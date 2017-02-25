@@ -19,16 +19,6 @@ public class User {
 
     private static final int LOGIN_MIN_LENGTH = 4;
 
-    private static final int PW_MIN_LENGTH = 6;
-
-    private static final int SALT_SIZE = 20;
-
-    private static final int HASH_ITERATION_COUNT = 13;
-
-    private static final int KEY_LENGTH = 64;
-
-    private static final String HASH_ALGORITHM = "PBKDF2WithHmacSHA1";
-
     @Id
     private String id;
 
@@ -62,10 +52,20 @@ public class User {
         this.login = login;
     }
 
-    public void setPassword(@Length(min = PW_MIN_LENGTH) String password) throws InvalidKeySpecException {
-        byte[] salt = getSalt();
-        passwordSalt = Base64.getEncoder().encodeToString(salt);
-        passwordHash = Base64.getEncoder().encodeToString(getHash(password, salt));
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public String getPasswordSalt() {
+        return passwordSalt;
+    }
+
+    public void setPasswordSalt(String passwordSalt) {
+        this.passwordSalt = passwordSalt;
     }
 
     public String getEmail() {
@@ -76,45 +76,25 @@ public class User {
         this.email = email;
     }
 
-    public boolean isPasswordEqual(String password) throws InvalidKeySpecException {
-        byte[] hash = getHash(password, Base64.getDecoder().decode(passwordSalt));
-        return passwordHash.equals(Base64.getEncoder().encodeToString(hash));
-    }
 
     public User withLogin(String login) {
         setLogin(login);
         return this;
     }
 
-    public User withPassword(String password) throws InvalidKeySpecException {
-        setPassword(password);
+    public User withPasswordHash(String passwordHash) {
+        setPasswordHash(passwordHash);
+        return this;
+    }
+
+    public User withPasswordSalt(String passwordSalt) {
+        setPasswordSalt(passwordSalt);
         return this;
     }
 
     public User withEmail(String email) {
         setEmail(email);
         return this;
-    }
-
-    private byte[] getSalt() {
-        byte[] salt = new byte[SALT_SIZE];
-        SecureRandom random = new SecureRandom();
-        random.nextBytes(salt);
-        return salt;
-    }
-
-    private byte[] getHash(String password, byte[] salt) throws InvalidKeySpecException {
-
-        PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, HASH_ITERATION_COUNT, KEY_LENGTH);
-
-        SecretKeyFactory factory;
-        try {
-            factory = SecretKeyFactory.getInstance(HASH_ALGORITHM);
-        } catch (NoSuchAlgorithmException e) {
-            throw new InternalError(e);
-        }
-
-        return factory.generateSecret(spec).getEncoded();
     }
 
     @Override
