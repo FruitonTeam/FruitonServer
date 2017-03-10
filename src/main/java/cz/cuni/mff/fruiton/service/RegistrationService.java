@@ -41,7 +41,6 @@ public class RegistrationService {
         logger.log(Level.FINE, "Registered user: {0}", user);
     }
 
-
     public static class RegistrationException extends RuntimeException {
 
         public RegistrationException(String message) {

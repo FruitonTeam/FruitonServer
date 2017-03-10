@@ -33,7 +33,7 @@ public class AuthenticationService {
     public User authenticate(String login, String password) {
         User user = userRepository.findByLogin(login);
         if (user == null) {
-            throw new UsernameNotFoundException("User: " + login);
+            throw new UsernameNotFoundException("User " + login + " is not registered.");
         }
 
         boolean authenticated;
@@ -61,6 +61,7 @@ public class AuthenticationService {
 
         } catch (GeneralSecurityException e) {
             // probably ignore, google provides no documentation when this exception occurs
+            logger.log(Level.FINE, "GeneralSecurityException while verifying google token", e);
         } catch (IOException e) {
             logger.log(Level.WARNING, "IOException occurred while verifying google token", e);
         }

@@ -7,13 +7,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
-import java.util.Base64;
-
 @Document
 public class User {
 
@@ -23,7 +16,7 @@ public class User {
     private String id;
 
     @Indexed(unique = true)
-    @Length(min = LOGIN_MIN_LENGTH)
+    @Length(min = LOGIN_MIN_LENGTH, message = "Login has to have at least 4 characters.")
     private String login;
 
     @NotBlank
@@ -32,7 +25,7 @@ public class User {
     @NotBlank
     private String passwordSalt;
 
-    @Email
+    @Email(message = "Invalid email address.")
     @NotBlank
     private String email;
 
