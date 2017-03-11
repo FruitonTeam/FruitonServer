@@ -4,7 +4,8 @@ import com.mongodb.DuplicateKeyException;
 import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.dao.UserRepository;
 import cz.cuni.mff.fruiton.dao.model.User;
-import cz.cuni.mff.fruiton.service.RegistrationService;
+import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
+import cz.cuni.mff.fruiton.service.authentication.impl.RegistrationServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,22 +18,35 @@ import java.util.List;
 @RestController
 public class RegistrationController {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
+    private final RegistrationService service;
 
     @Autowired
-    private RegistrationService service;
+    public RegistrationController(UserRepository repository, RegistrationService service) {
+        userRepository = repository;
+        this.service = service;
+    }
 
     @RequestMapping(value = "/api/register", method = RequestMethod.POST)
     public String register(@RequestBody UserProtos.RegistrationData data) {
-
         service.register(data);
-
         return "OK";
     }
 
-    @ExceptionHandler(RegistrationService.RegistrationException.class)
-    public ResponseEntity<String> handleRegistrationException(RegistrationService.RegistrationException e) {
+    @RequestMapping(value = "/api/confirmMail", method = RequestMethod.GET)
+    public String confirmMail(@RequestParam(value = "confirmationId") String confirmationId) {
+        service.confirmEmail(confirmationId);
+        return "Mail confirmed";
+    }
+
+    @RequestMapping(value = "/api/getAllRegistered", method = RequestMethod.GET)
+    public List<User> getAllRegistered() {
+        return userRepository.findAll();
+    }
+
+    @ExceptionHandler(RegistrationServiceImpl.RegistrationException.class)
+    public ResponseEntity<String> handleRegistrationException(RegistrationServiceImpl.RegistrationException e) {
         return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -56,9 +70,9 @@ public class RegistrationController {
         return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
     }
 
-    @RequestMapping(value = "/api/getAllRegistered", method = RequestMethod.GET)
-    public List<User> getAllRegistered() {
-        return userRepository.findAll();
+    @ExceptionHandler(RegistrationServiceImpl.MailConfirmationNotFound.class)
+    public ResponseEntity<String> handleMailConfirmationNotFoundException(RegistrationServiceImpl.MailConfirmationNotFound e) {
+        return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
     }
 
 }

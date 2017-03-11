@@ -1,5 +1,6 @@
-package cz.cuni.mff.fruiton.service;
+package cz.cuni.mff.fruiton.service.authentication.impl;
 
+import cz.cuni.mff.fruiton.service.authentication.PasswordService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,7 @@ import java.util.Base64;
 
 @Service
 @PropertySource("classpath:security.properties")
-public class PasswordService {
+public class PasswordServiceImpl implements PasswordService {
 
     @Value("${salt.size}")
     private int saltSize;
@@ -28,6 +29,7 @@ public class PasswordService {
     @Value("${hash.algorithm}")
     private String hashAlgorithm;
 
+    @Override
     public Hash getPasswordHash(@Nonnull String password) throws InvalidKeySpecException {
         byte[] salt = getSalt();
         String passwordSalt = Base64.getEncoder().encodeToString(salt);
@@ -36,6 +38,7 @@ public class PasswordService {
         return new Hash(passwordSalt, passwordHash);
     }
 
+    @Override
     public boolean isPasswordEqual(@Nonnull String password, @Nonnull String salt, @Nonnull String passwordHash)
             throws InvalidKeySpecException {
 
@@ -62,26 +65,6 @@ public class PasswordService {
         }
 
         return factory.generateSecret(spec).getEncoded();
-    }
-
-    public static class Hash {
-
-        private String salt;
-        private String hash;
-
-        public Hash(String salt, String hash) {
-            this.salt = salt;
-            this.hash = hash;
-        }
-
-        public String getSalt() {
-            return salt;
-        }
-
-
-        public String getHash() {
-            return hash;
-        }
     }
 
 }

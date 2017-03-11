@@ -1,9 +1,11 @@
-package cz.cuni.mff.fruiton.service;
+package cz.cuni.mff.fruiton.service.authentication.impl;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import cz.cuni.mff.fruiton.dao.UserRepository;
 import cz.cuni.mff.fruiton.dao.model.User;
+import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
+import cz.cuni.mff.fruiton.service.authentication.PasswordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -17,19 +19,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Service
-public class AuthenticationService {
+public class AuthenticationServiceImpl implements AuthenticationService {
 
-    private static final Logger logger = Logger.getLogger(AuthenticationService.class.getName());
+    private static final Logger logger = Logger.getLogger(AuthenticationServiceImpl.class.getName());
+
+    private final UserRepository userRepository;
+
+    private final GoogleIdTokenVerifier verifier;
+
+    private final PasswordService passwdService;
 
     @Autowired
-    private UserRepository userRepository;
+    public AuthenticationServiceImpl(UserRepository userRepository, GoogleIdTokenVerifier verifier, PasswordService passwdService) {
+        this.userRepository = userRepository;
+        this.verifier = verifier;
+        this.passwdService = passwdService;
+    }
 
-    @Autowired
-    private GoogleIdTokenVerifier verifier;
-
-    @Autowired
-    private PasswordService passwdService;
-
+    @Override
     public User authenticate(String login, String password) {
         User user = userRepository.findByLogin(login);
         if (user == null) {
@@ -51,6 +58,7 @@ public class AuthenticationService {
         return user;
     }
 
+    @Override
     public GoogleIdToken.Payload authenticate(String idTokenStr) {
         try {
             GoogleIdToken idToken = verifier.verify(idTokenStr);

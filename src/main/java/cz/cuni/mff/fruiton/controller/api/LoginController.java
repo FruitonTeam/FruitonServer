@@ -3,7 +3,7 @@ package cz.cuni.mff.fruiton.controller.api;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import cz.cuni.mff.fruiton.dao.model.User;
 import cz.cuni.mff.fruiton.dto.UserProtos;
-import cz.cuni.mff.fruiton.service.AuthenticationService;
+import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +17,12 @@ import java.util.UUID;
 @RestController
 public class LoginController {
 
+    private final AuthenticationService authService;
+
     @Autowired
-    private AuthenticationService authService;
+    public LoginController(AuthenticationService authService) {
+        this.authService = authService;
+    }
 
     @RequestMapping(value = "/api/login", method = RequestMethod.POST)
     public String login(@RequestBody UserProtos.LoginData data) {

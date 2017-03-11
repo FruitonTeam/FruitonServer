@@ -29,6 +29,8 @@ public class User {
     @NotBlank
     private String email;
 
+    private boolean emailConfirmed = false;
+
     public String getId() {
         return id;
     }
@@ -69,6 +71,13 @@ public class User {
         this.email = email;
     }
 
+    public boolean isEmailConfirmed() {
+        return emailConfirmed;
+    }
+
+    public void setEmailConfirmed(boolean emailConfirmed) {
+        this.emailConfirmed = emailConfirmed;
+    }
 
     public User withLogin(String login) {
         setLogin(login);
