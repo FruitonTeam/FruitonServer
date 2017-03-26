@@ -19,3 +19,29 @@ message LoginData {
     string password = 2;
 
 }
+
+message LoginGoogle {
+
+    string token = 1;
+
+}
+
+
+message ChatMsg {
+
+    string msg = 1;
+
+}
+
+message WrapperMessage {
+
+    //int32 type = 1;
+
+    oneof msg {
+        RegistrationData m1 = 1;
+        LoginData m2 = 2;
+        LoginGoogle m3 = 3;
+        ChatMsg chat = 4;
+    }
+
+}

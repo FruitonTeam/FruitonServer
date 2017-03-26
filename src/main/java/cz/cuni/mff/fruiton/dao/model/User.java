@@ -26,7 +26,6 @@ public class User {
     private String passwordSalt;
 
     @Email(message = "Invalid email address.")
-    @NotBlank
     private String email;
 
     private boolean emailConfirmed = false;

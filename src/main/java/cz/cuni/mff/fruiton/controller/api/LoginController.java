@@ -48,8 +48,8 @@ public class LoginController {
     }
 
     @RequestMapping(value = "/api/loginGoogle", method = RequestMethod.POST)
-    public String loginGoogle(@RequestBody String idTokenStr) {
-        GoogleIdToken.Payload payload = authService.authenticate(idTokenStr);
+    public String loginGoogle(@RequestBody UserProtos.LoginGoogle data) {
+        GoogleIdToken.Payload payload = authService.authenticate(data.getToken());
         return payload.getSubject();
     }
 
