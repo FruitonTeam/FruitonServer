@@ -35,8 +35,6 @@ message ChatMsg {
 
 message WrapperMessage {
 
-    //int32 type = 1;
-
     oneof msg {
         RegistrationData m1 = 1;
         LoginData m2 = 2;
