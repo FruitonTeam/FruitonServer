@@ -19,7 +19,6 @@ public class ReflectionUtils {
     public static Set<Method> getMethodsWithAnnotation(Set<Class<?>> classes, Class<? extends Annotation> annotation) {
         Set<Method> methods = new HashSet<>();
 
-
         for (Class<?> cl : classes) {
             for (Method m : cl.getMethods()) {
                 if (m.isAnnotationPresent(annotation)) {

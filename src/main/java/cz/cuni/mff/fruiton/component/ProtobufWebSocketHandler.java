@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.component;
 
+import cz.cuni.mff.fruiton.service.communication.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
@@ -16,11 +17,13 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
     private static final Logger logger = Logger.getLogger(ProtobufWebSocketHandler.class.getName());
 
-    private MessageDispatcher dispatcher;
+    private final MessageDispatcher dispatcher;
+    private final SessionService sessionService;
 
     @Autowired
-    public ProtobufWebSocketHandler(MessageDispatcher dispatcher) {
+    public ProtobufWebSocketHandler(MessageDispatcher dispatcher, SessionService sessionService) {
         this.dispatcher = dispatcher;
+        this.sessionService = sessionService;
     }
 
     @Override
@@ -35,11 +38,13 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         logger.log(Level.FINEST, "Opened connection: {0}", session);
+        sessionService.register(session);
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         logger.log(Level.FINEST, "Closed connection: {0} with status: {1}", new Object[] {session, status});
+        sessionService.unregister(session);
     }
 
 }

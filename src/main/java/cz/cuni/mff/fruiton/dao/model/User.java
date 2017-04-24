@@ -4,11 +4,14 @@ import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.security.Principal;
+
 @Document
-public class User {
+public class User implements Principal {
 
     private static final int LOGIN_MIN_LENGTH = 4;
 
@@ -105,5 +108,11 @@ public class User {
                 ", login='" + login + '\'' +
                 ", email='" + email + '\'' +
                 '}';
+    }
+
+    @Override
+    @Transient
+    public String getName() {
+        return login;
     }
 }

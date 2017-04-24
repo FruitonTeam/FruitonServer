@@ -62,7 +62,6 @@ public class MessageDispatcher {
             methods.put(msgNumber, new DispatchMethod(m, context.getBean(m.getDeclaringClass())));
 
         }
-
     }
 
     /**
@@ -82,7 +81,7 @@ public class MessageDispatcher {
         Object o = msg.getField(fields.get(msgNum));
 
         try {
-            methods.get(msgNum).invoke(session, o);
+            methods.get(msgNum).invoke(session.getPrincipal(), o);
         } catch (InvocationTargetException|IllegalAccessException e) {
             logger.log(Level.SEVERE, "Could not dispatch message", e);
         }

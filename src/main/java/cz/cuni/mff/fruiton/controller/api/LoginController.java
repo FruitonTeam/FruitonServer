@@ -4,6 +4,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import cz.cuni.mff.fruiton.dao.model.User;
 import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
+import cz.cuni.mff.fruiton.service.authentication.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,18 +19,23 @@ import java.util.UUID;
 public class LoginController {
 
     private final AuthenticationService authService;
+    private final TokenService tokenService;
 
     @Autowired
-    public LoginController(AuthenticationService authService) {
+    public LoginController(AuthenticationService authService, TokenService tokenService) {
         this.authService = authService;
+        this.tokenService = tokenService;
     }
 
     @RequestMapping(value = "/api/login", method = RequestMethod.POST)
     public String login(@RequestBody UserProtos.LoginData data) {
 
         User user = authService.authenticate(data.getLogin(), data.getPassword());
+        String userToken = UUID.randomUUID().toString();
 
-        return UUID.randomUUID().toString();
+        tokenService.register(userToken, user);
+
+        return userToken;
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
