@@ -4,13 +4,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.security.Principal;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class SessionServiceImpl implements SessionService {
 
-    private Map<Principal, WebSocketSession> sessions = new HashMap<>();
+    private Map<Principal, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
     @Override
     public void register(WebSocketSession session) {
