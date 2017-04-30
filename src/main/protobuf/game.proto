@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package cz.cuni.mff.fruiton.dto;
+
+option java_package = "cz.cuni.mff.fruiton.dto";
+option java_outer_classname = "GameProtos";
+
+import "chat.proto";
+
+message WrapperMessage {
+
+    oneof msg {
+        ChatMsg chatMsg = 1;
+        SaladInfo salad = 2;
+    }
+
+}
+
+message Fruiton {
+
+    string id = 1;
+
+}
+
+message SaladInfo {
+
+    repeated Fruiton salad = 1;
+
+}
+
+

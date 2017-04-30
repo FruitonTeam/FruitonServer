@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.service.communication;
 
+import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.dto.UserProtos;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,13 +25,11 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public void send(Principal principal, UserProtos.WrapperMessage message) {
+    public void send(Principal principal, GameProtos.WrapperMessage message) {
         BinaryMessage msg = new BinaryMessage(message.toByteArray());
 
-        TextMessage txt = new TextMessage("trololo");
-
         try {
-            sessionService.getSession(principal).sendMessage(txt);
+            sessionService.getSession(principal).sendMessage(msg);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Cannot send websocket message", e);
         }

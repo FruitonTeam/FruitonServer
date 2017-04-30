@@ -3,6 +3,7 @@ package cz.cuni.mff.fruiton.component;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Descriptors;
 import cz.cuni.mff.fruiton.annotation.HandleProtobufMessage;
+import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.util.ReflectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,7 @@ public class MessageDispatcher {
     @PostConstruct
     private void init() {
 
-        List<Descriptors.OneofDescriptor> oneOfs = UserProtos.WrapperMessage.getDescriptor().getOneofs();
+        List<Descriptors.OneofDescriptor> oneOfs = GameProtos.WrapperMessage.getDescriptor().getOneofs();
 
         Descriptors.OneofDescriptor oneOf = oneOfs.get(0);
 
@@ -55,7 +56,7 @@ public class MessageDispatcher {
         for (Method m : handleProtobufMessageMethods) {
 
             HandleProtobufMessage handleProtobufMessage = m.getAnnotation(HandleProtobufMessage.class);
-            UserProtos.WrapperMessage.MsgCase msgCase = handleProtobufMessage.msgCase();
+            GameProtos.WrapperMessage.MsgCase msgCase = handleProtobufMessage.msgCase();
 
             int msgNumber = msgCase.getNumber();
 
@@ -74,7 +75,7 @@ public class MessageDispatcher {
 
         CodedInputStream cis = CodedInputStream.newInstance(message.getPayload());
 
-        UserProtos.WrapperMessage msg = UserProtos.WrapperMessage.parseFrom(cis);
+        GameProtos.WrapperMessage msg = GameProtos.WrapperMessage.parseFrom(cis);
 
         int msgNum = msg.getMsgCase().getNumber();
 

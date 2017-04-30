@@ -1,6 +1,8 @@
 package cz.cuni.mff.fruiton.component;
 
+import cz.cuni.mff.fruiton.dao.model.User;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
+import cz.cuni.mff.fruiton.service.communication.game.SaladService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
@@ -19,11 +21,13 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
     private final MessageDispatcher dispatcher;
     private final SessionService sessionService;
+    private final SaladService saladService;
 
     @Autowired
-    public ProtobufWebSocketHandler(MessageDispatcher dispatcher, SessionService sessionService) {
+    public ProtobufWebSocketHandler(MessageDispatcher dispatcher, SessionService sessionService, SaladService saladService) {
         this.dispatcher = dispatcher;
         this.sessionService = sessionService;
+        this.saladService = saladService;
     }
 
     @Override
@@ -39,6 +43,7 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         logger.log(Level.FINEST, "Opened connection: {0}", session);
         sessionService.register(session);
+        saladService.sendSalad((User) session.getPrincipal());
     }
 
     @Override
