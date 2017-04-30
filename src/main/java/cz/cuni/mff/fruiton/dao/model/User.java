@@ -6,9 +6,11 @@ import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.security.Principal;
+import java.util.List;
 
 @Document
 public class User implements Principal {
@@ -32,6 +34,9 @@ public class User implements Principal {
     private String email;
 
     private boolean emailConfirmed = false;
+
+    @DBRef
+    private List<Fruiton> salad;
 
     public String getId() {
         return id;
@@ -79,6 +84,14 @@ public class User implements Principal {
 
     public void setEmailConfirmed(boolean emailConfirmed) {
         this.emailConfirmed = emailConfirmed;
+    }
+
+    public List<Fruiton> getSalad() {
+        return salad;
+    }
+
+    public void setSalad(List<Fruiton> salad) {
+        this.salad = salad;
     }
 
     public User withLogin(String login) {
