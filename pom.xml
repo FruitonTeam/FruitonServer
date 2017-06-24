@@ -110,6 +110,31 @@
             </plugin>
 
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <executions>
+                    <execution>
+                        <id>protobufs-checkout</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <executable>git</executable>
+                            <arguments>
+                                <argument>clone</argument>
+                                <argument>-b</argument>
+                                <argument>develop</argument>
+                                <argument>http://prak.mff.cuni.cz:7990/scm/fruit/protobufs.git</argument>
+                                <argument>target/protobufs</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <groupId>com.github.os72</groupId>
                 <artifactId>protoc-jar-maven-plugin</artifactId>
                 <version>3.2.0</version>
@@ -123,7 +148,7 @@
                             <protocVersion>3.2.0</protocVersion> <!-- 2.4.1, 2.5.0, 2.6.1, 3.2.0 -->
                             <includeStdTypes>true</includeStdTypes>
                             <inputDirectories>
-                                <include>src/main/protobuf</include>
+                                <include>target/protobufs</include>
                             </inputDirectories>
                         </configuration>
                     </execution>
