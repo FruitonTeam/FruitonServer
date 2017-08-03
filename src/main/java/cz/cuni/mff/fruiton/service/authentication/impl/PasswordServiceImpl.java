@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Nonnull;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.NoSuchAlgorithmException;
@@ -30,7 +29,7 @@ public class PasswordServiceImpl implements PasswordService {
     private String hashAlgorithm;
 
     @Override
-    public Hash getPasswordHash(@Nonnull String password) throws InvalidKeySpecException {
+    public final Hash getPasswordHash(final String password) throws InvalidKeySpecException {
         byte[] salt = getSalt();
         String passwordSalt = Base64.getEncoder().encodeToString(salt);
         String passwordHash = Base64.getEncoder().encodeToString(getHash(password, salt));
@@ -39,7 +38,7 @@ public class PasswordServiceImpl implements PasswordService {
     }
 
     @Override
-    public boolean isPasswordEqual(@Nonnull String password, @Nonnull String salt, @Nonnull String passwordHash)
+    public final boolean isPasswordEqual(final String password, final String salt, final String passwordHash)
             throws InvalidKeySpecException {
 
         byte[] hash = getHash(password, Base64.getDecoder().decode(salt));
@@ -53,7 +52,7 @@ public class PasswordServiceImpl implements PasswordService {
         return salt;
     }
 
-    private byte[] getHash(String password, byte[] salt) throws InvalidKeySpecException {
+    private byte[] getHash(final String password, final byte[] salt) throws InvalidKeySpecException {
 
         PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, hashIterationCount, keyLength);
 

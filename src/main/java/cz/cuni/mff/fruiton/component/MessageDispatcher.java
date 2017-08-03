@@ -4,7 +4,6 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Descriptors;
 import cz.cuni.mff.fruiton.annotation.HandleProtobufMessage;
 import cz.cuni.mff.fruiton.dto.GameProtos;
-import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.util.ReflectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -16,7 +15,11 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,7 +37,7 @@ public class MessageDispatcher {
     private Map<Integer, Descriptors.FieldDescriptor> fields = new HashMap<>();
 
     @Autowired
-    public MessageDispatcher(ApplicationContext context) {
+    public MessageDispatcher(final ApplicationContext context) {
         this.context = context;
     }
 
@@ -71,7 +74,7 @@ public class MessageDispatcher {
      * @param message binary message to dispatch
      * @throws IOException if message could not be converted to protobuf
      */
-    public void dispatch(WebSocketSession session, BinaryMessage message) throws IOException {
+    public final void dispatch(final WebSocketSession session, final BinaryMessage message) throws IOException {
 
         CodedInputStream cis = CodedInputStream.newInstance(message.getPayload());
 
@@ -83,7 +86,7 @@ public class MessageDispatcher {
 
         try {
             methods.get(msgNum).invoke(session.getPrincipal(), o);
-        } catch (InvocationTargetException|IllegalAccessException e) {
+        } catch (InvocationTargetException | IllegalAccessException e) {
             logger.log(Level.SEVERE, "Could not dispatch message", e);
         }
     }
@@ -93,12 +96,12 @@ public class MessageDispatcher {
         private Method m;
         private Object invocationObject;
 
-        public DispatchMethod(Method m, Object invocationObject) {
+        DispatchMethod(final Method m, final Object invocationObject) {
             this.m = m;
             this.invocationObject = invocationObject;
         }
 
-        public void invoke(Object... args) throws InvocationTargetException, IllegalAccessException {
+        void invoke(final Object... args) throws InvocationTargetException, IllegalAccessException {
             m.invoke(invocationObject, args);
         }
     }

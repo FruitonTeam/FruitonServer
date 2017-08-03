@@ -24,14 +24,18 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
     private final SaladService saladService;
 
     @Autowired
-    public ProtobufWebSocketHandler(MessageDispatcher dispatcher, SessionService sessionService, SaladService saladService) {
+    public ProtobufWebSocketHandler(
+            final MessageDispatcher dispatcher,
+            final SessionService sessionService,
+            final SaladService saladService
+    ) {
         this.dispatcher = dispatcher;
         this.sessionService = sessionService;
         this.saladService = saladService;
     }
 
     @Override
-    protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) {
+    protected final void handleBinaryMessage(final WebSocketSession session, final BinaryMessage message) {
         try {
             dispatcher.dispatch(session, message);
         } catch (IOException e) {
@@ -40,14 +44,14 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+    public final void afterConnectionEstablished(final WebSocketSession session) throws Exception {
         logger.log(Level.FINEST, "Opened connection: {0}", session);
         sessionService.register(session);
         saladService.sendSalad((User) session.getPrincipal());
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+    public final void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) throws Exception {
         logger.log(Level.FINEST, "Closed connection: {0} with status: {1}", new Object[] {session, status});
         sessionService.unregister(session);
     }

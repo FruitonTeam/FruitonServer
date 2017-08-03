@@ -19,12 +19,12 @@ public class Chat {
     private final MessageService msgService;
 
     @Autowired
-    public Chat(MessageService msgService) {
+    public Chat(final MessageService msgService) {
         this.msgService = msgService;
     }
 
     @HandleProtobufMessage(msgCase = GameProtos.WrapperMessage.MsgCase.CHATMSG)
-    public void handleChatMessage(User user, ChatProtos.ChatMsg chat) {
+    public final void handleChatMessage(final User user, final ChatProtos.ChatMsg chat) {
         logger.log(Level.FINE, "Chat message received from {0} with content: {1}", new Object[] {user, chat});
 
         GameProtos.WrapperMessage m = GameProtos.WrapperMessage.newBuilder()

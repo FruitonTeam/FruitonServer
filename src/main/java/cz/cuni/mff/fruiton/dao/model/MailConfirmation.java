@@ -13,19 +13,19 @@ public class MailConfirmation {
     @DBRef
     private User user;
 
-    public String getId() {
+    public final String getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public final void setId(final String id) {
         this.id = id;
     }
 
-    public User getUser() {
+    public final User getUser() {
         return user;
     }
 
-    public void setUser(User user) {
+    public final void setUser(final User user) {
         this.user = user;
     }
 

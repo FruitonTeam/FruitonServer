@@ -11,7 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
@@ -22,13 +26,13 @@ public class LoginController {
     private final TokenService tokenService;
 
     @Autowired
-    public LoginController(AuthenticationService authService, TokenService tokenService) {
+    public LoginController(final AuthenticationService authService, final TokenService tokenService) {
         this.authService = authService;
         this.tokenService = tokenService;
     }
 
     @RequestMapping(value = "/api/login", method = RequestMethod.POST)
-    public String login(@RequestBody UserProtos.LoginData data) {
+    public final String login(@RequestBody final UserProtos.LoginData data) {
 
         User user = authService.authenticate(data.getLogin(), data.getPassword());
         String userToken = UUID.randomUUID().toString();
@@ -39,22 +43,22 @@ public class LoginController {
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<String> handleUsernameNotFoundException(UsernameNotFoundException e) {
+    public final ResponseEntity<String> handleUsernameNotFoundException(final UsernameNotFoundException e) {
         return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<String> handleBadCredentialsException(BadCredentialsException e) {
+    public final ResponseEntity<String> handleBadCredentialsException(final BadCredentialsException e) {
         return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(AuthenticationServiceException.class)
-    public ResponseEntity<String> handleAuthenticationServiceException(AuthenticationServiceException e) {
+    public final ResponseEntity<String> handleAuthenticationServiceException(final AuthenticationServiceException e) {
         return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @RequestMapping(value = "/api/loginGoogle", method = RequestMethod.POST)
-    public String loginGoogle(@RequestBody UserProtos.LoginGoogle data) {
+    public final String loginGoogle(@RequestBody final UserProtos.LoginGoogle data) {
         GoogleIdToken.Payload payload = authService.authenticate(data.getToken());
         return payload.getSubject();
     }

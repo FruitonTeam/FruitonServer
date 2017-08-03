@@ -6,7 +6,7 @@ public interface RegistrationService {
 
     class RegistrationException extends RuntimeException {
 
-        public RegistrationException(String message) {
+        public RegistrationException(final String message) {
             super(message);
         }
 
@@ -14,7 +14,7 @@ public interface RegistrationService {
 
     class MailConfirmationNotFound extends RegistrationException {
 
-        public MailConfirmationNotFound(String message) {
+        public MailConfirmationNotFound(final String message) {
             super(message);
         }
 

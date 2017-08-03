@@ -1,7 +1,6 @@
 package cz.cuni.mff.fruiton.annotation;
 
 import cz.cuni.mff.fruiton.dto.GameProtos;
-import cz.cuni.mff.fruiton.dto.UserProtos;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

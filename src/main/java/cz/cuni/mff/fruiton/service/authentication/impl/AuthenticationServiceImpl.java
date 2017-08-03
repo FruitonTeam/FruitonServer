@@ -30,14 +30,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final PasswordService passwdService;
 
     @Autowired
-    public AuthenticationServiceImpl(UserRepository userRepository, GoogleIdTokenVerifier verifier, PasswordService passwdService) {
+    public AuthenticationServiceImpl(
+            final UserRepository userRepository,
+            final GoogleIdTokenVerifier verifier,
+            final PasswordService passwdService
+    ) {
         this.userRepository = userRepository;
         this.verifier = verifier;
         this.passwdService = passwdService;
     }
 
     @Override
-    public User authenticate(String login, String password) {
+    public final User authenticate(final String login, final String password) {
         User user = userRepository.findByLogin(login);
         if (user == null) {
             throw new UsernameNotFoundException("User " + login + " is not registered.");
@@ -59,7 +63,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public GoogleIdToken.Payload authenticate(String idTokenStr) {
+    public final GoogleIdToken.Payload authenticate(final String idTokenStr) {
         try {
             GoogleIdToken idToken = verifier.verify(idTokenStr);
 
