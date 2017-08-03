@@ -145,7 +145,7 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <protocVersion>3.2.0</protocVersion> <!-- 2.4.1, 2.5.0, 2.6.1, 3.2.0 -->
+                            <protocVersion>3.2.0</protocVersion>
                             <includeStdTypes>true</includeStdTypes>
                             <inputDirectories>
                                 <include>target/protobufs</include>
@@ -153,6 +153,18 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-Xlint:all</arg>
+                        <arg>-Werror</arg>
+                    </compilerArgs>
+                </configuration>
             </plugin>
 
         </plugins>
