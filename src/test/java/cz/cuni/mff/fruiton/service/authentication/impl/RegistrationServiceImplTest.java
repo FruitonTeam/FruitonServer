@@ -16,6 +16,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.validation.ConstraintViolationException;
 
+import static cz.cuni.mff.fruiton.test.util.TestUtils.getRegistrationData;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -23,8 +24,13 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = cz.cuni.mff.fruiton.Application.class)
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class RegistrationServiceImplTest {
+
+    private static final String EMAIL = "test@test.com";
+    private static final String LOGIN = "login";
+    private static final String PASSWORD = "password";
+
 
     @Autowired
     private RegistrationServiceImpl registrationService;
@@ -37,26 +43,18 @@ public class RegistrationServiceImplTest {
 
     @Test
     public void registerTest() {
-        RegistrationData data = RegistrationData.newBuilder()
-                .setEmail("test@test.com")
-                .setLogin("login")
-                .setPassword("password")
-                .build();
+        RegistrationData data = getRegistrationData(EMAIL, LOGIN, PASSWORD);
 
         registrationService.register(data);
 
-        User user = userRepository.findByLogin("login");
+        User user = userRepository.findByLogin(LOGIN);
         assertNotNull("User was not persisted after registration", user);
-        assertEquals("Persisted email is different than the one used for registration", "test@test.com", user.getEmail());
+        assertEquals("Persisted email is different than the one used for registration", EMAIL, user.getEmail());
     }
 
     @Test(expected = DuplicateKeyException.class)
     public void registerWithSameLogin() {
-        RegistrationData data = RegistrationData.newBuilder()
-                .setEmail("test1@test.com")
-                .setLogin("login1")
-                .setPassword("password")
-                .build();
+        RegistrationData data = getRegistrationData(EMAIL, LOGIN, PASSWORD);
 
         registrationService.register(data);
         registrationService.register(data);
@@ -64,15 +62,11 @@ public class RegistrationServiceImplTest {
 
     @Test
     public void confirmMailTest() {
-        RegistrationData data = RegistrationData.newBuilder()
-                .setEmail("test1@test.com")
-                .setLogin("login2")
-                .setPassword("password")
-                .build();
+        RegistrationData data = getRegistrationData(EMAIL, LOGIN, PASSWORD);
 
         registrationService.register(data);
 
-        User user = userRepository.findByLogin("login2");
+        User user = userRepository.findByLogin(LOGIN);
 
         assertFalse("Email should not be confirmed yet", user.isEmailConfirmed());
 
@@ -80,7 +74,7 @@ public class RegistrationServiceImplTest {
 
         registrationService.confirmEmail(id);
 
-        user = userRepository.findByLogin("login2"); // refresh data
+        user = userRepository.findByLogin(LOGIN); // refresh data
         assertTrue("Email should be confirmed", user.isEmailConfirmed());
     }
 
@@ -95,61 +89,37 @@ public class RegistrationServiceImplTest {
 
     @Test(expected = ConstraintViolationException.class)
     public void registerWithEmptyLoginTest() {
-        RegistrationData data = RegistrationData.newBuilder()
-                .setEmail("test1@test.com")
-                .setLogin("")
-                .setPassword("password")
-                .build();
+        RegistrationData data = getRegistrationData(EMAIL, "", PASSWORD);
         registrationService.register(data);
     }
 
     @Test(expected = ConstraintViolationException.class)
     public void registerWithShortLoginTest() {
-        RegistrationData data = RegistrationData.newBuilder()
-                .setEmail("test1@test.com")
-                .setLogin("a")
-                .setPassword("password")
-                .build();
+        RegistrationData data = getRegistrationData(EMAIL, "a", PASSWORD);
         registrationService.register(data);
     }
 
     @Test(expected = ConstraintViolationException.class)
     public void registerWithWrongEmailTest() {
-        RegistrationData data = RegistrationData.newBuilder()
-                .setEmail("test")
-                .setLogin("login3")
-                .setPassword("password")
-                .build();
+        RegistrationData data = getRegistrationData("test", LOGIN, PASSWORD);
         registrationService.register(data);
     }
 
     @Test(expected = ConstraintViolationException.class)
     public void registerWithEmptyEmailTest() {
-        RegistrationData data = RegistrationData.newBuilder()
-                .setEmail("")
-                .setLogin("login4")
-                .setPassword("password")
-                .build();
+        RegistrationData data = getRegistrationData("", LOGIN, PASSWORD);
         registrationService.register(data);
     }
 
     @Test(expected = RegistrationException.class)
     public void registerWithEmptyPasswordTest() {
-        RegistrationData data = RegistrationData.newBuilder()
-                .setEmail("test@test.com")
-                .setLogin("login6")
-                .setPassword("")
-                .build();
+        RegistrationData data = getRegistrationData(EMAIL, LOGIN, "");
         registrationService.register(data);
     }
 
     @Test(expected = ConstraintViolationException.class)
     public void registerWithNonAlphanumericLoginTest() {
-        RegistrationData data = RegistrationData.newBuilder()
-                .setEmail("test@test.com")
-                .setLogin("myLogin\n\r")
-                .setPassword("password")
-                .build();
+        RegistrationData data = getRegistrationData(EMAIL, "login\n\r", PASSWORD);
         registrationService.register(data);
     }
 

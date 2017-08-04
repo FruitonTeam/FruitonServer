@@ -12,13 +12,18 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import static cz.cuni.mff.fruiton.test.util.TestUtils.getRegistrationData;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = cz.cuni.mff.fruiton.Application.class)
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class AuthenticationServiceImplTest {
+
+    private static final String EMAIL = "test@test.com";
+    private static final String LOGIN = "login";
+    private static final String PASSWORD = "password";
 
     @Autowired
     private RegistrationService registrationService;
@@ -28,32 +33,24 @@ public class AuthenticationServiceImplTest {
 
     @Test
     public void authenticateTest() {
-        RegistrationData data = RegistrationData.newBuilder()
-                .setEmail("test@test.com")
-                .setLogin("login")
-                .setPassword("password")
-                .build();
+        RegistrationData data = getRegistrationData(EMAIL, LOGIN, PASSWORD);
         registrationService.register(data);
 
-        User user = authenticationService.authenticate("login", "password");
+        User user = authenticationService.authenticate(LOGIN, PASSWORD);
         assertNotNull("Authentication fail", user);
-        assertEquals("Login should be equal", "login", user.getLogin());
+        assertEquals("Login should be equal", LOGIN, user.getLogin());
     }
 
     @Test(expected = UsernameNotFoundException.class)
     public void authenticateNotRegisteredUserTest() {
-        authenticationService.authenticate("unknownLogin", "password");
+        authenticationService.authenticate("unknownLogin", PASSWORD);
     }
 
     @Test(expected = BadCredentialsException.class)
     public void badCredentialsTest() {
-        RegistrationData data = RegistrationData.newBuilder()
-                .setEmail("test@test.com")
-                .setLogin("login2")
-                .setPassword("password")
-                .build();
+        RegistrationData data = getRegistrationData(EMAIL, LOGIN, PASSWORD);
         registrationService.register(data);
-        authenticationService.authenticate("login2", "badPassword");
+        authenticationService.authenticate(LOGIN, "badPassword");
     }
 
 }
