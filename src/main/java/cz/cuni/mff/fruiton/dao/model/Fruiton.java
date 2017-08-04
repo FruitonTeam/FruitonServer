@@ -10,15 +10,15 @@ public class Fruiton {
     @Id
     private String id;
 
-    public String getId() {
+    public final String getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public final void setId(final String id) {
         this.id = id;
     }
 
-    public GameProtos.Fruiton convertToDTO() {
+    public final GameProtos.Fruiton convertToDTO() {
         return GameProtos.Fruiton.newBuilder().setId(id).build();
     }
 }

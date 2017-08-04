@@ -9,7 +9,12 @@ import cz.cuni.mff.fruiton.service.authentication.impl.RegistrationServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
@@ -23,35 +28,35 @@ public class RegistrationController {
     private final RegistrationService service;
 
     @Autowired
-    public RegistrationController(UserRepository repository, RegistrationService service) {
+    public RegistrationController(final UserRepository repository, final RegistrationService service) {
         userRepository = repository;
         this.service = service;
     }
 
     @RequestMapping(value = "/api/register", method = RequestMethod.POST)
-    public String register(@RequestBody UserProtos.RegistrationData data) {
+    public final String register(@RequestBody final UserProtos.RegistrationData data) {
         service.register(data);
         return "OK";
     }
 
     @RequestMapping(value = "/api/confirmMail", method = RequestMethod.GET)
-    public String confirmMail(@RequestParam(value = "confirmationId") String confirmationId) {
+    public final String confirmMail(@RequestParam(value = "confirmationId") final String confirmationId) {
         service.confirmEmail(confirmationId);
         return "Mail confirmed";
     }
 
     @RequestMapping(value = "/api/getAllRegistered", method = RequestMethod.GET)
-    public List<User> getAllRegistered() {
+    public final List<User> getAllRegistered() {
         return userRepository.findAll();
     }
 
     @ExceptionHandler(RegistrationServiceImpl.RegistrationException.class)
-    public ResponseEntity<String> handleRegistrationException(RegistrationServiceImpl.RegistrationException e) {
+    public final ResponseEntity<String> handleRegistrationException(final RegistrationServiceImpl.RegistrationException e) {
         return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<String> handleConstraintValidationException(ConstraintViolationException e) {
+    public final ResponseEntity<String> handleConstraintValidationException(final ConstraintViolationException e) {
         final StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (ConstraintViolation cv : e.getConstraintViolations()) {
@@ -66,12 +71,14 @@ public class RegistrationController {
     }
 
     @ExceptionHandler(DuplicateKeyException.class)
-    public ResponseEntity<String> handleDuplicateKeyException(DuplicateKeyException e) {
+    public final ResponseEntity<String> handleDuplicateKeyException(final DuplicateKeyException e) {
         return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(RegistrationServiceImpl.MailConfirmationNotFound.class)
-    public ResponseEntity<String> handleMailConfirmationNotFoundException(RegistrationServiceImpl.MailConfirmationNotFound e) {
+    public final ResponseEntity<String> handleMailConfirmationNotFoundException(
+            final RegistrationServiceImpl.MailConfirmationNotFound e
+    ) {
         return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
     }
 

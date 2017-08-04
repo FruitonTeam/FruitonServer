@@ -13,17 +13,17 @@ public class SessionServiceImpl implements SessionService {
     private Map<Principal, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
     @Override
-    public void register(WebSocketSession session) {
+    public final void register(final WebSocketSession session) {
         sessions.put(session.getPrincipal(), session);
     }
 
     @Override
-    public WebSocketSession getSession(Principal principal) {
+    public final WebSocketSession getSession(final Principal principal) {
         return sessions.get(principal);
     }
 
     @Override
-    public void unregister(WebSocketSession session) {
+    public final void unregister(final WebSocketSession session) {
         sessions.remove(session.getPrincipal());
     }
 

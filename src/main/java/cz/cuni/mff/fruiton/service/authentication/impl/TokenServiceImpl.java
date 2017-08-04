@@ -23,13 +23,13 @@ public class TokenServiceImpl implements TokenService {
     private final Map<String, TokenValue> tokens = Collections.synchronizedMap(new HashMap<>());
 
     @Override
-    public void register(String token, User user) {
+    public final void register(final String token, final User user) {
         TokenValue value = new TokenValue(user, Instant.now());
         tokens.put(token, value);
     }
 
     @Override
-    public User getUserAndInvalidateToken(String token) {
+    public final User getUserAndInvalidateToken(final String token) {
         TokenValue value = tokens.get(token);
         if (value == null) {
             return null;
@@ -41,18 +41,18 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public boolean isValid(String token) {
+    public final boolean isValid(final String token) {
         return tokens.containsKey(token);
     }
 
     @Scheduled(fixedDelay = INVALIDATION_TIME)
-    public void invalidateTokens() {
+    public final void invalidateTokens() {
         logger.finest("Invalidating token data");
 
         Instant now = Instant.now();
 
         synchronized (tokens) {
-            for (Iterator<Map.Entry<String, TokenValue>> it = tokens.entrySet().iterator(); it.hasNext(); ) {
+            for (Iterator<Map.Entry<String, TokenValue>> it = tokens.entrySet().iterator(); it.hasNext();) {
                 Map.Entry<String, TokenValue> entry = it.next();
 
                 TokenValue val = entry.getValue();
@@ -70,7 +70,7 @@ public class TokenServiceImpl implements TokenService {
         private User user;
         private Instant inserted;
 
-        public TokenValue(User user, Instant inserted) {
+        TokenValue(final User user, final Instant inserted) {
             this.user = user;
             this.inserted = inserted;
         }

@@ -38,94 +38,94 @@ public class User implements Principal {
     @DBRef
     private List<Fruiton> salad;
 
-    public String getId() {
+    public final String getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public final void setId(final String id) {
         this.id = id;
     }
 
-    public String getLogin() {
+    public final String getLogin() {
         return login;
     }
 
-    public void setLogin(String login) {
+    public final void setLogin(final String login) {
         this.login = login;
     }
 
-    public String getPasswordHash() {
+    public final String getPasswordHash() {
         return passwordHash;
     }
 
-    public void setPasswordHash(String passwordHash) {
+    public final void setPasswordHash(final String passwordHash) {
         this.passwordHash = passwordHash;
     }
 
-    public String getPasswordSalt() {
+    public final String getPasswordSalt() {
         return passwordSalt;
     }
 
-    public void setPasswordSalt(String passwordSalt) {
+    public final void setPasswordSalt(final String passwordSalt) {
         this.passwordSalt = passwordSalt;
     }
 
-    public String getEmail() {
+    public final String getEmail() {
         return email;
     }
 
-    public void setEmail(String email) {
+    public final void setEmail(final String email) {
         this.email = email;
     }
 
-    public boolean isEmailConfirmed() {
+    public final boolean isEmailConfirmed() {
         return emailConfirmed;
     }
 
-    public void setEmailConfirmed(boolean emailConfirmed) {
+    public final void setEmailConfirmed(final boolean emailConfirmed) {
         this.emailConfirmed = emailConfirmed;
     }
 
-    public List<Fruiton> getSalad() {
+    public final List<Fruiton> getSalad() {
         return salad;
     }
 
-    public void setSalad(List<Fruiton> salad) {
+    public final void setSalad(final List<Fruiton> salad) {
         this.salad = salad;
     }
 
-    public User withLogin(String login) {
+    public final User withLogin(final String login) {
         setLogin(login);
         return this;
     }
 
-    public User withPasswordHash(String passwordHash) {
+    public final User withPasswordHash(final String passwordHash) {
         setPasswordHash(passwordHash);
         return this;
     }
 
-    public User withPasswordSalt(String passwordSalt) {
+    public final User withPasswordSalt(final String passwordSalt) {
         setPasswordSalt(passwordSalt);
         return this;
     }
 
-    public User withEmail(String email) {
+    public final User withEmail(final String email) {
         setEmail(email);
         return this;
     }
 
     @Override
-    public String toString() {
-        return "User{" +
-                "id='" + id + '\'' +
-                ", login='" + login + '\'' +
-                ", email='" + email + '\'' +
-                '}';
+    public final String toString() {
+        return "User{"
+                + "id='" + id + '\''
+                + ", login='" + login + '\''
+                + ", email='" + email + '\''
+                + '}';
     }
 
     @Override
     @Transient
-    public String getName() {
+    public final String getName() {
         return login;
     }
 }

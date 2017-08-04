@@ -12,11 +12,18 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-public class ReflectionUtils {
+public final class ReflectionUtils {
 
     private static final Logger logger = Logger.getLogger(ReflectionUtils.class.getName());
 
-    public static Set<Method> getMethodsWithAnnotation(Set<Class<?>> classes, Class<? extends Annotation> annotation) {
+    private ReflectionUtils() {
+
+    }
+
+    public static Set<Method> getMethodsWithAnnotation(
+            final Set<Class<?>> classes,
+            final Class<? extends Annotation> annotation
+    ) {
         Set<Method> methods = new HashSet<>();
 
         for (Class<?> cl : classes) {
@@ -30,7 +37,7 @@ public class ReflectionUtils {
         return methods;
     }
 
-    public static Set<Class<?>> getClassesInPackages(Iterable<String> basePackages) {
+    public static Set<Class<?>> getClassesInPackages(final Iterable<String> basePackages) {
         Set<Class<?>> classes = new HashSet<>();
         for (String basePackage : basePackages) {
             classes.addAll(getClassesInPackage(basePackage));
@@ -39,7 +46,7 @@ public class ReflectionUtils {
         return classes;
     }
 
-    public static Set<Class<?>> getClassesInPackage(String basePackage) {
+    public static Set<Class<?>> getClassesInPackage(final String basePackage) {
         Set<Class<?>> classes = new HashSet<>();
 
         final ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(false);

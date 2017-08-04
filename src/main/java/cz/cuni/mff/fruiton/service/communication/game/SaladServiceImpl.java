@@ -20,12 +20,12 @@ public class SaladServiceImpl implements SaladService {
     private final MessageService messageService;
 
     @Autowired
-    public SaladServiceImpl(MessageService messageService) {
+    public SaladServiceImpl(final MessageService messageService) {
         this.messageService = messageService;
     }
 
     @Override
-    public void sendSalad(User user) {
+    public final void sendSalad(final User user) {
 
         logger.log(Level.FINEST, "Sending salad info to user: {0}", user);
 

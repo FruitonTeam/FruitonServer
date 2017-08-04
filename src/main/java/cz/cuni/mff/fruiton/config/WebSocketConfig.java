@@ -33,19 +33,23 @@ public class WebSocketConfig implements WebSocketConfigurer {
     private final ProtobufWebSocketHandler handler;
 
     @Autowired
-    public WebSocketConfig(TokenService tokenService, ProtobufWebSocketHandler handler) {
+    public WebSocketConfig(final TokenService tokenService, final ProtobufWebSocketHandler handler) {
         this.tokenService = tokenService;
         this.handler = handler;
     }
 
     @Override
-    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+    public final void registerWebSocketHandlers(final WebSocketHandlerRegistry registry) {
         registry.addHandler(handler, "/socket")
                 .addInterceptors(websocketInterceptor())
                 .setHandshakeHandler(new DefaultHandshakeHandler() {
 
                     @Override
-                    protected Principal determineUser(ServerHttpRequest request, WebSocketHandler wsHandler, Map<String, Object> attributes) {
+                    protected Principal determineUser(
+                            final ServerHttpRequest request,
+                            final WebSocketHandler wsHandler,
+                            final Map<String, Object> attributes
+                    ) {
                         String token = request.getHeaders().get(TOKEN_HEADER_KEY).get(0);
                         return tokenService.getUserAndInvalidateToken(token);
                     }
@@ -57,10 +61,12 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public HandshakeInterceptor websocketInterceptor() {
         return new HandshakeInterceptor() {
             @Override
-            public boolean beforeHandshake(ServerHttpRequest serverHttpRequest,
-                                           ServerHttpResponse serverHttpResponse,
-                                           WebSocketHandler webSocketHandler,
-                                           Map<String, Object> map) throws Exception {
+            public boolean beforeHandshake(
+                    final ServerHttpRequest serverHttpRequest,
+                    final ServerHttpResponse serverHttpResponse,
+                    final WebSocketHandler webSocketHandler,
+                    final Map<String, Object> map
+            ) throws Exception {
 
                 List<String> tokens = serverHttpRequest.getHeaders().get(TOKEN_HEADER_KEY);
                 if (tokens == null || tokens.isEmpty()) {
@@ -82,10 +88,12 @@ public class WebSocketConfig implements WebSocketConfigurer {
             }
 
             @Override
-            public void afterHandshake(ServerHttpRequest serverHttpRequest,
-                                       ServerHttpResponse serverHttpResponse,
-                                       WebSocketHandler webSocketHandler,
-                                       Exception e) {
+            public void afterHandshake(
+                    final ServerHttpRequest serverHttpRequest,
+                    final ServerHttpResponse serverHttpResponse,
+                    final WebSocketHandler webSocketHandler,
+                    final Exception e
+            ) {
 
             }
 

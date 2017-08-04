@@ -6,8 +6,6 @@ import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Nonnull;
-
 @Service
 public class MailServiceImpl implements MailService {
 
@@ -16,13 +14,13 @@ public class MailServiceImpl implements MailService {
     private final SimpleMailMessage templateMessage;
 
     @Autowired
-    public MailServiceImpl(MailSender mailSender, SimpleMailMessage templateMessage) {
+    public MailServiceImpl(final MailSender mailSender, final SimpleMailMessage templateMessage) {
         this.mailSender = mailSender;
         this.templateMessage = templateMessage;
     }
 
     @Override
-    public void send(@Nonnull String to, @Nonnull String subject, @Nonnull String content) {
+    public final void send(final String to, final String subject, final String content) {
         SimpleMailMessage msg = new SimpleMailMessage(templateMessage);
         msg.setTo(to);
         msg.setSubject(subject);

@@ -9,7 +9,7 @@ public interface PasswordService {
         private String salt;
         private String hash;
 
-        public Hash(String salt, String hash) {
+        public Hash(final String salt, final String hash) {
             this.salt = salt;
             this.hash = hash;
         }

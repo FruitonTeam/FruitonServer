@@ -40,8 +40,12 @@ public class RegistrationServiceImpl implements RegistrationService {
     private String mailConfirmationTemplate;
 
     @Autowired
-    public RegistrationServiceImpl(UserRepository userRepository, EmailConfirmationRepository mailConfirmationRepository,
-                                   PasswordService passwdService, MailService mailService) {
+    public RegistrationServiceImpl(
+            final UserRepository userRepository,
+            final EmailConfirmationRepository mailConfirmationRepository,
+            final PasswordService passwdService,
+            final MailService mailService
+    ) {
         this.userRepository = userRepository;
         this.mailConfirmationRepository = mailConfirmationRepository;
         this.passwdService = passwdService;
@@ -49,7 +53,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
 
     @Transactional
-    public void register(UserProtos.RegistrationData data) {
+    public final void register(final UserProtos.RegistrationData data) {
 
         PasswordServiceImpl.Hash passwdHash;
         try {
@@ -72,7 +76,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         logger.log(Level.FINE, "Registered user: {0}", user);
     }
 
-    private void sendEmailConfirmationRequest(User user) {
+    private void sendEmailConfirmationRequest(final User user) {
         MailConfirmation confirmation = new MailConfirmation();
         confirmation.setUser(user);
 
@@ -84,7 +88,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
 
     @Transactional
-    public void confirmEmail(String confirmationId) {
+    public final void confirmEmail(final String confirmationId) {
 
         MailConfirmation confirmation = mailConfirmationRepository.findOne(confirmationId);
         if (confirmation == null) {

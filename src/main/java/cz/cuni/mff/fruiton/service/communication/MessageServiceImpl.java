@@ -1,11 +1,9 @@
 package cz.cuni.mff.fruiton.service.communication;
 
 import cz.cuni.mff.fruiton.dto.GameProtos;
-import cz.cuni.mff.fruiton.dto.UserProtos;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.BinaryMessage;
-import org.springframework.web.socket.TextMessage;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -20,12 +18,12 @@ public class MessageServiceImpl implements MessageService {
     private final SessionService sessionService;
 
     @Autowired
-    public MessageServiceImpl(SessionService sessionService) {
+    public MessageServiceImpl(final SessionService sessionService) {
         this.sessionService = sessionService;
     }
 
     @Override
-    public void send(Principal principal, GameProtos.WrapperMessage message) {
+    public final void send(final Principal principal, final GameProtos.WrapperMessage message) {
         BinaryMessage msg = new BinaryMessage(message.toByteArray());
 
         try {
