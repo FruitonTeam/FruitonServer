@@ -58,6 +58,8 @@ public class RegistrationServiceImpl implements RegistrationService {
         PasswordServiceImpl.Hash passwdHash;
         try {
             passwdHash = passwdService.getPasswordHash(data.getPassword());
+        } catch (IllegalArgumentException e) {
+            throw new RegistrationException("Cannot create hash from password: " + data.getPassword());
         } catch (InvalidKeySpecException e) {
             logger.log(Level.SEVERE, "Could not create password hash", e);
             throw new RegistrationException("Cannot register user because of the internal error");
