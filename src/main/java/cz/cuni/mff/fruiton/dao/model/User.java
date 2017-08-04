@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.validation.constraints.Pattern;
 import java.security.Principal;
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class User implements Principal {
 
     @Indexed(unique = true)
     @Length(min = LOGIN_MIN_LENGTH, message = "Login has to have at least 4 characters.")
+    @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Login can contain only alphanumeric characters.")
     private String login;
 
     @NotBlank
@@ -30,6 +32,7 @@ public class User implements Principal {
     @NotBlank
     private String passwordSalt;
 
+    @NotBlank
     @Email(message = "Invalid email address.")
     private String email;
 
@@ -112,6 +115,25 @@ public class User implements Principal {
     public final User withEmail(final String email) {
         setEmail(email);
         return this;
+    }
+
+    @Override
+    public final boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        User user = (User) o;
+
+        return login != null ? login.equals(user.login) : user.login == null;
+    }
+
+    @Override
+    public final int hashCode() {
+        return login != null ? login.hashCode() : 0;
     }
 
     @Override

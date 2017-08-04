@@ -30,6 +30,10 @@ public class PasswordServiceImpl implements PasswordService {
 
     @Override
     public final Hash getPasswordHash(final String password) throws InvalidKeySpecException {
+        if (password == null || password.isEmpty()) {
+            throw new IllegalArgumentException("Cannot create password hash for blank password.");
+        }
+
         byte[] salt = getSalt();
         String passwordSalt = Base64.getEncoder().encodeToString(salt);
         String passwordHash = Base64.getEncoder().encodeToString(getHash(password, salt));
