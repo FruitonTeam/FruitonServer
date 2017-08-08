@@ -1,6 +1,6 @@
 package cz.cuni.mff.fruiton.service.authentication.impl;
 
-import cz.cuni.mff.fruiton.dao.model.User;
+import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.authentication.TokenService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;

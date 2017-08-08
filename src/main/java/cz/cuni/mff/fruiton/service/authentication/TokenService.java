@@ -1,6 +1,6 @@
 package cz.cuni.mff.fruiton.service.authentication;
 
-import cz.cuni.mff.fruiton.dao.model.User;
+import cz.cuni.mff.fruiton.dao.domain.User;
 
 public interface TokenService {
 

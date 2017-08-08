@@ -1,6 +1,6 @@
 package cz.cuni.mff.fruiton.component;
 
-import cz.cuni.mff.fruiton.dao.model.User;
+import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.communication.game.SaladService;
 import org.springframework.beans.factory.annotation.Autowired;

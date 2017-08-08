@@ -1,7 +1,7 @@
 package cz.cuni.mff.fruiton.controller.api;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import cz.cuni.mff.fruiton.dao.model.User;
+import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
 import cz.cuni.mff.fruiton.service.authentication.TokenService;

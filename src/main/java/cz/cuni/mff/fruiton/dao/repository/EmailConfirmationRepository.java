@@ -1,6 +1,6 @@
-package cz.cuni.mff.fruiton.dao;
+package cz.cuni.mff.fruiton.dao.repository;
 
-import cz.cuni.mff.fruiton.dao.model.MailConfirmation;
+import cz.cuni.mff.fruiton.dao.domain.MailConfirmation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

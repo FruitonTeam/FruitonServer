@@ -1,6 +1,6 @@
 package cz.cuni.mff.fruiton.service.authentication.impl;
 
-import cz.cuni.mff.fruiton.dao.model.User;
+import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.UserProtos.RegistrationData;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import org.junit.Test;

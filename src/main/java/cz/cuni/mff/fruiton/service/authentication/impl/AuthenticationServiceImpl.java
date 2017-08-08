@@ -2,19 +2,18 @@ package cz.cuni.mff.fruiton.service.authentication.impl;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import cz.cuni.mff.fruiton.dao.UserRepository;
-import cz.cuni.mff.fruiton.dao.model.User;
+import cz.cuni.mff.fruiton.dao.repository.UserRepository;
+import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
-import cz.cuni.mff.fruiton.service.authentication.PasswordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,17 +26,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final GoogleIdTokenVerifier verifier;
 
-    private final PasswordService passwdService;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
     public AuthenticationServiceImpl(
             final UserRepository userRepository,
             final GoogleIdTokenVerifier verifier,
-            final PasswordService passwdService
+            final PasswordEncoder passwordEncoder
     ) {
         this.userRepository = userRepository;
         this.verifier = verifier;
-        this.passwdService = passwdService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -47,14 +46,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new UsernameNotFoundException("User " + login + " is not registered.");
         }
 
-        boolean authenticated;
-        try {
-            authenticated = passwdService.isPasswordEqual(password, user.getPasswordSalt(), user.getPasswordHash());
-        } catch (InvalidKeySpecException e) {
-            logger.log(Level.WARNING, "Cannot compare passwords for user: {0}", login);
-            throw new AuthenticationServiceException("Cannot complete authentication, please write a ticket");
-        }
-
+        boolean authenticated = passwordEncoder.matches(password, user.getPassword());
         if (!authenticated) {
             throw new BadCredentialsException("Incorrect password");
         }
