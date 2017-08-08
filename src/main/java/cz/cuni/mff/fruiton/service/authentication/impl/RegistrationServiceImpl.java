@@ -54,7 +54,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     @Transactional
     public final void register(final UserProtos.RegistrationData data) {
         if (data.getPassword() == null || data.getPassword().isEmpty()) {
-            throw new RegistrationException("Cannot create hash from password: " + data.getPassword());
+            throw new RegistrationException("Cannot register user with password: " + data.getPassword());
         }
 
         User user = new User()
