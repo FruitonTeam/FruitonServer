@@ -1,4 +1,4 @@
-package cz.cuni.mff.fruiton.dao.model;
+package cz.cuni.mff.fruiton.dao.domain;
 
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.Length;
@@ -27,10 +27,7 @@ public class User implements Principal {
     private String login;
 
     @NotBlank
-    private String passwordHash;
-
-    @NotBlank
-    private String passwordSalt;
+    private String password;
 
     @NotBlank
     @Email(message = "Invalid email address.")
@@ -57,20 +54,12 @@ public class User implements Principal {
         this.login = login;
     }
 
-    public final String getPasswordHash() {
-        return passwordHash;
+    public final String getPassword() {
+        return password;
     }
 
-    public final void setPasswordHash(final String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public final String getPasswordSalt() {
-        return passwordSalt;
-    }
-
-    public final void setPasswordSalt(final String passwordSalt) {
-        this.passwordSalt = passwordSalt;
+    public final void setPassword(final String password) {
+        this.password = password;
     }
 
     public final String getEmail() {
@@ -102,13 +91,8 @@ public class User implements Principal {
         return this;
     }
 
-    public final User withPasswordHash(final String passwordHash) {
-        setPasswordHash(passwordHash);
-        return this;
-    }
-
-    public final User withPasswordSalt(final String passwordSalt) {
-        setPasswordSalt(passwordSalt);
+    public final User withPassword(final String password) {
+        setPassword(password);
         return this;
     }
 

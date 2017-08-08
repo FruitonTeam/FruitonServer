@@ -1,6 +1,6 @@
-package cz.cuni.mff.fruiton.dao;
+package cz.cuni.mff.fruiton.dao.repository;
 
-import cz.cuni.mff.fruiton.dao.model.User;
+import cz.cuni.mff.fruiton.dao.domain.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

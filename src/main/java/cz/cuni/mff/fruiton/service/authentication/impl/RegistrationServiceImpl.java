@@ -1,20 +1,19 @@
 package cz.cuni.mff.fruiton.service.authentication.impl;
 
-import cz.cuni.mff.fruiton.dao.EmailConfirmationRepository;
-import cz.cuni.mff.fruiton.dao.UserRepository;
-import cz.cuni.mff.fruiton.dao.model.MailConfirmation;
-import cz.cuni.mff.fruiton.dao.model.User;
+import cz.cuni.mff.fruiton.dao.repository.EmailConfirmationRepository;
+import cz.cuni.mff.fruiton.dao.repository.UserRepository;
+import cz.cuni.mff.fruiton.dao.domain.MailConfirmation;
+import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.UserProtos;
-import cz.cuni.mff.fruiton.service.authentication.PasswordService;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import cz.cuni.mff.fruiton.service.util.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.spec.InvalidKeySpecException;
 import java.text.MessageFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,9 +28,9 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     private final EmailConfirmationRepository mailConfirmationRepository;
 
-    private final PasswordService passwdService;
-
     private final MailService mailService;
+
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${mail.confirmation.subject}")
     private String mailConfirmationSubject;
@@ -43,32 +42,24 @@ public class RegistrationServiceImpl implements RegistrationService {
     public RegistrationServiceImpl(
             final UserRepository userRepository,
             final EmailConfirmationRepository mailConfirmationRepository,
-            final PasswordService passwdService,
-            final MailService mailService
+            final MailService mailService,
+            final PasswordEncoder passwordEncoder
     ) {
         this.userRepository = userRepository;
         this.mailConfirmationRepository = mailConfirmationRepository;
-        this.passwdService = passwdService;
         this.mailService = mailService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
     public final void register(final UserProtos.RegistrationData data) {
-
-        PasswordServiceImpl.Hash passwdHash;
-        try {
-            passwdHash = passwdService.getPasswordHash(data.getPassword());
-        } catch (IllegalArgumentException e) {
-            throw new RegistrationException("Cannot create hash from password: " + data.getPassword());
-        } catch (InvalidKeySpecException e) {
-            logger.log(Level.SEVERE, "Could not create password hash", e);
-            throw new RegistrationException("Cannot register user because of the internal error");
+        if (data.getPassword() == null || data.getPassword().isEmpty()) {
+            throw new RegistrationException("Cannot register user with password: " + data.getPassword());
         }
 
         User user = new User()
                 .withLogin(data.getLogin())
-                .withPasswordHash(passwdHash.getHash())
-                .withPasswordSalt(passwdHash.getSalt())
+                .withPassword(passwordEncoder.encode(data.getPassword()))
                 .withEmail(data.getEmail());
 
         userRepository.save(user);

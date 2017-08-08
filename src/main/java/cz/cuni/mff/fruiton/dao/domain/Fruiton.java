@@ -1,4 +1,4 @@
-package cz.cuni.mff.fruiton.dao.model;
+package cz.cuni.mff.fruiton.dao.domain;
 
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import org.springframework.data.annotation.Id;

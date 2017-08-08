@@ -2,8 +2,8 @@ package cz.cuni.mff.fruiton.controller.api;
 
 import com.mongodb.DuplicateKeyException;
 import cz.cuni.mff.fruiton.dto.UserProtos;
-import cz.cuni.mff.fruiton.dao.UserRepository;
-import cz.cuni.mff.fruiton.dao.model.User;
+import cz.cuni.mff.fruiton.dao.repository.UserRepository;
+import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import cz.cuni.mff.fruiton.service.authentication.impl.RegistrationServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;

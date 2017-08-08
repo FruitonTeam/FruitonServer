@@ -1,7 +1,7 @@
 package cz.cuni.mff.fruiton.component;
 
 import cz.cuni.mff.fruiton.annotation.HandleProtobufMessage;
-import cz.cuni.mff.fruiton.dao.model.User;
+import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.ChatProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.communication.MessageService;
