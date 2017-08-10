@@ -88,6 +88,12 @@
         </dependency>
 
         <dependency>
+            <groupId>cz.cuni.mff</groupId>
+            <artifactId>fruiton-protobufs</artifactId>
+            <version>1.0-20170810.074439-1</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
@@ -121,52 +127,6 @@
             </plugin>
 
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.6.0</version>
-                <executions>
-                    <execution>
-                        <id>protobufs-checkout</id>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <executable>git</executable>
-                            <arguments>
-                                <argument>clone</argument>
-                                <argument>-b</argument>
-                                <argument>develop</argument>
-                                <argument>http://prak.mff.cuni.cz:7990/scm/fruit/protobufs.git</argument>
-                                <argument>target/protobufs</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>com.github.os72</groupId>
-                <artifactId>protoc-jar-maven-plugin</artifactId>
-                <version>3.2.0</version>
-                <executions>
-                    <execution>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <protocVersion>3.2.0</protocVersion>
-                            <includeStdTypes>true</includeStdTypes>
-                            <inputDirectories>
-                                <include>target/protobufs</include>
-                            </inputDirectories>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
@@ -192,7 +152,7 @@
                 <executions>
                     <execution>
                         <id>checkstyle</id>
-                        <phase>compile</phase> <!-- do not use validate phase because protobuf is not generated yet-->
+                        <phase>validate</phase>
                         <configuration>
                             <configLocation>checkstyle.xml</configLocation>
                             <encoding>UTF-8</encoding>
