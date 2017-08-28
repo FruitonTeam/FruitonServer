@@ -4,7 +4,7 @@ import cz.cuni.mff.fruiton.annotation.HandleProtobufMessage;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.ChatProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos;
-import cz.cuni.mff.fruiton.service.communication.MessageService;
+import cz.cuni.mff.fruiton.service.communication.chat.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,24 +16,18 @@ public class Chat {
 
     private static final Logger logger = Logger.getLogger(Chat.class.getName());
 
-    private final MessageService msgService;
+    private final ChatService chatService;
 
     @Autowired
-    public Chat(final MessageService msgService) {
-        this.msgService = msgService;
+    public Chat(final ChatService chatService) {
+        this.chatService = chatService;
     }
 
-    @HandleProtobufMessage(msgCase = GameProtos.WrapperMessage.MsgCase.CHATMSG)
-    public final void handleChatMessage(final User user, final ChatProtos.ChatMsg chat) {
-        logger.log(Level.FINE, "Chat message received from {0} with content: {1}", new Object[] {user, chat});
+    @HandleProtobufMessage(msgCase = GameProtos.WrapperMessage.MsgCase.CHATMESSAGE)
+    public final void handleChatMessage(final User from, final ChatProtos.ChatMessage msg) {
+        logger.log(Level.FINE, "Chat message received from {0} with content: {1}", new Object[] {from, msg});
 
-        GameProtos.WrapperMessage m = GameProtos.WrapperMessage.newBuilder()
-                .setChatMsg(ChatProtos.ChatMsg.newBuilder()
-                        .setMsg("lololo")
-                        .build())
-                .build();
-
-        msgService.send(user, m);
+        chatService.accept(from, msg);
     }
 
 }

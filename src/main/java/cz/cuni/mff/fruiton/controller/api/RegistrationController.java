@@ -45,7 +45,7 @@ public class RegistrationController {
         return "Mail confirmed";
     }
 
-    @RequestMapping(value = "/api/getAllRegistered", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/debug/getAllRegistered", method = RequestMethod.GET)
     public final List<User> getAllRegistered() {
         return userRepository.findAll();
     }
