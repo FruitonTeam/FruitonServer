@@ -1,9 +1,10 @@
-package cz.cuni.mff.fruiton.service.communication.game;
+package cz.cuni.mff.fruiton.service.game.impl;
 
 import cz.cuni.mff.fruiton.dao.domain.Fruiton;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.GameProtos;
-import cz.cuni.mff.fruiton.service.communication.MessageService;
+import cz.cuni.mff.fruiton.service.communication.CommunicationService;
+import cz.cuni.mff.fruiton.service.game.SaladService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +18,11 @@ public class SaladServiceImpl implements SaladService {
 
     private static final Logger logger = Logger.getLogger(SaladServiceImpl.class.getName());
 
-    private final MessageService messageService;
+    private final CommunicationService communicationService;
 
     @Autowired
-    public SaladServiceImpl(final MessageService messageService) {
-        this.messageService = messageService;
+    public SaladServiceImpl(final CommunicationService communicationService) {
+        this.communicationService = communicationService;
     }
 
     @Override
@@ -42,7 +43,7 @@ public class SaladServiceImpl implements SaladService {
                         .build())
                 .build();
 
-        messageService.send(user, m);
+        communicationService.send(user, m);
     }
 
 }

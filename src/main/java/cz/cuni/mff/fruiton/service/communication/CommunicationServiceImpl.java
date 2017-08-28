@@ -11,14 +11,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Service
-public class MessageServiceImpl implements MessageService {
+public class CommunicationServiceImpl implements CommunicationService {
 
-    private static final Logger logger = Logger.getLogger(MessageServiceImpl.class.getName());
+    private static final Logger logger = Logger.getLogger(CommunicationServiceImpl.class.getName());
 
     private final SessionService sessionService;
 
     @Autowired
-    public MessageServiceImpl(final SessionService sessionService) {
+    public CommunicationServiceImpl(final SessionService sessionService) {
         this.sessionService = sessionService;
     }
 
