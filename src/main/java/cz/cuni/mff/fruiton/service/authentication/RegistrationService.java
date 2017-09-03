@@ -12,16 +12,6 @@ public interface RegistrationService {
 
     }
 
-    class MailConfirmationNotFound extends RegistrationException {
-
-        public MailConfirmationNotFound(final String message) {
-            super(message);
-        }
-
-    }
-
     void register(UserProtos.RegistrationData data);
-
-    void confirmEmail(String confirmationId);
 
 }

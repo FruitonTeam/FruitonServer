@@ -1,6 +1,6 @@
-package cz.cuni.mff.fruiton.service.util.impl;
+package cz.cuni.mff.fruiton.service.communication.mail.impl;
 
-import cz.cuni.mff.fruiton.service.util.MailService;
+import cz.cuni.mff.fruiton.service.communication.mail.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;

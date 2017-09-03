@@ -18,6 +18,8 @@ public class User implements Principal {
 
     private static final int LOGIN_MIN_LENGTH = 4;
 
+    private static final String DEFAULT_AVATAR = "boy.png";
+
     @Id
     private String id;
 
@@ -31,12 +33,16 @@ public class User implements Principal {
 
     @NotBlank
     @Email(message = "Invalid email address.")
+    @Indexed(unique = true)
     private String email;
 
     private boolean emailConfirmed = false;
 
     @DBRef
     private List<Fruiton> salad;
+
+    /** Avatar's image filename. */
+    private String avatar;
 
     public final String getId() {
         return id;
@@ -84,6 +90,21 @@ public class User implements Principal {
 
     public final void setSalad(final List<Fruiton> salad) {
         this.salad = salad;
+    }
+
+    public final String getAvatar() {
+        if (avatar == null || avatar.isEmpty()) {
+            return DEFAULT_AVATAR;
+        }
+        return avatar;
+    }
+
+    public final void setAvatar(final String avatar) {
+        this.avatar = avatar;
+    }
+
+    public final boolean isAvatarSet() {
+        return avatar != null && !avatar.isEmpty();
     }
 
     public final User withLogin(final String login) {

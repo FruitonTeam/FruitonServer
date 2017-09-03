@@ -1,8 +1,28 @@
 package cz.cuni.mff.fruiton.test.util;
 
+import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dao.repository.UserRepository;
+import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.dto.UserProtos.RegistrationData;
+import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
+import cz.cuni.mff.fruiton.util.StorageUtils;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.UUID;
 
 public class TestUtils {
+
+    public static final String DEFAULT_LOGIN = "login";
+
+    private static final String DEFAULT_EMAIL = "test@test.com";
+    private static final String DEFAULT_PASSWORD = "password";
+
+    private static final String DEFAULT_AVATAR_IMAGE_PATH = "/static/img/boy.png";
+    private static final String PNG_CONTENT_TYPE = "image/png";
 
     private TestUtils() {
 
@@ -18,6 +38,32 @@ public class TestUtils {
                 .setLogin(login)
                 .setPassword(password)
                 .build();
+    }
+
+    public static RegistrationData getDefaultRegistrationData() {
+        return getRegistrationData(DEFAULT_EMAIL, DEFAULT_LOGIN, DEFAULT_PASSWORD);
+    }
+
+    public static User defaultRegister(final RegistrationService registrationService, final UserRepository userRepository) {
+        UserProtos.RegistrationData data = getDefaultRegistrationData();
+        registrationService.register(data);
+        return userRepository.findByLogin(TestUtils.DEFAULT_LOGIN);
+    }
+
+    public static MultipartFile getDefaultAvatar(String avatarImageName) throws IOException {
+        InputStream is = TestUtils.class.getResourceAsStream(DEFAULT_AVATAR_IMAGE_PATH);
+        MultipartFile avatar = new MockMultipartFile(avatarImageName, avatarImageName, PNG_CONTENT_TYPE, is);
+        is.close();
+
+        return avatar;
+    }
+
+    public static String getUniqueAvatarName(String defaultAvatarName) {
+        String avatarImageName = defaultAvatarName;
+        while (new File(StorageUtils.getImageRoot(), avatarImageName).exists()) {
+            avatarImageName = UUID.randomUUID().toString() + avatarImageName;
+        }
+        return avatarImageName;
     }
 
 }
