@@ -1,4 +1,4 @@
-package cz.cuni.mff.fruiton.service.util;
+package cz.cuni.mff.fruiton.service.communication.mail;
 
 public interface MailService {
 

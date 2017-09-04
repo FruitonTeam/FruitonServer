@@ -8,7 +8,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 @Configuration
 @EnableMongoAuditing
-class MongoConfig {
+public class MongoConfig {
 
     @Bean
     public ValidatingMongoEventListener validatingMongoEventListener() {

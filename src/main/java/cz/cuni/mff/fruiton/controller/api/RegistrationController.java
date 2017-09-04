@@ -6,6 +6,8 @@ import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import cz.cuni.mff.fruiton.service.authentication.impl.RegistrationServiceImpl;
+import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
+import cz.cuni.mff.fruiton.service.social.EmailConfirmationService.MailConfirmationNotFound;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,10 +29,17 @@ public class RegistrationController {
 
     private final RegistrationService service;
 
+    private final EmailConfirmationService emailConfirmationService;
+
     @Autowired
-    public RegistrationController(final UserRepository repository, final RegistrationService service) {
-        userRepository = repository;
+    public RegistrationController(
+            final UserRepository userRepository,
+            final RegistrationService service,
+            final EmailConfirmationService emailConfirmationService
+    ) {
+        this.userRepository = userRepository;
         this.service = service;
+        this.emailConfirmationService = emailConfirmationService;
     }
 
     @RequestMapping(value = "/api/register", method = RequestMethod.POST)
@@ -41,7 +50,7 @@ public class RegistrationController {
 
     @RequestMapping(value = "/api/confirmMail", method = RequestMethod.GET)
     public final String confirmMail(@RequestParam(value = "confirmationId") final String confirmationId) {
-        service.confirmEmail(confirmationId);
+        emailConfirmationService.confirmEmail(confirmationId);
         return "Mail confirmed";
     }
 
@@ -75,9 +84,9 @@ public class RegistrationController {
         return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(RegistrationServiceImpl.MailConfirmationNotFound.class)
+    @ExceptionHandler(MailConfirmationNotFound.class)
     public final ResponseEntity<String> handleMailConfirmationNotFoundException(
-            final RegistrationServiceImpl.MailConfirmationNotFound e
+            final MailConfirmationNotFound e
     ) {
         return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
     }

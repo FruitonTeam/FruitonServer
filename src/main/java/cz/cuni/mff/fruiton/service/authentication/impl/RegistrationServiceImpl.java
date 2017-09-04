@@ -1,20 +1,15 @@
 package cz.cuni.mff.fruiton.service.authentication.impl;
 
-import cz.cuni.mff.fruiton.dao.repository.EmailConfirmationRepository;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
-import cz.cuni.mff.fruiton.dao.domain.MailConfirmation;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
-import cz.cuni.mff.fruiton.service.util.MailService;
+import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.text.MessageFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,32 +21,22 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     private final UserRepository userRepository;
 
-    private final EmailConfirmationRepository mailConfirmationRepository;
-
-    private final MailService mailService;
-
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${mail.confirmation.subject}")
-    private String mailConfirmationSubject;
-
-    @Value("${mail.confirmation.content.template}")
-    private String mailConfirmationTemplate;
+    private final EmailConfirmationService emailConfirmationService;
 
     @Autowired
     public RegistrationServiceImpl(
             final UserRepository userRepository,
-            final EmailConfirmationRepository mailConfirmationRepository,
-            final MailService mailService,
+            final EmailConfirmationService emailConfirmationService,
             final PasswordEncoder passwordEncoder
     ) {
         this.userRepository = userRepository;
-        this.mailConfirmationRepository = mailConfirmationRepository;
-        this.mailService = mailService;
+        this.emailConfirmationService = emailConfirmationService;
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Transactional
+    @Override
     public final void register(final UserProtos.RegistrationData data) {
         if (data.getPassword() == null || data.getPassword().isEmpty()) {
             throw new RegistrationException("Cannot register user with password: " + data.getPassword());
@@ -64,40 +49,9 @@ public class RegistrationServiceImpl implements RegistrationService {
 
         userRepository.save(user);
 
-        sendEmailConfirmationRequest(user);
+        emailConfirmationService.sendEmailConfirmationRequest(user);
 
         logger.log(Level.FINE, "Registered user: {0}", user);
-    }
-
-    private void sendEmailConfirmationRequest(final User user) {
-        MailConfirmation confirmation = new MailConfirmation();
-        confirmation.setUser(user);
-
-        mailConfirmationRepository.save(confirmation);
-
-        String mailConfirmationContent = MessageFormat.format(mailConfirmationTemplate, user.getLogin(), confirmation.getId());
-
-        mailService.send(user.getEmail(), mailConfirmationSubject, mailConfirmationContent);
-    }
-
-    @Transactional
-    public final void confirmEmail(final String confirmationId) {
-
-        MailConfirmation confirmation = mailConfirmationRepository.findOne(confirmationId);
-        if (confirmation == null) {
-            throw new MailConfirmationNotFound("No MailConfirmation with id " + confirmationId);
-        }
-
-        User user = confirmation.getUser();
-        if (user == null) {
-            logger.log(Level.SEVERE, "No user for confirmation id: {0}", confirmationId);
-            throw new RegistrationException("Cannot confirm email address, please contact support");
-        }
-
-        user.setEmailConfirmed(true);
-        userRepository.save(user);
-
-        mailConfirmationRepository.delete(confirmation);
     }
 
 }
