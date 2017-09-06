@@ -6,7 +6,7 @@ import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.MessageRepository;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dto.ChatProtos;
-import cz.cuni.mff.fruiton.dto.GameProtos;
+import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.PlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +47,7 @@ public class ChatServiceImpl implements ChatService {
         messageRepository.save(msgToPersist);
 
         if (playerService.isOnline(recipient)) {
-            communicationService.send(recipient, GameProtos.WrapperMessage.newBuilder().setChatMessage(message).build());
+            communicationService.send(recipient, WrapperMessage.newBuilder().setChatMessage(message).build());
             msgToPersist.setStatus(MessageStatus.DELIVERED);
             messageRepository.save(msgToPersist);
         }

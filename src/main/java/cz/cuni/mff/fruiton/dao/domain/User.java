@@ -6,12 +6,10 @@ import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.Pattern;
 import java.security.Principal;
-import java.util.List;
 
 @Document
 public class User implements Principal {
@@ -37,9 +35,6 @@ public class User implements Principal {
     private String email;
 
     private boolean emailConfirmed = false;
-
-    @DBRef
-    private List<Fruiton> salad;
 
     /** Avatar's image filename. */
     private String avatar;
@@ -82,14 +77,6 @@ public class User implements Principal {
 
     public final void setEmailConfirmed(final boolean emailConfirmed) {
         this.emailConfirmed = emailConfirmed;
-    }
-
-    public final List<Fruiton> getSalad() {
-        return salad;
-    }
-
-    public final void setSalad(final List<Fruiton> salad) {
-        this.salad = salad;
     }
 
     public final String getAvatar() {

@@ -1,6 +1,6 @@
 package cz.cuni.mff.fruiton.service.communication;
 
-import cz.cuni.mff.fruiton.dto.GameProtos;
+import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.BinaryMessage;
@@ -23,7 +23,7 @@ public class CommunicationServiceImpl implements CommunicationService {
     }
 
     @Override
-    public final void send(final Principal principal, final GameProtos.WrapperMessage message) {
+    public final void send(final Principal principal, final WrapperMessage message) {
         BinaryMessage msg = new BinaryMessage(message.toByteArray());
 
         try {

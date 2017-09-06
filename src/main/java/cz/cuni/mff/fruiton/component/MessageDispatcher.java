@@ -3,7 +3,9 @@ package cz.cuni.mff.fruiton.component;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Descriptors;
 import cz.cuni.mff.fruiton.annotation.HandleProtobufMessage;
-import cz.cuni.mff.fruiton.dto.GameProtos;
+import cz.cuni.mff.fruiton.dto.CommonProtos.ErrorMessage;
+import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
+import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.util.ReflectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -30,21 +32,23 @@ public class MessageDispatcher {
 
     private static final Logger logger = Logger.getLogger(MessageDispatcher.class.getName());
 
-    private ApplicationContext context;
+    private final ApplicationContext context;
+    private final CommunicationService communicationService;
 
     private Map<Integer, DispatchMethod> methods = new HashMap<>();
 
     private Map<Integer, Descriptors.FieldDescriptor> fields = new HashMap<>();
 
     @Autowired
-    public MessageDispatcher(final ApplicationContext context) {
+    public MessageDispatcher(final ApplicationContext context, final CommunicationService communicationService) {
         this.context = context;
+        this.communicationService = communicationService;
     }
 
     @PostConstruct
     private void init() {
 
-        List<Descriptors.OneofDescriptor> oneOfs = GameProtos.WrapperMessage.getDescriptor().getOneofs();
+        List<Descriptors.OneofDescriptor> oneOfs = WrapperMessage.getDescriptor().getOneofs();
 
         Descriptors.OneofDescriptor oneOf = oneOfs.get(0);
 
@@ -59,7 +63,7 @@ public class MessageDispatcher {
         for (Method m : handleProtobufMessageMethods) {
 
             HandleProtobufMessage handleProtobufMessage = m.getAnnotation(HandleProtobufMessage.class);
-            GameProtos.WrapperMessage.MsgCase msgCase = handleProtobufMessage.msgCase();
+            WrapperMessage.MessageCase msgCase = handleProtobufMessage.messageCase();
 
             int msgNumber = msgCase.getNumber();
 
@@ -78,9 +82,9 @@ public class MessageDispatcher {
 
         CodedInputStream cis = CodedInputStream.newInstance(message.getPayload());
 
-        GameProtos.WrapperMessage msg = GameProtos.WrapperMessage.parseFrom(cis);
+        WrapperMessage msg = WrapperMessage.parseFrom(cis);
 
-        int msgNum = msg.getMsgCase().getNumber();
+        int msgNum = msg.getMessageCase().getNumber();
 
         Object o = msg.getField(fields.get(msgNum));
 
@@ -88,7 +92,16 @@ public class MessageDispatcher {
             methods.get(msgNum).invoke(session.getPrincipal(), o);
         } catch (InvocationTargetException | IllegalAccessException e) {
             logger.log(Level.SEVERE, "Could not dispatch message", e);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Exception while processing WebSocket message", e);
+            communicationService.send(session.getPrincipal(), createErrorMessage(e.getMessage()));
         }
+    }
+
+    private WrapperMessage createErrorMessage(final String message) {
+        return WrapperMessage.newBuilder()
+                .setErrorMessage(ErrorMessage.newBuilder().setMessage(message).build())
+                .build();
     }
 
     private static class DispatchMethod {
