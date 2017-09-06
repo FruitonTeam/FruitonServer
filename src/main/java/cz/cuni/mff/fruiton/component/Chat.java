@@ -3,7 +3,7 @@ package cz.cuni.mff.fruiton.component;
 import cz.cuni.mff.fruiton.annotation.HandleProtobufMessage;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.ChatProtos;
-import cz.cuni.mff.fruiton.dto.GameProtos;
+import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
 import cz.cuni.mff.fruiton.service.communication.chat.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -23,7 +23,7 @@ public class Chat {
         this.chatService = chatService;
     }
 
-    @HandleProtobufMessage(msgCase = GameProtos.WrapperMessage.MsgCase.CHATMESSAGE)
+    @HandleProtobufMessage(messageCase = WrapperMessage.MessageCase.CHATMESSAGE)
     public final void handleChatMessage(final User from, final ChatProtos.ChatMessage msg) {
         logger.log(Level.FINE, "Chat message received from {0} with content: {1}", new Object[] {from, msg});
 
