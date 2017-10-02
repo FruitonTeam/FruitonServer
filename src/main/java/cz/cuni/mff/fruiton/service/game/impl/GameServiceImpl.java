@@ -10,6 +10,7 @@ import fruiton.kernel.Fruiton;
 import fruiton.kernel.Kernel;
 import fruiton.kernel.Player;
 import fruiton.kernel.actions.Action;
+import fruiton.kernel.events.Event;
 import haxe.root.Array;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -176,11 +177,17 @@ public final class GameServiceImpl implements GameService {
         Array<Action> actions = kernel.getAllValidActionsFrom(KernelUtils.positionToPoint(action.getFrom()));
         for (int i = 0; i < actions.length; i++) {
             if (KernelUtils.isActionWithTarget(action.getId(), actions.__get(i), action.getTo())) {
-                kernel.performAction(actions.__get(i));
+                Array<Event> events = kernel.performAction(actions.__get(i));
+                processEvents(events);
+                return;
             }
         }
 
         throw new IllegalStateException("Cannot find any valid mapping for user " + user + " and action " + action);
+    }
+
+    private void processEvents(final Array<Event> events) {
+        // TODO: check for game over event
     }
 
     @Override
