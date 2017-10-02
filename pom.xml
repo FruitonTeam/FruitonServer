@@ -87,8 +87,20 @@
         </dependency>
 
         <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.5</version>
+        </dependency>
+
+        <dependency>
             <groupId>cz.cuni.mff</groupId>
             <artifactId>fruiton-protobufs</artifactId>
+            <version>0.1.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>cz.cuni.mff</groupId>
+            <artifactId>fruiton-kernel</artifactId>
             <version>0.1.1</version>
         </dependency>
 

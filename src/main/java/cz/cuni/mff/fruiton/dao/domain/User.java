@@ -39,6 +39,11 @@ public class User implements Principal {
     /** Avatar's image filename. */
     private String avatar;
 
+    private int rating;
+
+    @Transient
+    private State state = State.MENU;
+
     public final String getId() {
         return id;
     }
@@ -88,6 +93,22 @@ public class User implements Principal {
 
     public final void setAvatar(final String avatar) {
         this.avatar = avatar;
+    }
+
+    public final int getRating() {
+        return rating;
+    }
+
+    public final void setRating(final int rating) {
+        this.rating = rating;
+    }
+
+    public final State getState() {
+        return state;
+    }
+
+    public final void setState(final State state) {
+        this.state = state;
     }
 
     public final boolean isAvatarSet() {
@@ -142,4 +163,9 @@ public class User implements Principal {
     public final String getName() {
         return login;
     }
+
+    public enum State {
+        MENU, MATCHMAKING, IN_GAME
+    }
+
 }
