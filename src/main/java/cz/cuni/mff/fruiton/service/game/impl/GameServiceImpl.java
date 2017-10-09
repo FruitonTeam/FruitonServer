@@ -6,6 +6,7 @@ import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.PlayerService;
+import cz.cuni.mff.fruiton.service.util.ImageService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import fruiton.kernel.Fruiton;
 import fruiton.kernel.Kernel;
@@ -16,6 +17,7 @@ import haxe.root.Array;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Random;
@@ -38,10 +40,17 @@ public final class GameServiceImpl implements GameService {
 
     private final PlayerService playerService;
 
+    private final ImageService imageService;
+
     @Autowired
-    public GameServiceImpl(final CommunicationService communicationService, final PlayerService playerService) {
+    public GameServiceImpl(
+            final CommunicationService communicationService,
+            final PlayerService playerService,
+            final ImageService imageService
+    ) {
         this.communicationService = communicationService;
         this.playerService = playerService;
+        this.imageService = imageService;
     }
 
     @Override
@@ -117,18 +126,18 @@ public final class GameServiceImpl implements GameService {
     ) {
         logger.log(Level.FINEST, "Sending game ready messages to {0} and {1}", new Object[] {user1, user2});
 
-        sendGameReadyMessage(user1, user2.getId(), team2, firstUserStartsFirst);
-        sendGameReadyMessage(user2, user1.getId(), team1, !firstUserStartsFirst);
+        sendGameReadyMessage(user1, user2, team2, firstUserStartsFirst);
+        sendGameReadyMessage(user2, user1, team1, !firstUserStartsFirst);
     }
 
     private void sendGameReadyMessage(
             final User recipient,
-            final String opponentId,
+            final User opponent,
             final GameProtos.FruitonTeam opponentTeam,
             final boolean startsFirst
     ) {
         GameProtos.GameReady gameReadyMessage = GameProtos.GameReady.newBuilder()
-                .setOpponentId(opponentId)
+                .setOpponent(getPlayerInfo(opponent))
                 .setOpponentTeam(opponentTeam)
                 .setStartsFirst(startsFirst)
                 .build();
@@ -136,6 +145,23 @@ public final class GameServiceImpl implements GameService {
         communicationService.send(recipient, CommonProtos.WrapperMessage.newBuilder()
                 .setGameReady(gameReadyMessage)
                 .build());
+    }
+
+    private GameProtos.PlayerInfo getPlayerInfo(final User player) {
+
+        GameProtos.PlayerInfo.Builder builder = GameProtos.PlayerInfo.newBuilder()
+                .setLogin(player.getLogin())
+                .setRating(player.getRating());
+
+        if (player.isAvatarSet()) {
+            try {
+                builder.setAvatar(imageService.getBase64Avatar(player));
+            } catch (IOException e) {
+                logger.log(Level.WARNING, "Could not encode avatar for user {0}", player);
+            }
+        }
+
+        return builder.build();
     }
 
     @Override
