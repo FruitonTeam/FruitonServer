@@ -1,6 +1,9 @@
 package cz.cuni.mff.fruiton.component;
 
+import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
+import cz.cuni.mff.fruiton.service.game.GameService;
+import cz.cuni.mff.fruiton.service.game.MatchMakingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
@@ -20,13 +23,20 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
     private final MessageDispatcher dispatcher;
     private final SessionService sessionService;
 
+    private final MatchMakingService matchMakingService;
+    private final GameService gameService;
+
     @Autowired
     public ProtobufWebSocketHandler(
             final MessageDispatcher dispatcher,
-            final SessionService sessionService
+            final SessionService sessionService,
+            final MatchMakingService matchMakingService,
+            final GameService gameService
     ) {
         this.dispatcher = dispatcher;
         this.sessionService = sessionService;
+        this.matchMakingService = matchMakingService;
+        this.gameService = gameService;
     }
 
     @Override
@@ -48,6 +58,13 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
     public final void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) throws Exception {
         logger.log(Level.FINEST, "Closed connection: {0} with status: {1}", new Object[] {session, status});
         sessionService.unregister(session);
+
+        User user = (User) session.getPrincipal();
+        if (user.getState() == User.State.MATCHMAKING) {
+            matchMakingService.removeFromMatchMaking(user);
+        } else if (user.getState() == User.State.IN_GAME) {
+            gameService.userDisconnected(user);
+        }
     }
 
 }

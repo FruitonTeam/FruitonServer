@@ -24,6 +24,8 @@ public class CommunicationServiceImpl implements CommunicationService {
 
     @Override
     public final void send(final Principal principal, final WrapperMessage message) {
+        logger.log(Level.FINEST, "Sending message {0} to user {1}", new Object[] {message, principal});
+
         BinaryMessage msg = new BinaryMessage(message.toByteArray());
 
         try {
