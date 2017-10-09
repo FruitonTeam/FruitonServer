@@ -79,4 +79,8 @@ public final class KernelUtils {
         return new Point(position.getX(), position.getY());
     }
 
+    public static GameProtos.Position positionOf(final int x, final int y) {
+        return GameProtos.Position.newBuilder().setX(x).setY(y).build();
+    }
+
 }

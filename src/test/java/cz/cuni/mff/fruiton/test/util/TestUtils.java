@@ -6,12 +6,17 @@ import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.dto.UserProtos.RegistrationData;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import cz.cuni.mff.fruiton.util.StorageUtils;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.UUID;
 
 public class TestUtils {
@@ -64,6 +69,20 @@ public class TestUtils {
             avatarImageName = UUID.randomUUID().toString() + avatarImageName;
         }
         return avatarImageName;
+    }
+
+    public static String login(final String login, final String password) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.put(HttpHeaders.CONTENT_TYPE, List.of("application/json"));
+
+        String requestBody = "{\"login\": \"" + login +"\", \"password\": \"" + password + "\"}";
+
+        HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
+
+        ResponseEntity<String> response = new TestRestTemplate()
+                .postForEntity("http://localhost:8050/api/login", request, String.class);
+
+        return response.getBody();
     }
 
 }

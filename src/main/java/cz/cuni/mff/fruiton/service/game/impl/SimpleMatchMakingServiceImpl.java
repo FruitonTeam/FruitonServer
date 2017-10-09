@@ -33,7 +33,7 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
     }
 
     @Override
-    public void findGame(final User user, final FindGame findGameMsg) {
+    public synchronized void findGame(final User user, final FindGame findGameMsg) {
         user.setState(User.State.MATCHMAKING);
 
         Optional<User> opponent = getOpponent(user);
@@ -42,31 +42,26 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
         } else {
             logger.log(Level.FINEST, "Adding {0} to waiting list", user);
 
-            synchronized (waitingForOpponent) {
-                waitingForOpponent.add(user);
-            }
+            waitingForOpponent.add(user);
+
             teams.put(user, findGameMsg.getTeam());
         }
     }
 
     private Optional<User> getOpponent(final User user) {
-        synchronized (waitingForOpponent) {
-            return Optional.ofNullable(waitingForOpponent.poll());
-        }
+        return Optional.ofNullable(waitingForOpponent.poll());
     }
 
     @Override
-    public void removeFromMatchMaking(final User user) {
+    public synchronized void removeFromMatchMaking(final User user) {
         logger.log(Level.FINE, "Removing {0} from matchmaking", user);
 
         user.setState(User.State.MENU);
 
-        synchronized (waitingForOpponent) {
-            if (waitingForOpponent.contains(user)) {
-                waitingForOpponent.remove(user);
-            } else {
-                logger.log(Level.WARNING, "Could not remove user {0} from match making", user);
-            }
+        if (waitingForOpponent.contains(user)) {
+            waitingForOpponent.remove(user);
+        } else {
+            logger.log(Level.WARNING, "Could not remove user {0} from match making", user);
         }
     }
 

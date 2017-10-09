@@ -5,6 +5,7 @@ import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.GameService;
+import cz.cuni.mff.fruiton.service.game.PlayerService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import fruiton.kernel.Fruiton;
 import fruiton.kernel.Kernel;
@@ -35,9 +36,12 @@ public final class GameServiceImpl implements GameService {
 
     private final CommunicationService communicationService;
 
+    private final PlayerService playerService;
+
     @Autowired
-    public GameServiceImpl(final CommunicationService communicationService) {
+    public GameServiceImpl(final CommunicationService communicationService, final PlayerService playerService) {
         this.communicationService = communicationService;
+        this.playerService = playerService;
     }
 
     @Override
@@ -98,6 +102,7 @@ public final class GameServiceImpl implements GameService {
         for (int i = 0; i < team.getFruitonIDsCount(); i++) {
             Fruiton fruiton = KernelUtils.getFruiton(team.getFruitonIDs(i));
             fruiton.owner = owner;
+            // TODO: convert one position for one player
             fruiton.position = KernelUtils.positionToPoint(team.getPositions(i));
             fruitonArray.push(fruiton);
         }
@@ -196,7 +201,10 @@ public final class GameServiceImpl implements GameService {
 
         User opponent = gameData.getOpponentUser(user);
 
-        sendGameOverMessage(opponent, 0, null); // TODO: set correct reason and results
+        if (playerService.isOnline(opponent)) {
+            // TODO: set correct reason and results
+            sendGameOverMessage(opponent, 0, GameProtos.GameResults.newBuilder().build());
+        }
     }
 
     private void sendGameOverMessage(final User to, final int reason, final GameProtos.GameResults results) {
