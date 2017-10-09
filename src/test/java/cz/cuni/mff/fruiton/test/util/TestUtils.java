@@ -71,7 +71,7 @@ public class TestUtils {
         return avatarImageName;
     }
 
-    public static String login(final String login, final String password) {
+    public static String login(final String login, final String password, final int port) {
         HttpHeaders headers = new HttpHeaders();
         headers.put(HttpHeaders.CONTENT_TYPE, List.of("application/json"));
 
@@ -80,7 +80,7 @@ public class TestUtils {
         HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
 
         ResponseEntity<String> response = new TestRestTemplate()
-                .postForEntity("http://localhost:8050/api/login", request, String.class);
+                .postForEntity("http://localhost:" + port + "/api/login", request, String.class);
 
         return response.getBody();
     }

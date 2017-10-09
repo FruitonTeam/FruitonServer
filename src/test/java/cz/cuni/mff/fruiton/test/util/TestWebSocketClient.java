@@ -26,8 +26,8 @@ public class TestWebSocketClient extends WebSocketClient {
 
     private BlockingQueue<CommonProtos.WrapperMessage> messageQueue = new LinkedBlockingQueue<>();
 
-    public TestWebSocketClient(final String token) throws URISyntaxException {
-        super(new URI("ws://localhost:8050/socket"), new Draft_6455(), Map.of(TOKEN_HEADER, token), CONNECTION_TIMEOUT);
+    public TestWebSocketClient(final String token, final int port) throws URISyntaxException {
+        super(new URI("ws://localhost:" + port + "/socket"), new Draft_6455(), Map.of(TOKEN_HEADER, token), CONNECTION_TIMEOUT);
     }
 
     @Override

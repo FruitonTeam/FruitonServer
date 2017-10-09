@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = cz.cuni.mff.fruiton.Application.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@SpringBootTest(classes = cz.cuni.mff.fruiton.Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class GameTest {
 
@@ -33,6 +34,9 @@ public class GameTest {
     @Autowired
     private RegistrationService registrationService;
 
+    @LocalServerPort
+    private int port;
+
     private TestWebSocketClient client1;
     private TestWebSocketClient client2;
 
@@ -42,11 +46,11 @@ public class GameTest {
         registrationService.register(TestUtils.getRegistrationData("test1@test.com", LOGIN1, PASSWORD));
         registrationService.register(TestUtils.getRegistrationData("test2@test.com", LOGIN2, PASSWORD));
 
-        String token1 = TestUtils.login(LOGIN1, PASSWORD);
-        String token2 = TestUtils.login(LOGIN2, PASSWORD);
+        String token1 = TestUtils.login(LOGIN1, PASSWORD, port);
+        String token2 = TestUtils.login(LOGIN2, PASSWORD, port);
 
-        client1 = new TestWebSocketClient(token1);
-        client2 = new TestWebSocketClient(token2);
+        client1 = new TestWebSocketClient(token1, port);
+        client2 = new TestWebSocketClient(token2, port);
 
         client1.connectBlocking();
         client2.connectBlocking();
