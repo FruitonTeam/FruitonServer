@@ -10,6 +10,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.Pattern;
 import java.security.Principal;
+import java.util.LinkedList;
+import java.util.List;
 
 @Document
 public class User implements Principal {
@@ -43,6 +45,8 @@ public class User implements Principal {
 
     @Transient
     private State state = State.MENU;
+
+    private List<Integer> unlockedFruitons = new LinkedList<>();
 
     public final String getId() {
         return id;
@@ -109,6 +113,14 @@ public class User implements Principal {
 
     public final void setState(final State state) {
         this.state = state;
+    }
+
+    public final List<Integer> getUnlockedFruitons() {
+        return unlockedFruitons;
+    }
+
+    public final void setUnlockedFruitons(final List<Integer> unlockedFruitons) {
+        this.unlockedFruitons = unlockedFruitons;
     }
 
     public final boolean isAvatarSet() {
