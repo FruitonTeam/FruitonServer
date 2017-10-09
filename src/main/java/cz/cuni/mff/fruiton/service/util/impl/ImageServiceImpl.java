@@ -9,19 +9,22 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Service
-public class ImageServiceImpl implements ImageService {
+public final class ImageServiceImpl implements ImageService {
 
     private static final String IMAGE_CONTENT_TYPE_PREFIX = "image/";
 
     private static final Logger logger = Logger.getLogger(ImageServiceImpl.class.getName());
 
     @Override
-    public final String saveAvatar(final MultipartFile avatar) throws IOException {
+    public String saveAvatar(final MultipartFile avatar) throws IOException {
         if (avatar == null) {
             throw new IllegalArgumentException("Cannot save null avatar");
         }
@@ -47,7 +50,7 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    public final void removeAvatar(final User user) {
+    public void removeAvatar(final User user) {
         if (user == null) {
             throw new IllegalArgumentException("Cannot remove avatar for null user");
         }
@@ -60,7 +63,7 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    public final void removeAvatar(final String avatarImageName) {
+    public void removeAvatar(final String avatarImageName) {
         if (avatarImageName == null) {
             throw new IllegalArgumentException("Cannot remove avatar for null image name");
         }
@@ -84,4 +87,10 @@ public class ImageServiceImpl implements ImageService {
             throw new IllegalStateException("Could not delete file " + file.getName());
         }
     }
+
+    @Override
+    public String getBase64Avatar(final User user) throws IOException {
+        return Base64.getEncoder().encodeToString(Files.readAllBytes(Paths.get(user.getAvatar())));
+    }
+
 }
