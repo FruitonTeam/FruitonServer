@@ -10,7 +10,7 @@ public final class StorageUtils {
 
     private static final Path STORAGE_PATH = Paths.get(System.getProperty("user.home"), APP_DIR);
 
-    private static final String IMAGE_PATH = Paths.get(STORAGE_PATH.toString(), "img").toString();
+    public static final String IMAGE_PATH = Paths.get(STORAGE_PATH.toString(), "img").toString();
 
     private StorageUtils() {
 
