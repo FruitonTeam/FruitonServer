@@ -20,9 +20,6 @@ import java.nio.charset.StandardCharsets;
 
 public final class KernelUtils {
 
-    public static final int MAP_WIDTH = 9;
-    public static final int MAP_HEIGHT = 10;
-
     private static FruitonDatabase fruitonDatabase;
 
     private KernelUtils() {

@@ -9,6 +9,7 @@ import cz.cuni.mff.fruiton.service.game.PlayerService;
 import cz.cuni.mff.fruiton.service.util.ImageService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import fruiton.kernel.Fruiton;
+import fruiton.kernel.GameState;
 import fruiton.kernel.Kernel;
 import fruiton.kernel.Player;
 import fruiton.kernel.events.Event;
@@ -98,8 +99,8 @@ public final class GameServiceImpl implements GameService {
         teamBuilder.addAllFruitonIDs(team.getFruitonIDsList());
         for (GameProtos.Position position : team.getPositionsList()) {
             teamBuilder.addPositions(KernelUtils.positionOf(
-                    KernelUtils.MAP_WIDTH - 1 - position.getX(),
-                    KernelUtils.MAP_HEIGHT - 1 - position.getY()
+                    GameState.WIDTH - 1 - position.getX(),
+                    GameState.HEIGHT - 1 - position.getY()
             ));
         }
 
