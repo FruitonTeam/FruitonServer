@@ -8,7 +8,11 @@ import fruiton.fruitDb.factories.FruitonFactory;
 import fruiton.kernel.Fruiton;
 import fruiton.kernel.actions.Action;
 import fruiton.kernel.actions.AttackAction;
+import fruiton.kernel.actions.AttackActionContext;
+import fruiton.kernel.actions.EndTurnAction;
+import fruiton.kernel.actions.EndTurnActionContext;
 import fruiton.kernel.actions.MoveAction;
+import fruiton.kernel.actions.MoveActionContext;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -16,26 +20,8 @@ import java.nio.charset.StandardCharsets;
 
 public final class KernelUtils {
 
-    private enum ActionType {
-        MOVE(0), ATTACK(1);
-
-        private final int value;
-
-        ActionType(final int value) {
-            this.value = value;
-        }
-
-        public static ActionType parse(final int value) {
-            for (ActionType actionType : ActionType.values()) {
-                if (actionType.value == value) {
-                    return actionType;
-                }
-            }
-
-            throw new IllegalArgumentException("Unknown value " + value);
-        }
-
-    }
+    public static final int MAP_WIDTH = 9;
+    public static final int MAP_HEIGHT = 10;
 
     private static FruitonDatabase fruitonDatabase;
 
@@ -64,16 +50,25 @@ public final class KernelUtils {
         return FruitonFactory.makeFruiton(id, getFruitonDb());
     }
 
-    public static boolean isActionWithTarget(final int actionId, final Action action, final GameProtos.Position target) {
-        switch (ActionType.parse(actionId)) {
-            case MOVE:
-                return ((MoveAction) action).actionContext.target.equalsTo(positionToPoint(target));
-            case ATTACK:
-                return ((AttackAction) action).actionContext.target.equalsTo(positionToPoint(target));
-            default:
-                throw new IllegalStateException("Unknown action id");
+    public static Action getActionFromProtobuf(final GameProtos.Action protobufAction) {
+        if (MoveAction.ID == protobufAction.getId()) {
+            return new MoveAction(new MoveActionContext(
+                    KernelUtils.positionToPoint(protobufAction.getFrom()),
+                    KernelUtils.positionToPoint(protobufAction.getTo())
+            ));
+        } else if (AttackAction.ID == protobufAction.getId()) {
+            return new AttackAction(new AttackActionContext(
+                    0,
+                    KernelUtils.positionToPoint(protobufAction.getFrom()),
+                    KernelUtils.positionToPoint(protobufAction.getTo())
+            ));
+        } else if (EndTurnAction.ID == protobufAction.getId()) {
+            return new EndTurnAction(new EndTurnActionContext());
+        } else {
+            throw new IllegalStateException("Unknown action " + protobufAction);
         }
     }
+
 
     public static Point positionToPoint(final GameProtos.Position position) {
         return new Point(position.getX(), position.getY());
