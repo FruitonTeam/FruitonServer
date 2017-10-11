@@ -9,9 +9,9 @@ import cz.cuni.mff.fruiton.service.game.PlayerService;
 import cz.cuni.mff.fruiton.service.util.ImageService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import fruiton.kernel.Fruiton;
+import fruiton.kernel.GameState;
 import fruiton.kernel.Kernel;
 import fruiton.kernel.Player;
-import fruiton.kernel.actions.Action;
 import fruiton.kernel.events.Event;
 import haxe.root.Array;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,9 +69,15 @@ public final class GameServiceImpl implements GameService {
         Player player1 = new Player(ATOMIC_INT.getAndIncrement());
         Player player2 = new Player(ATOMIC_INT.getAndIncrement());
 
-        Array<Fruiton> fruitons = getFruitonsArray(player1, player2, team1, team2);
-
         boolean firstUserStartsFirst = random.nextBoolean();
+
+        Array<Fruiton> fruitons;
+        if (firstUserStartsFirst) {
+            fruitons = getFruitonsArray(player1, player2, convertFruitonPositions(team1), team2);
+        } else {
+            fruitons = getFruitonsArray(player1, player2, team1, convertFruitonPositions(team2));
+        }
+
         Kernel kernel;
         if (firstUserStartsFirst) {
             kernel = new Kernel(player1, player2, fruitons);
@@ -85,6 +91,20 @@ public final class GameServiceImpl implements GameService {
         userToGameData.put(user2, gameData);
 
         sendGameReadyMessages(user1, user2, team1, team2, firstUserStartsFirst);
+    }
+
+    private GameProtos.FruitonTeam convertFruitonPositions(final GameProtos.FruitonTeam team) {
+        GameProtos.FruitonTeam.Builder teamBuilder = GameProtos.FruitonTeam.newBuilder();
+        teamBuilder.setName(team.getName());
+        teamBuilder.addAllFruitonIDs(team.getFruitonIDsList());
+        for (GameProtos.Position position : team.getPositionsList()) {
+            teamBuilder.addPositions(KernelUtils.positionOf(
+                    GameState.WIDTH - 1 - position.getX(),
+                    GameState.HEIGHT - 1 - position.getY()
+            ));
+        }
+
+        return teamBuilder.build();
     }
 
     private Array<Fruiton> getFruitonsArray(
@@ -111,7 +131,6 @@ public final class GameServiceImpl implements GameService {
         for (int i = 0; i < team.getFruitonIDsCount(); i++) {
             Fruiton fruiton = KernelUtils.getFruiton(team.getFruitonIDs(i));
             fruiton.owner = owner;
-            // TODO: convert one position for one player
             fruiton.position = KernelUtils.positionToPoint(team.getPositions(i));
             fruitonArray.push(fruiton);
         }
@@ -205,20 +224,19 @@ public final class GameServiceImpl implements GameService {
 
         logger.log(Level.FINEST, "Performing action {0} in game {1}", new Object[] {action, gameData});
 
-        Array<Action> actions = kernel.getAllValidActionsFrom(KernelUtils.positionToPoint(action.getFrom()));
-        for (int i = 0; i < actions.length; i++) {
-            if (KernelUtils.isActionWithTarget(action.getId(), actions.__get(i), action.getTo())) {
-                Array<Event> events = kernel.performAction(actions.__get(i));
-                processEvents(events);
-                return;
-            }
-        }
-
-        throw new IllegalStateException("Cannot find any valid mapping for user " + user + " and action " + action);
+        Array<Event> events = kernel.performAction(KernelUtils.getActionFromProtobuf(action));
+        processEvents(events);
     }
 
     private void processEvents(final Array<Event> events) {
-        // TODO: check for game over event
+        for (int i = 0; i < events.length; i++) {
+            Event e = events.__get(i);
+            processEvent(e);
+        }
+    }
+
+    private void processEvent(final Event e) {
+        // TODO: specific handling
     }
 
     @Override
