@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(title = 'Error')">
+
+</head>
+
+<body>
+
+<nav th:replace="fragments/navbar :: navbar"></nav>
+
+<div class="container main-content">
+    <div class="jumbotron">
+        <h2>Whoops, something went wrong</h2>
+
+        <div class="alert alert-danger">
+            <p th:text="${message}"></p>
+        </div>
+    </div>
+
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>

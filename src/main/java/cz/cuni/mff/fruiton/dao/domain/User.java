@@ -7,18 +7,25 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.validation.constraints.Pattern;
 import java.security.Principal;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Document
-public class User implements Principal {
+public class User implements Principal, UserDetails {
 
     private static final int LOGIN_MIN_LENGTH = 4;
 
     private static final String DEFAULT_AVATAR = "boy.png";
+
+    private static final String ROLE_USER = "ROLE_USER";
 
     @Id
     private String id;
@@ -64,6 +71,7 @@ public class User implements Principal {
         this.login = login;
     }
 
+    @Override
     public final String getPassword() {
         return password;
     }
@@ -140,6 +148,49 @@ public class User implements Principal {
     public final User withEmail(final String email) {
         setEmail(email);
         return this;
+    }
+
+    @Override
+    public final Collection<? extends GrantedAuthority> getAuthorities() {
+        return getGrantedAuthorities(getRoles());
+    }
+
+    private List<GrantedAuthority> getGrantedAuthorities(final Collection<String> roles) {
+        return roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+    }
+
+    private List<String> getRoles() {
+        return List.of(ROLE_USER);
+    }
+
+    @Transient
+    @Override
+    public final String getUsername() {
+        return login;
+    }
+
+    @Transient
+    @Override
+    public final boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Transient
+    @Override
+    public final boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Transient
+    @Override
+    public final boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Transient
+    @Override
+    public final boolean isEnabled() {
+        return true;
     }
 
     @Override

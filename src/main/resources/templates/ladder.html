@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(title = 'Ladder')">
+
+</head>
+<body>
+
+<nav th:replace="fragments/navbar :: navbar"></nav>
+
+<div class="container main-content">
+
+    <h2 th:text="'Ladder'"></h2>
+
+    <div class="row" th:if="${users.isEmpty()}">
+        <div class="alert alert-warning">
+            No results found.
+        </div>
+    </div>
+
+    <div class="row">
+
+        <div class="list-group">
+            <a class="list-group-item" th:each="user : ${users}" th:href="@{'/profile/' + ${user.login}}">
+                <span th:text="${user.login}"></span>
+                <div class="pull-right">
+                    <span>Rating: </span><strong><span th:text="${user.rating}"></span></strong>
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+    <div class="row" th:if="${pages &gt; 0}">
+
+        <nav aria-label="Page navigation">
+            <div class="text-center">
+                <ul class="pagination">
+                    <li th:classappend="${page == 1 ? 'disabled' : ''}">
+                        <a href="javascript:void(0)" th:onclick="${page != 1 ? 'changeToPage(' + (page - 1) + ')' : ''}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+
+                    <li th:each="i : ${#numbers.sequence(1, pages)}"
+                        th:classappend="${i == page ? 'active' : ''}">
+
+                        <a href="javascript:void(0)" th:onclick="'changeToPage(' + ${i} + ')'" th:text="${i}"></a>
+                    </li>
+
+                    <li th:classappend="${page == pages ? 'disabled' : ''}">
+                        <a href="javascript:void(0)" th:onclick="${page != pages ? 'changeToPage(' + (page + 1) + ')' : ''}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+    </div>
+
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+
+<script type="text/javascript" th:src="@{/js/jquery.query-object.js}"></script>
+
+<script>
+
+    function changeToPage(page) {
+        window.location.search = jQuery.query.set("page", page);
+    }
+
+</script>
+
+</body>
+</html>
