@@ -12,6 +12,7 @@ import fruiton.kernel.Fruiton;
 import fruiton.kernel.GameState;
 import fruiton.kernel.Kernel;
 import fruiton.kernel.Player;
+import fruiton.kernel.actions.Action;
 import fruiton.kernel.events.Event;
 import haxe.root.Array;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,14 +70,18 @@ public final class GameServiceImpl implements GameService {
         Player player1 = new Player(ATOMIC_INT.getAndIncrement());
         Player player2 = new Player(ATOMIC_INT.getAndIncrement());
 
-        boolean firstUserStartsFirst = random.nextBoolean();
+        boolean firstUserStartsFirst = true; // TODO: after testing change to random.nextBoolean();
 
-        Array<Fruiton> fruitons;
+        GameProtos.FruitonTeam finalTeam1 = team1;
+        GameProtos.FruitonTeam finalTeam2 = team2;
+
         if (firstUserStartsFirst) {
-            fruitons = getFruitonsArray(player1, player2, convertFruitonPositions(team1), team2);
+            finalTeam2 = convertFruitonPositions(team2);
         } else {
-            fruitons = getFruitonsArray(player1, player2, team1, convertFruitonPositions(team2));
+            finalTeam1 = convertFruitonPositions(team1);
         }
+
+        Array<Fruiton> fruitons = getFruitonsArray(player1, player2, finalTeam1, finalTeam2);
 
         Kernel kernel;
         if (firstUserStartsFirst) {
@@ -90,7 +95,7 @@ public final class GameServiceImpl implements GameService {
         userToGameData.put(user1, gameData);
         userToGameData.put(user2, gameData);
 
-        sendGameReadyMessages(user1, user2, team1, team2, firstUserStartsFirst);
+        sendGameReadyMessages(user1, user2, finalTeam1, finalTeam2, firstUserStartsFirst);
     }
 
     private GameProtos.FruitonTeam convertFruitonPositions(final GameProtos.FruitonTeam team) {
@@ -193,10 +198,12 @@ public final class GameServiceImpl implements GameService {
             throw new IllegalStateException("User " + user + " has no game associated");
         }
 
-        gameData.setPlayerReady(user);
+        synchronized (this) {
+            gameData.setPlayerReady(user);
 
-        if (gameData.arePlayersReady()) {
-            startGame(gameData);
+            if (gameData.arePlayersReady()) {
+                startGame(gameData);
+            }
         }
     }
 
@@ -209,22 +216,28 @@ public final class GameServiceImpl implements GameService {
 
     private void sendGameStartsMessage(final User to) {
         communicationService.send(to, CommonProtos.WrapperMessage.newBuilder()
-                .setGameReady(GameProtos.GameReady.newBuilder().build())
+                .setGameStarts(GameProtos.GameStarts.newBuilder().build())
                 .build());
     }
 
     @Override
-    public void performAction(final User user, final GameProtos.Action action) {
+    public void performAction(final User user, final GameProtos.Action protobufAction) {
         GameData gameData = userToGameData.get(user);
         if (gameData == null) {
             throw new IllegalStateException("User " + user + " has no game associated");
         }
 
+        logger.log(Level.FINEST, "User {0} is performing action {2} in game {2}",
+                new Object[] {user, protobufAction, gameData});
+
+        communicationService.send(gameData.getOpponentUser(user),
+                CommonProtos.WrapperMessage.newBuilder().setAction(protobufAction).build());
+
         Kernel kernel = gameData.kernel;
 
-        logger.log(Level.FINEST, "Performing action {0} in game {1}", new Object[] {action, gameData});
+        Action kernelAction = KernelUtils.getActionFromProtobuf(protobufAction, kernel);
 
-        Array<Event> events = kernel.performAction(KernelUtils.getActionFromProtobuf(action));
+        Array<Event> events = kernel.performAction(kernelAction);
         processEvents(events);
     }
 
@@ -286,31 +299,24 @@ public final class GameServiceImpl implements GameService {
             this.kernel = kernel;
         }
 
-        private Player getPlayer(final User user) {
-            if (user == user1) {
-                return player1;
-            } else if (user == user2) {
-                return player2;
-            }
-            throw new IllegalStateException("This game is not for user " + user);
-        }
-
         private User getOpponentUser(final User user) {
-            if (user == user1) {
+            if (user.equals(user1)) {
                 return user2;
-            } else if (user == user2) {
+            } else if (user.equals(user2)) {
                 return user1;
+            } else {
+                throw new IllegalStateException("This game is not for user " + user);
             }
-            throw new IllegalStateException("This game is not for user " + user);
         }
 
         private void setPlayerReady(final User user) {
-            if (user == user1) {
+            if (user.equals(user1)) {
                 player1Ready = true;
-            } else if (user == user2) {
+            } else if (user.equals(user2)) {
                 player2Ready = true;
+            } else {
+                throw new IllegalStateException("This game is not for user " + user);
             }
-            throw new IllegalStateException("This game is not for user " + user);
         }
 
         private boolean arePlayersReady() {
