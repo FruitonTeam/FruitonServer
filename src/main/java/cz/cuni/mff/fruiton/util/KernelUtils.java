@@ -6,6 +6,7 @@ import fruiton.dataStructures.Point;
 import fruiton.fruitDb.FruitonDatabase;
 import fruiton.fruitDb.factories.FruitonFactory;
 import fruiton.kernel.Fruiton;
+import fruiton.kernel.Kernel;
 import fruiton.kernel.actions.Action;
 import fruiton.kernel.actions.AttackAction;
 import fruiton.kernel.actions.AttackActionContext;
@@ -47,16 +48,17 @@ public final class KernelUtils {
         return FruitonFactory.makeFruiton(id, getFruitonDb());
     }
 
-    public static Action getActionFromProtobuf(final GameProtos.Action protobufAction) {
+    public static Action getActionFromProtobuf(final GameProtos.Action protobufAction, final Kernel kernel) {
         if (MoveAction.ID == protobufAction.getId()) {
             return new MoveAction(new MoveActionContext(
                     KernelUtils.positionToPoint(protobufAction.getFrom()),
                     KernelUtils.positionToPoint(protobufAction.getTo())
             ));
         } else if (AttackAction.ID == protobufAction.getId()) {
-            return new AttackAction(new AttackActionContext(
-                    0,
-                    KernelUtils.positionToPoint(protobufAction.getFrom()),
+            Point from = KernelUtils.positionToPoint(protobufAction.getFrom());
+            int dmg = kernel.currentState.field.get(from).fruiton.damage;
+
+            return new AttackAction(new AttackActionContext(dmg, from,
                     KernelUtils.positionToPoint(protobufAction.getTo())
             ));
         } else if (EndTurnAction.ID == protobufAction.getId()) {
