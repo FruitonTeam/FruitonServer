@@ -50,13 +50,14 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
     @Override
     public final void afterConnectionEstablished(final WebSocketSession session) throws Exception {
-        logger.log(Level.FINEST, "Opened connection: {0}", session);
+        logger.log(Level.FINEST, "Opened connection for {0} with id: {1}",
+                new Object[] {session.getPrincipal(), session.getId()});
         sessionService.register(session);
     }
 
     @Override
     public final void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) throws Exception {
-        logger.log(Level.FINEST, "Closed connection: {0} with status: {1}", new Object[] {session, status});
+        logger.log(Level.FINEST, "Closed connection for {0} with status: {1}", new Object[] {session.getPrincipal(), status});
         sessionService.unregister(session);
 
         User user = (User) session.getPrincipal();
