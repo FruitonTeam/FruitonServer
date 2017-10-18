@@ -4,6 +4,7 @@ import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.BinaryMessage;
+import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -28,8 +29,13 @@ public class CommunicationServiceImpl implements CommunicationService {
 
         BinaryMessage msg = new BinaryMessage(message.toByteArray());
 
+        WebSocketSession session = sessionService.getSession(principal);
+        if (session == null) {
+            logger.log(Level.WARNING, "Cannot send message because connection was lost with {0}", principal);
+            return;
+        }
         try {
-            sessionService.getSession(principal).sendMessage(msg);
+            session.sendMessage(msg);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Cannot send websocket message", e);
         }
