@@ -55,6 +55,8 @@ public class User implements Principal, UserDetails {
 
     private List<Integer> unlockedFruitons = new LinkedList<>();
 
+    private List<FruitonTeam> teams = new LinkedList<>();
+
     public final String getId() {
         return id;
     }
@@ -129,6 +131,14 @@ public class User implements Principal, UserDetails {
 
     public final void setUnlockedFruitons(final List<Integer> unlockedFruitons) {
         this.unlockedFruitons = unlockedFruitons;
+    }
+
+    public final List<FruitonTeam> getTeams() {
+        return teams;
+    }
+
+    public final void setTeams(final List<FruitonTeam> teams) {
+        this.teams = teams;
     }
 
     public final boolean isAvatarSet() {

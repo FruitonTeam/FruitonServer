@@ -2,9 +2,11 @@ package cz.cuni.mff.fruiton.test.util;
 
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
+import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.dto.UserProtos.RegistrationData;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
+import cz.cuni.mff.fruiton.util.KernelUtils;
 import cz.cuni.mff.fruiton.util.StorageUtils;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
@@ -83,6 +85,27 @@ public class TestUtils {
                 .postForEntity("http://localhost:" + port + "/api/login", request, String.class);
 
         return response.getBody();
+    }
+
+    public static GameProtos.FruitonTeam getDefaultFruitonTeam() {
+
+        return GameProtos.FruitonTeam.newBuilder()
+                .setName("test_team_name")
+                .addAllFruitonIDs(List.of(1, 2, 2, 2, 2, 3, 3, 3, 3, 3))
+                .addAllPositions(List.of(
+                        KernelUtils.positionOf(0, 0),
+                        KernelUtils.positionOf(1, 0),
+                        KernelUtils.positionOf(2, 0),
+                        KernelUtils.positionOf(3, 0),
+                        KernelUtils.positionOf(4, 0),
+                        KernelUtils.positionOf(0, 1),
+                        KernelUtils.positionOf(1, 1),
+                        KernelUtils.positionOf(2, 1),
+                        KernelUtils.positionOf(3, 1),
+                        KernelUtils.positionOf(4, 1)
+                        )
+                )
+                .build();
     }
 
 }

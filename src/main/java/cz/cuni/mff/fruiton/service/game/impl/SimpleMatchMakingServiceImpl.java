@@ -5,6 +5,7 @@ import cz.cuni.mff.fruiton.dto.GameProtos.FindGame;
 import cz.cuni.mff.fruiton.dto.GameProtos.FruitonTeam;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.MatchMakingService;
+import cz.cuni.mff.fruiton.util.KernelUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +35,10 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
 
     @Override
     public synchronized void findGame(final User user, final FindGame findGameMsg) {
+        if (!KernelUtils.isTeamValid(findGameMsg.getTeam())) {
+            throw new IllegalArgumentException("Invalid team " + findGameMsg.getTeam());
+        }
+
         user.setState(User.State.MATCHMAKING);
 
         Optional<User> opponent = getOpponent(user);

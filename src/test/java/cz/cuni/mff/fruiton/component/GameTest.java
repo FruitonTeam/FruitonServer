@@ -6,7 +6,6 @@ import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import cz.cuni.mff.fruiton.test.util.TestUtils;
 import cz.cuni.mff.fruiton.test.util.TestWebSocketClient;
-import cz.cuni.mff.fruiton.util.KernelUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,7 +16,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.net.URISyntaxException;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -59,8 +57,8 @@ public class GameTest {
     @Test
     public void matchMakingTest() throws InvalidProtocolBufferException, InterruptedException {
 
-        client1.send(buildFindGameMsg("team1", List.of(1), List.of(KernelUtils.positionOf(0, 0))).toByteArray());
-        client2.send(buildFindGameMsg("team2", List.of(1), List.of(KernelUtils.positionOf(0, 0))).toByteArray());
+        client1.send(buildFindGameMsg().toByteArray());
+        client2.send(buildFindGameMsg().toByteArray());
 
         CommonProtos.WrapperMessage message1 = client1.blockingPoll();
         CommonProtos.WrapperMessage message2 = client2.blockingPoll();
@@ -71,18 +69,10 @@ public class GameTest {
                 CommonProtos.WrapperMessage.MessageCase.GAMEREADY, message2.getMessageCase());
     }
 
-    private CommonProtos.WrapperMessage buildFindGameMsg(
-            final String teamName,
-            final Iterable<Integer> fruitonIds,
-            final Iterable<GameProtos.Position> fruitonPositions
-    ) {
+    private CommonProtos.WrapperMessage buildFindGameMsg() {
         return CommonProtos.WrapperMessage.newBuilder()
                 .setFindGame(GameProtos.FindGame.newBuilder()
-                        .setTeam(GameProtos.FruitonTeam.newBuilder()
-                                .setName(teamName)
-                                .addAllFruitonIDs(fruitonIds)
-                                .addAllPositions(fruitonPositions)
-                                .build())
+                        .setTeam(TestUtils.getDefaultFruitonTeam())
                         .build())
                 .build();
     }
