@@ -14,6 +14,9 @@ import fruiton.kernel.actions.EndTurnAction;
 import fruiton.kernel.actions.EndTurnActionContext;
 import fruiton.kernel.actions.MoveAction;
 import fruiton.kernel.actions.MoveActionContext;
+import fruiton.kernel.fruitonTeam.FruitonTeamValidator;
+import fruiton.kernel.fruitonTeam.ValidationResult;
+import haxe.root.Array;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -75,6 +78,14 @@ public final class KernelUtils {
 
     public static GameProtos.Position positionOf(final int x, final int y) {
         return GameProtos.Position.newBuilder().setX(x).setY(y).build();
+    }
+
+    public static boolean isTeamValid(final GameProtos.FruitonTeam team) {
+        Array<Object> fruitons = new Array<>();
+        team.getFruitonIDsList().forEach(fruitons::push);
+
+        ValidationResult validationResult = FruitonTeamValidator.validateFruitonTeam(fruitons, getFruitonDb());
+        return validationResult.complete && validationResult.valid;
     }
 
 }
