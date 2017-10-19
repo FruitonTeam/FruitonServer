@@ -11,7 +11,6 @@ import fruiton.kernel.actions.Action;
 import fruiton.kernel.actions.AttackAction;
 import fruiton.kernel.actions.AttackActionContext;
 import fruiton.kernel.actions.EndTurnAction;
-import fruiton.kernel.actions.EndTurnActionContext;
 import fruiton.kernel.actions.MoveAction;
 import fruiton.kernel.actions.MoveActionContext;
 import fruiton.kernel.fruitonTeam.FruitonTeamValidator;
@@ -65,12 +64,11 @@ public final class KernelUtils {
                     KernelUtils.positionToPoint(protobufAction.getTo())
             ));
         } else if (EndTurnAction.ID == protobufAction.getId()) {
-            return new EndTurnAction(new EndTurnActionContext());
+            return EndTurnAction.createNew();
         } else {
             throw new IllegalStateException("Unknown action " + protobufAction);
         }
     }
-
 
     public static Point positionToPoint(final GameProtos.Position position) {
         return new Point(position.getX(), position.getY());
