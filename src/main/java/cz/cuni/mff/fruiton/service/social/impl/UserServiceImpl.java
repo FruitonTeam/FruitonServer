@@ -1,6 +1,5 @@
 package cz.cuni.mff.fruiton.service.social.impl;
 
-import cz.cuni.mff.fruiton.dao.domain.FruitonTeam;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
@@ -103,20 +102,6 @@ public class UserServiceImpl implements UserService {
             throw new UsernameNotFoundException("Cannot find user for: " + id);
         }
         return user;
-    }
-
-    @Override
-    public final void addTeam(final User user, final FruitonTeam teamToAdd) {
-        // if team with the same name exists then remove it
-        user.getTeams().removeIf(ft -> ft.getName().equals(teamToAdd.getName()));
-        user.getTeams().add(teamToAdd);
-        repository.save(user);
-    }
-
-    @Override
-    public final void removeTeam(final User user, final String teamToRemove) {
-        user.getTeams().removeIf(ft -> ft.getName().equals(teamToRemove));
-        repository.save(user);
     }
 
 }

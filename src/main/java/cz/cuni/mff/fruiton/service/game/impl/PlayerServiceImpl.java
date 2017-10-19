@@ -1,5 +1,7 @@
 package cz.cuni.mff.fruiton.service.game.impl;
 
+import cz.cuni.mff.fruiton.dao.domain.FruitonTeam;
+import cz.cuni.mff.fruiton.dao.domain.FruitonTeamMember;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
@@ -53,15 +55,6 @@ public final class PlayerServiceImpl implements PlayerService {
         return isOnline(player);
     }
 
-    public List<Integer> getAvailableFruitons(final String login) {
-        User user = userRepository.findByLogin(login);
-        if (user == null) {
-            throw new IllegalArgumentException("Unknown user " + login);
-        }
-
-        return ListUtils.union(defaultUnlockedFruitons, user.getUnlockedFruitons());
-    }
-
     @Override
     public Optional<String> getBase64Avatar(final String login) throws IOException {
         User player = userRepository.findByLogin(login);
@@ -70,6 +63,46 @@ public final class PlayerServiceImpl implements PlayerService {
         }
 
         return Optional.empty();
+    }
+
+    @Override
+    public void addTeam(final User user, final FruitonTeam teamToAdd) {
+        List<Integer> availableFruitons = getAvailableFruitons(user);
+
+        for (FruitonTeamMember member : teamToAdd.getFruitons()) {
+            if (!availableFruitons.contains(member.getFruitonId())) {
+                throw new IllegalArgumentException("User does not have unlocked fruiton with id " + member.getFruitonId());
+            }
+        }
+
+        // if team with the same name exists then remove it
+        user.getTeams().removeIf(ft -> ft.getName().equals(teamToAdd.getName()));
+        user.getTeams().add(teamToAdd);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void removeTeam(final User user, final String teamToRemove) {
+        user.getTeams().removeIf(ft -> ft.getName().equals(teamToRemove));
+        userRepository.save(user);
+    }
+
+    @Override
+    public List<Integer> getAvailableFruitons(final String login) {
+        User user = userRepository.findByLogin(login);
+        if (user == null) {
+            throw new IllegalArgumentException("Unknown user " + login);
+        }
+
+        return getAvailableFruitons(user);
+    }
+
+    private List<Integer> getAvailableFruitons(final User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("Cannot get available fruitons for null user");
+        }
+
+        return ListUtils.union(defaultUnlockedFruitons, user.getUnlockedFruitons());
     }
 
 }

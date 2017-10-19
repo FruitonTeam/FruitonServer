@@ -5,7 +5,7 @@ import cz.cuni.mff.fruiton.dao.domain.FruitonTeamMember;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
-import cz.cuni.mff.fruiton.service.social.UserService;
+import cz.cuni.mff.fruiton.service.game.PlayerService;
 import cz.cuni.mff.fruiton.test.util.TestUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,7 +27,7 @@ public class FruitonTeamTest {
     private static final String TEAM_NAME = "team_name";
 
     @Autowired
-    private UserService userService;
+    private PlayerService playerService;
 
     @Autowired
     private RegistrationService registrationService;
@@ -47,24 +47,23 @@ public class FruitonTeamTest {
         member.setFruitonId(1);
         team.setFruitons(List.of(member));
 
-        userService.addTeam(user, team);
+        playerService.addTeam(user, team);
 
         user = userRepository.findOne(user.getId());
 
         assertEquals(1, user.getTeams().size());
 
-        userService.addTeam(user, team);
+        playerService.addTeam(user, team);
 
         user = userRepository.findOne(user.getId());
 
         assertEquals(1, user.getTeams().size());
 
-        userService.removeTeam(user, TEAM_NAME);
+        playerService.removeTeam(user, TEAM_NAME);
 
         user = userRepository.findOne(user.getId());
 
         assertTrue(user.getTeams().isEmpty());
     }
-
 
 }
