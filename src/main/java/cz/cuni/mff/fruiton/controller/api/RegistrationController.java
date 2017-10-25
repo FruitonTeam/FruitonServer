@@ -1,47 +1,94 @@
 package cz.cuni.mff.fruiton.controller.api;
 
+import com.mongodb.DuplicateKeyException;
 import cz.cuni.mff.fruiton.dto.UserProtos;
-import cz.cuni.mff.fruiton.dao.UserRepository;
-import cz.cuni.mff.fruiton.dao.model.User;
+import cz.cuni.mff.fruiton.dao.repository.UserRepository;
+import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
+import cz.cuni.mff.fruiton.service.authentication.impl.RegistrationServiceImpl;
+import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
+import cz.cuni.mff.fruiton.service.social.EmailConfirmationService.MailConfirmationNotFound;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.security.spec.InvalidKeySpecException;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @RestController
 public class RegistrationController {
 
-    private static final Logger logger = Logger.getLogger(RegistrationController.class.getName());
+    private final UserRepository userRepository;
+
+    private final RegistrationService service;
+
+    private final EmailConfirmationService emailConfirmationService;
 
     @Autowired
-    private UserRepository userRepository;
+    public RegistrationController(
+            final UserRepository userRepository,
+            final RegistrationService service,
+            final EmailConfirmationService emailConfirmationService
+    ) {
+        this.userRepository = userRepository;
+        this.service = service;
+        this.emailConfirmationService = emailConfirmationService;
+    }
 
     @RequestMapping(value = "/api/register", method = RequestMethod.POST)
-    public String register(@RequestBody UserProtos.User data) {
-
-        User user;
-        try {
-            user = new User()
-                    .withLogin(data.getLogin())
-                    .withPassword(data.getPassword())
-                    .withEmail(data.getEmail());
-        } catch (InvalidKeySpecException e) {
-            logger.log(Level.WARNING, "Cannot create hash for " + data.getPassword(), e);
-            throw new IllegalStateException("Cannot fulfill the request because of the internal error");
-        }
-
-        userRepository.save(user);
-        logger.log(Level.FINE, "Registered user: {0}", user);
-
+    public final String register(@RequestBody final UserProtos.RegistrationData data) {
+        service.register(data);
         return "OK";
     }
 
-    @RequestMapping(value = "/api/getAllRegistered", method = RequestMethod.GET)
-    public List<User> getAllRegistered() {
+    @RequestMapping(value = "/api/confirmMail", method = RequestMethod.GET)
+    public final String confirmMail(@RequestParam(value = "confirmationId") final String confirmationId) {
+        emailConfirmationService.confirmEmail(confirmationId);
+        return "Mail confirmed";
+    }
+
+    @RequestMapping(value = "/api/debug/getAllRegistered", method = RequestMethod.GET)
+    public final List<User> getAllRegistered() {
         return userRepository.findAll();
+    }
+
+    @ExceptionHandler(RegistrationServiceImpl.RegistrationException.class)
+    public final ResponseEntity<String> handleRegistrationException(final RegistrationServiceImpl.RegistrationException e) {
+        return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public final ResponseEntity<String> handleConstraintValidationException(final ConstraintViolationException e) {
+        final StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (ConstraintViolation cv : e.getConstraintViolations()) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(' ');
+            }
+            sb.append(cv.getMessage());
+        }
+        return new ResponseEntity<>(sb.toString(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DuplicateKeyException.class)
+    public final ResponseEntity<String> handleDuplicateKeyException(final DuplicateKeyException e) {
+        return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MailConfirmationNotFound.class)
+    public final ResponseEntity<String> handleMailConfirmationNotFoundException(
+            final MailConfirmationNotFound e
+    ) {
+        return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
     }
 
 }
