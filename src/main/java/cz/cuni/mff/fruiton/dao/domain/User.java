@@ -57,6 +57,8 @@ public class User implements Principal, UserDetails {
 
     private List<FruitonTeam> teams = new LinkedList<>();
 
+    private String googleSubject;
+
     public final String getId() {
         return id;
     }
@@ -139,6 +141,14 @@ public class User implements Principal, UserDetails {
 
     public final void setTeams(final List<FruitonTeam> teams) {
         this.teams = teams;
+    }
+
+    public final String getGoogleSubject() {
+        return googleSubject;
+    }
+
+    public final void setGoogleSubject(final String googleSubject) {
+        this.googleSubject = googleSubject;
     }
 
     public final boolean isAvatarSet() {

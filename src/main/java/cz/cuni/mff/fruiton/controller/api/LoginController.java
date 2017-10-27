@@ -1,6 +1,5 @@
 package cz.cuni.mff.fruiton.controller.api;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -33,13 +33,18 @@ public class LoginController {
 
     @RequestMapping(value = "/api/login", method = RequestMethod.POST)
     public final String login(@RequestBody final UserProtos.LoginData data) {
-
         User user = authService.authenticate(data.getLogin(), data.getPassword());
-        String userToken = UUID.randomUUID().toString();
+        return generateTokenForUser(user);
+    }
 
+    private String generateTokenForUser(final User user) {
+        String userToken = generateToken();
         tokenService.register(userToken, user);
-
         return userToken;
+    }
+
+    private String generateToken() {
+        return UUID.randomUUID().toString();
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
@@ -57,10 +62,38 @@ public class LoginController {
         return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @RequestMapping(value = "/api/loginGoogle", method = RequestMethod.POST)
-    public final String loginGoogle(@RequestBody final UserProtos.LoginGoogle data) {
-        GoogleIdToken.Payload payload = authService.authenticate(data.getToken());
-        return payload.getSubject();
+    @RequestMapping(value = "/api/loginGoogle")
+    public final GoogleLoginResult loginGoogle(@RequestParam final String idToken) {
+        User user = authService.authenticate(idToken);
+        String token = generateTokenForUser(user);
+        return new GoogleLoginResult(user.getLogin(), token);
+    }
+
+    private static class GoogleLoginResult {
+
+        private String login;
+        private String token;
+
+        private GoogleLoginResult(final String login, final String token) {
+            this.login = login;
+            this.token = token;
+        }
+
+        public String getLogin() {
+            return login;
+        }
+
+        public String getToken() {
+            return token;
+        }
+
+        public void setLogin(final String login) {
+            this.login = login;
+        }
+
+        public void setToken(final String token) {
+            this.token = token;
+        }
     }
 
 }

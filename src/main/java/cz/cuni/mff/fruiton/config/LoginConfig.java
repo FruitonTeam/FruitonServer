@@ -17,7 +17,7 @@ public class LoginConfig {
     public GoogleIdTokenVerifier googleIdTokenVerifier() {
         return new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
                 .setAudience(Collections.singleton(CLIENT_ID))
-                .setIssuer("accounts.google.com")
+                .setIssuer("https://accounts.google.com")
                 .build();
     }
 
