@@ -1,5 +1,7 @@
 package cz.cuni.mff.fruiton.service.authentication;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.UserProtos;
 
 public interface RegistrationService {
@@ -13,5 +15,7 @@ public interface RegistrationService {
     }
 
     void register(UserProtos.RegistrationData data);
+
+    User register(GoogleIdToken.Payload payload);
 
 }

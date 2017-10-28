@@ -5,6 +5,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
+import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -28,15 +29,19 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final RegistrationService registrationService;
+
     @Autowired
     public AuthenticationServiceImpl(
             final UserRepository userRepository,
             final GoogleIdTokenVerifier verifier,
-            final PasswordEncoder passwordEncoder
+            final PasswordEncoder passwordEncoder,
+            final RegistrationService registrationService
     ) {
         this.userRepository = userRepository;
         this.verifier = verifier;
         this.passwordEncoder = passwordEncoder;
+        this.registrationService = registrationService;
     }
 
     @Override
@@ -55,12 +60,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public final GoogleIdToken.Payload authenticate(final String idTokenStr) {
+    public final User authenticate(final String idTokenStr) {
         try {
             GoogleIdToken idToken = verifier.verify(idTokenStr);
 
             if (idToken != null) {
-                return idToken.getPayload();
+                GoogleIdToken.Payload payload = idToken.getPayload();
+
+                User user = userRepository.findByGoogleSubject(payload.getSubject());
+                if (user == null) {
+                    user = registrationService.register(payload);
+                }
+                return user;
             }
 
         } catch (GeneralSecurityException e) {
@@ -70,7 +81,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             logger.log(Level.WARNING, "IOException occurred while verifying google token", e);
         }
 
-        throw new AuthenticationServiceException("Could not verify token");
+        throw new AuthenticationServiceException("Could not verify google token");
     }
 
 }
