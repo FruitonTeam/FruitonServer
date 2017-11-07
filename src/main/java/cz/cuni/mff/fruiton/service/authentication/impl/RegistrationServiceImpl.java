@@ -54,6 +54,7 @@ public class RegistrationServiceImpl implements RegistrationService {
                 .withEmail(data.getEmail());
 
         saveUser(user);
+        emailConfirmationService.sendEmailConfirmationRequest(user);
     }
 
     @Override
@@ -62,20 +63,17 @@ public class RegistrationServiceImpl implements RegistrationService {
 
         User user = new User()
                 .withLogin(login)
-                .withPassword(StringUtils.randomAlphanumeric(RANDOM_GOOGLE_PASSWORD_SIZE))
+                .withPassword(passwordEncoder.encode(StringUtils.randomAlphanumeric(RANDOM_GOOGLE_PASSWORD_SIZE)))
                 .withEmail(payload.getEmail());
 
         user.setGoogleSubject(payload.getSubject());
 
         saveUser(user);
-
         return user;
     }
 
     private void saveUser(final User user) {
         userRepository.save(user);
-
-        emailConfirmationService.sendEmailConfirmationRequest(user);
 
         logger.log(Level.FINE, "Registered user: {0}", user);
     }
