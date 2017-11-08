@@ -2,7 +2,6 @@ package cz.cuni.mff.fruiton.component;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import cz.cuni.mff.fruiton.dto.CommonProtos;
-import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import cz.cuni.mff.fruiton.test.util.TestUtils;
 import cz.cuni.mff.fruiton.test.util.TestWebSocketClient;
@@ -13,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.net.URISyntaxException;
@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = cz.cuni.mff.fruiton.Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@ActiveProfiles("production")
 public class GameTest {
 
     private static final String LOGIN1 = "test1";
@@ -57,8 +58,8 @@ public class GameTest {
     @Test
     public void matchMakingTest() throws InvalidProtocolBufferException, InterruptedException {
 
-        client1.send(buildFindGameMsg().toByteArray());
-        client2.send(buildFindGameMsg().toByteArray());
+        client1.send(TestUtils.buildFindGameMsgWrapped().toByteArray());
+        client2.send(TestUtils.buildFindGameMsgWrapped().toByteArray());
 
         CommonProtos.WrapperMessage message1 = client1.blockingPoll();
         CommonProtos.WrapperMessage message2 = client2.blockingPoll();
@@ -67,14 +68,6 @@ public class GameTest {
                 CommonProtos.WrapperMessage.MessageCase.GAMEREADY, message1.getMessageCase());
         assertEquals("After successful matchmaking GameReady message is expected from server",
                 CommonProtos.WrapperMessage.MessageCase.GAMEREADY, message2.getMessageCase());
-    }
-
-    private CommonProtos.WrapperMessage buildFindGameMsg() {
-        return CommonProtos.WrapperMessage.newBuilder()
-                .setFindGame(GameProtos.FindGame.newBuilder()
-                        .setTeam(TestUtils.getDefaultFruitonTeam())
-                        .build())
-                .build();
     }
 
 }

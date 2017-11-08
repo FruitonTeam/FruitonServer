@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.dao.domain;
 
+import cz.cuni.mff.fruiton.service.game.matchmaking.impl.EloRatingServiceImpl;
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotBlank;
@@ -48,7 +49,7 @@ public class User implements Principal, UserDetails {
     /** Avatar's image filename. */
     private String avatar;
 
-    private int rating;
+    private int rating = EloRatingServiceImpl.DEFAULT_RATING;
 
     @Transient
     private State state = State.MENU;
