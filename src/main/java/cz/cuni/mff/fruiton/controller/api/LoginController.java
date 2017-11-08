@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.controller.api;
 
+import com.mongodb.DuplicateKeyException;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
@@ -17,7 +18,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 public class LoginController {
@@ -60,6 +64,18 @@ public class LoginController {
     @ExceptionHandler(AuthenticationServiceException.class)
     public final ResponseEntity<String> handleAuthenticationServiceException(final AuthenticationServiceException e) {
         return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public final ResponseEntity<String> handleConstraintValidationException(final ConstraintViolationException e) {
+        String message = e.getConstraintViolations().stream().map(ConstraintViolation::getMessage)
+                .collect(Collectors.joining(", "));
+        return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DuplicateKeyException.class)
+    public final ResponseEntity<String> handleDuplicateKeyException(final DuplicateKeyException e) {
+        return new ResponseEntity<>(e.getErrorMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @RequestMapping(value = "/api/loginGoogle")
