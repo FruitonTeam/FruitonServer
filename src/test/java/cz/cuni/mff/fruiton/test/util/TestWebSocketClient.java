@@ -66,7 +66,7 @@ public class TestWebSocketClient extends WebSocketClient {
     }
 
     public CommonProtos.WrapperMessage blockingPoll() throws InterruptedException, InvalidProtocolBufferException {
-        return messageQueue.poll(1, TimeUnit.SECONDS);
+        return messageQueue.poll(5, TimeUnit.SECONDS);
     }
 
     public CommonProtos.WrapperMessage peek() throws InvalidProtocolBufferException, InterruptedException {

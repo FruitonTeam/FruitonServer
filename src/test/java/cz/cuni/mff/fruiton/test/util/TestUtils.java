@@ -2,6 +2,7 @@ package cz.cuni.mff.fruiton.test.util;
 
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
+import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.dto.UserProtos.RegistrationData;
@@ -105,6 +106,18 @@ public class TestUtils {
                         KernelUtils.positionOf(4, 1)
                         )
                 )
+                .build();
+    }
+
+    public static GameProtos.FindGame buildFindGameMsg() {
+        return GameProtos.FindGame.newBuilder()
+                .setTeam(TestUtils.getDefaultFruitonTeam())
+                .build();
+    }
+
+    public static CommonProtos.WrapperMessage buildFindGameMsgWrapped() {
+        return CommonProtos.WrapperMessage.newBuilder()
+                .setFindGame(buildFindGameMsg())
                 .build();
     }
 

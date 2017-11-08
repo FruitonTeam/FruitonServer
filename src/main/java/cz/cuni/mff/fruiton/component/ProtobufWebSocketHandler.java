@@ -3,7 +3,7 @@ package cz.cuni.mff.fruiton.component;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.game.GameService;
-import cz.cuni.mff.fruiton.service.game.MatchMakingService;
+import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;

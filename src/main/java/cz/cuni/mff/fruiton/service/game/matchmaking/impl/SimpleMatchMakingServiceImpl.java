@@ -1,12 +1,13 @@
-package cz.cuni.mff.fruiton.service.game.impl;
+package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
 
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.GameProtos.FindGame;
 import cz.cuni.mff.fruiton.dto.GameProtos.FruitonTeam;
 import cz.cuni.mff.fruiton.service.game.GameService;
-import cz.cuni.mff.fruiton.service.game.MatchMakingService;
+import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.Deque;
@@ -18,6 +19,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Service
+@Profile("debug")
 public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
 
     private static final Logger logger = Logger.getLogger(SimpleMatchMakingServiceImpl.class.getName());
@@ -41,7 +43,7 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
 
         user.setState(User.State.MATCHMAKING);
 
-        Optional<User> opponent = getOpponent(user);
+        Optional<User> opponent = getOpponent();
         if (opponent.isPresent()) {
             gameService.createGame(user, findGameMsg.getTeam(), opponent.get(), teams.remove(opponent.get()));
         } else {
@@ -53,7 +55,7 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
         }
     }
 
-    private Optional<User> getOpponent(final User user) {
+    private Optional<User> getOpponent() {
         return Optional.ofNullable(waitingForOpponent.poll());
     }
 

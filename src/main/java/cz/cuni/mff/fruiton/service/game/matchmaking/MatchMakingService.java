@@ -1,4 +1,4 @@
-package cz.cuni.mff.fruiton.service.game;
+package cz.cuni.mff.fruiton.service.game.matchmaking;
 
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.GameProtos;
