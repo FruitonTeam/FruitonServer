@@ -16,7 +16,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Service
-public class UserServiceImpl implements UserService {
+public final class UserServiceImpl implements UserService {
+
+    @FunctionalInterface
+    private interface AvatarSaver<T> {
+
+        String save(T t) throws IOException;
+
+    }
 
     private static final Logger logger = Logger.getLogger(UserServiceImpl.class.getName());
 
@@ -41,21 +48,32 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public final void changeAvatar(final User user, final MultipartFile avatar) {
+    public void changeAvatar(final User user, final MultipartFile avatar) {
+        changeAvatar(user, avatar, imageService::saveAvatar);
+    }
+
+    @Override
+    public void changeAvatar(final User user, final String url) {
+        changeAvatar(user, url, imageService::saveAvatar);
+    }
+
+    private <T> void changeAvatar(final User user, final T avatar, final AvatarSaver<T> avatarSaver) {
+        if (user == null) {
+            throw new IllegalArgumentException("Cannot change avatar for null user");
+        }
+
         if (user.isAvatarSet()) {
             imageService.removeAvatar(user);
         }
 
         if (avatar != null) {
-            String avatarImageName;
             try {
-                avatarImageName = imageService.saveAvatar(avatar);
+                String avatarImageName = avatarSaver.save(avatar);
+                user.setAvatar(avatarImageName);
+                repository.save(user);
             } catch (IOException e) {
-                logger.log(Level.SEVERE, "Cannot save avatar {0} for user {1}", new Object[] {avatar, user});
-                return;
+                logger.log(Level.WARNING, "Cannot save avatar {0} for user {1}", new Object[] {avatar, user});
             }
-            user.setAvatar(avatarImageName);
-            repository.save(user);
         } else {
             user.setAvatar(null);
             repository.save(user);
@@ -63,13 +81,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public final void changePassword(final User user, final String newPassword) {
+    public void changePassword(final User user, final String newPassword) {
         user.setPassword(passwordEncoder.encode(newPassword));
         repository.save(user);
     }
 
     @Override
-    public final void changeEmail(final User user, final String newEmail) {
+    public void changeEmail(final User user, final String newEmail) {
         user.setEmail(newEmail);
         user.setEmailConfirmed(false);
         repository.save(user);
@@ -78,7 +96,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public final User findUserByLogin(final String login) {
+    public User findUserByLogin(final String login) {
         if (login == null) {
             throw new IllegalArgumentException("Cannot find user for null login");
         }
@@ -91,7 +109,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public final User findUser(final String id) {
+    public User findUser(final String id) {
         if (id == null) {
             throw new IllegalArgumentException("Cannot find user for null id");
         }

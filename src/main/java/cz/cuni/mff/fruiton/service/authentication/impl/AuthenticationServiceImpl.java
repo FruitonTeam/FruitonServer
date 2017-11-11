@@ -6,6 +6,7 @@ import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
+import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,17 +33,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final RegistrationService registrationService;
 
+    private final UserService userService;
+
     @Autowired
     public AuthenticationServiceImpl(
             final UserRepository userRepository,
             final GoogleIdTokenVerifier verifier,
             final PasswordEncoder passwordEncoder,
-            final RegistrationService registrationService
+            final RegistrationService registrationService,
+            final UserService userService
     ) {
         this.userRepository = userRepository;
         this.verifier = verifier;
         this.passwordEncoder = passwordEncoder;
         this.registrationService = registrationService;
+        this.userService = userService;
     }
 
     @Override
@@ -68,10 +74,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 GoogleIdToken.Payload payload = idToken.getPayload();
 
                 User user = userRepository.findByGoogleSubject(payload.getSubject());
-                if (user == null) {
-                    user = registrationService.register(payload);
+                if (user != null) { // user logged via google before
+                    return user;
                 }
-                return user;
+
+                // first login
+                final User registeredUser = registrationService.register(payload);
+                getGooglePictureUrl(payload).ifPresentOrElse(url -> userService.changeAvatar(registeredUser, url),
+                        () -> logger.log(Level.FINER,
+                                "User {0} does not have google avatar, using default one", registeredUser));
+
+                return registeredUser;
             }
 
         } catch (GeneralSecurityException e) {
@@ -82,6 +95,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         throw new AuthenticationServiceException("Could not verify google token");
+    }
+
+    private Optional<String> getGooglePictureUrl(final GoogleIdToken.Payload payload) {
+        String pictureUrl = (String) payload.get("picture");
+        if (pictureUrl != null) {
+            return Optional.of(pictureUrl);
+        } else {
+            return Optional.empty();
+        }
     }
 
 }
