@@ -9,6 +9,8 @@ public interface ImageService {
 
     String saveAvatar(MultipartFile file) throws IOException;
 
+    String saveAvatar(String url) throws IOException;
+
     void removeAvatar(User user);
 
     void removeAvatar(String avatarImageName);

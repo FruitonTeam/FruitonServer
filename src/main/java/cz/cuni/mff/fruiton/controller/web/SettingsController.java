@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 
@@ -66,7 +67,7 @@ public class SettingsController {
             @RequestParam final String id
     ) {
         User user = userService.findUser(id);
-        userService.changeAvatar(user, null);
+        userService.changeAvatar(user, (MultipartFile) null);
 
         return "redirect:" + referer; // TODO: if referer is null then redirect to home page
     }

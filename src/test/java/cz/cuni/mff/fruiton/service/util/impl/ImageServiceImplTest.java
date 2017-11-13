@@ -40,7 +40,7 @@ public class ImageServiceImplTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void saveNullAvatar() throws IOException {
-        imageService.saveAvatar(null);
+        imageService.saveAvatar((MultipartFile) null);
     }
 
     @Test(expected = IllegalArgumentException.class)

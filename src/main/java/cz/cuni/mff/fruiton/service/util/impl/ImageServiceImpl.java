@@ -3,12 +3,15 @@ package cz.cuni.mff.fruiton.service.util.impl;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.util.ImageService;
 import cz.cuni.mff.fruiton.util.StorageUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Base64;
@@ -47,6 +50,18 @@ public final class ImageServiceImpl implements ImageService {
             file = new File(dir, uuid + fileName);
         }
         return file;
+    }
+
+    @Override
+    public String saveAvatar(final String url) throws IOException {
+        File imgRoot = StorageUtils.getImageRoot();
+
+        String imageName = FilenameUtils.getName(url);
+        File imageFile = getUniqueFile(imgRoot, imageName);
+
+        FileUtils.copyURLToFile(new URL(url), imageFile);
+
+        return imageName;
     }
 
     @Override

@@ -7,6 +7,8 @@ public interface UserService {
 
     void changeAvatar(User user, MultipartFile avatar);
 
+    void changeAvatar(User user, String url);
+
     void changePassword(User user, String newPassword);
 
     void changeEmail(User user, String newEmail);

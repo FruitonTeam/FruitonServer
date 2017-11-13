@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -52,7 +53,7 @@ public class UserServiceImplTest {
 
         assertTrue("Avatar was not set", userService.findUser(user.getId()).isAvatarSet());
 
-        userService.changeAvatar(user, null);
+        userService.changeAvatar(user, (MultipartFile) null);
 
         assertFalse("Avatar was not removed", userService.findUser(user.getId()).isAvatarSet());
     }
