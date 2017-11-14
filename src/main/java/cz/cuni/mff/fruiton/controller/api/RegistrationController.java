@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 public class RegistrationController {
@@ -66,22 +67,14 @@ public class RegistrationController {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public final ResponseEntity<String> handleConstraintValidationException(final ConstraintViolationException e) {
-        final StringBuilder sb = new StringBuilder();
-        boolean first = true;
-        for (ConstraintViolation cv : e.getConstraintViolations()) {
-            if (first) {
-                first = false;
-            } else {
-                sb.append(' ');
-            }
-            sb.append(cv.getMessage());
-        }
-        return new ResponseEntity<>(sb.toString(), HttpStatus.BAD_REQUEST);
+        String message = e.getConstraintViolations().stream().map(ConstraintViolation::getMessage)
+                .collect(Collectors.joining(", "));
+        return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(DuplicateKeyException.class)
     public final ResponseEntity<String> handleDuplicateKeyException(final DuplicateKeyException e) {
-        return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(e.getErrorMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MailConfirmationNotFound.class)
