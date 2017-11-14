@@ -75,7 +75,7 @@ public class LoginController {
 
     @ExceptionHandler(DuplicateKeyException.class)
     public final ResponseEntity<String> handleDuplicateKeyException(final DuplicateKeyException e) {
-        return new ResponseEntity<>(e.getErrorMessage(), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(e.getErrorMessage(), HttpStatus.CONFLICT);
     }
 
     @RequestMapping(value = "/api/loginGoogle")
