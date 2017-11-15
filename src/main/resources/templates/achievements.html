@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(title = 'Achievements')">
+
+</head>
+<body>
+
+<nav th:replace="fragments/navbar :: navbar"></nav>
+
+<div class="container main-content">
+
+    <div th:each="achievement, idx : ${achievements}">
+
+        <div th:classappend="${idx.count % 6 == 0 ? 'row' : ''}">
+
+            <div class="col-sm-2">
+                <div class="thumbnail">
+                    <img th:src="@{'/img/achievement/' + ${achievement.image}}" alt="Achievement image" style="width:100%"/>
+                    <div class="caption">
+                        <div th:if="${achievement.isProgressAchievement()}" class="progress">
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" aria-valuenow="0"
+                                     aria-valuemin="0" th:attr="aria-valuemax=${achievement.goal}">
+                                    <span th:text="'0/' + ${achievement.goal}"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <strong><span th:text="${achievement.name}"></span></strong><br/>
+                            <span th:text="${achievement.description}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>

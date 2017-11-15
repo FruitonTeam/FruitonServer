@@ -7,6 +7,7 @@ import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Document
-public class User implements Principal, UserDetails {
+public final class User implements Principal, UserDetails {
 
     private static final int LOGIN_MIN_LENGTH = 4;
 
@@ -60,119 +61,130 @@ public class User implements Principal, UserDetails {
 
     private String googleSubject;
 
-    public final String getId() {
+    @DBRef
+    private List<Achievement> unlockedAchievements = new LinkedList<>();
+
+    public String getId() {
         return id;
     }
 
-    public final void setId(final String id) {
+    public void setId(final String id) {
         this.id = id;
     }
 
-    public final String getLogin() {
+    public String getLogin() {
         return login;
     }
 
-    public final void setLogin(final String login) {
+    public void setLogin(final String login) {
         this.login = login;
     }
 
     @Override
-    public final String getPassword() {
+    public String getPassword() {
         return password;
     }
 
-    public final void setPassword(final String password) {
+    public void setPassword(final String password) {
         this.password = password;
     }
 
-    public final String getEmail() {
+    public String getEmail() {
         return email;
     }
 
-    public final void setEmail(final String email) {
+    public void setEmail(final String email) {
         this.email = email;
     }
 
-    public final boolean isEmailConfirmed() {
+    public boolean isEmailConfirmed() {
         return emailConfirmed;
     }
 
-    public final void setEmailConfirmed(final boolean emailConfirmed) {
+    public void setEmailConfirmed(final boolean emailConfirmed) {
         this.emailConfirmed = emailConfirmed;
     }
 
-    public final String getAvatar() {
+    public String getAvatar() {
         if (avatar == null || avatar.isEmpty()) {
             return DEFAULT_AVATAR;
         }
         return avatar;
     }
 
-    public final void setAvatar(final String avatar) {
+    public void setAvatar(final String avatar) {
         this.avatar = avatar;
     }
 
-    public final int getRating() {
+    public int getRating() {
         return rating;
     }
 
-    public final void setRating(final int rating) {
+    public void setRating(final int rating) {
         this.rating = rating;
     }
 
-    public final State getState() {
+    public State getState() {
         return state;
     }
 
-    public final void setState(final State state) {
+    public void setState(final State state) {
         this.state = state;
     }
 
-    public final List<Integer> getUnlockedFruitons() {
+    public List<Integer> getUnlockedFruitons() {
         return unlockedFruitons;
     }
 
-    public final void setUnlockedFruitons(final List<Integer> unlockedFruitons) {
+    public void setUnlockedFruitons(final List<Integer> unlockedFruitons) {
         this.unlockedFruitons = unlockedFruitons;
     }
 
-    public final List<FruitonTeam> getTeams() {
+    public List<FruitonTeam> getTeams() {
         return teams;
     }
 
-    public final void setTeams(final List<FruitonTeam> teams) {
+    public void setTeams(final List<FruitonTeam> teams) {
         this.teams = teams;
     }
 
-    public final String getGoogleSubject() {
+    public String getGoogleSubject() {
         return googleSubject;
     }
 
-    public final void setGoogleSubject(final String googleSubject) {
+    public void setGoogleSubject(final String googleSubject) {
         this.googleSubject = googleSubject;
     }
 
-    public final boolean isAvatarSet() {
+    public List<Achievement> getUnlockedAchievements() {
+        return unlockedAchievements;
+    }
+
+    public void setUnlockedAchievements(final List<Achievement> unlockedAchievements) {
+        this.unlockedAchievements = unlockedAchievements;
+    }
+
+    public boolean isAvatarSet() {
         return avatar != null && !avatar.isEmpty();
     }
 
-    public final User withLogin(final String login) {
+    public User withLogin(final String login) {
         setLogin(login);
         return this;
     }
 
-    public final User withPassword(final String password) {
+    public User withPassword(final String password) {
         setPassword(password);
         return this;
     }
 
-    public final User withEmail(final String email) {
+    public User withEmail(final String email) {
         setEmail(email);
         return this;
     }
 
     @Override
-    public final Collection<? extends GrantedAuthority> getAuthorities() {
+    public Collection<? extends GrantedAuthority> getAuthorities() {
         return getGrantedAuthorities(getRoles());
     }
 
@@ -186,36 +198,36 @@ public class User implements Principal, UserDetails {
 
     @Transient
     @Override
-    public final String getUsername() {
+    public String getUsername() {
         return login;
     }
 
     @Transient
     @Override
-    public final boolean isAccountNonExpired() {
+    public boolean isAccountNonExpired() {
         return true;
     }
 
     @Transient
     @Override
-    public final boolean isAccountNonLocked() {
+    public boolean isAccountNonLocked() {
         return true;
     }
 
     @Transient
     @Override
-    public final boolean isCredentialsNonExpired() {
+    public boolean isCredentialsNonExpired() {
         return true;
     }
 
     @Transient
     @Override
-    public final boolean isEnabled() {
+    public boolean isEnabled() {
         return true;
     }
 
     @Override
-    public final boolean equals(final Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
@@ -229,12 +241,12 @@ public class User implements Principal, UserDetails {
     }
 
     @Override
-    public final int hashCode() {
+    public int hashCode() {
         return login != null ? login.hashCode() : 0;
     }
 
     @Override
-    public final String toString() {
+    public String toString() {
         return "User{"
                 + "id='" + id + '\''
                 + ", login='" + login + '\''
@@ -244,7 +256,7 @@ public class User implements Principal, UserDetails {
 
     @Override
     @Transient
-    public final String getName() {
+    public String getName() {
         return login;
     }
 

@@ -24,6 +24,9 @@
                 <li th:classappend="${#httpServletRequest.getRequestURI().contains('/ladder') ? 'active':''}">
                     <a th:href="@{/ladder}">Game ladder</a>
                 </li>
+                <li th:classappend="${#httpServletRequest.getRequestURI().contains('/achievements') ? 'active':''}">
+                    <a th:href="@{/achievements}">Achievements</a>
+                </li>
                 <li th:classappend="${#httpServletRequest.getRequestURI().contains('/auction') ? 'active':''}">
                     <a th:href="@{/auction}">Auction</a>
                 </li>

@@ -39,3 +39,18 @@ body {
     padding-top: 30px;
     background-color: rgba(2555,255,255,.3);
 }
+
+/**
+ * Progress bars with centered text
+ */
+
+.progress {
+    position: relative;
+}
+
+.progress span {
+    position: absolute;
+    display: block;
+    width: 100%;
+    color: black;
+}
