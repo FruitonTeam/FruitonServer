@@ -1,0 +1,12 @@
+<mongoChangeLog>
+    <changeSet changeId="Achievements-Init" author="ahornace">
+        <script>
+            db.achievement.insert({
+                "name" : "Sprinter", "description" : "Move 10 times", "image" : "classic_shoe.png", "goal" : 10});
+            db.achievement.insert({
+                "name" : "Runner", "description" : "Move 100 times", "image" : "silver_shoe.png", "goal" : 100});
+            db.achievement.insert({
+                "name" : "Marathon man", "description" : "Move 1000 times", "image" : "golden_shoe.png", "goal" : 1000});
+        </script>
+    </changeSet>
+</mongoChangeLog>
