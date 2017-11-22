@@ -36,10 +36,30 @@
             </ul>
 
             <ul class="nav navbar-nav navbar-right">
-                <li><a th:href="@{/logout}">Log out</a></li>
+                <li><a href="#" onclick="signOut();">Log out</a></li>
             </ul>
         </div>
     </div>
+
+    <script th:inline="javascript">
+        function signOut() {
+            var auth2 = gapi.auth2.getAuthInstance();
+            if (auth2) {
+                auth2.signOut().then(function () {
+                    console.log('Google user signed out.');
+                });
+            }
+
+            window.location.href = /*[[@{/logout}]]*/ ''; // ordinary spring logout
+        }
+
+        $(document).ready(function() { // auth need to be initialized if no google sign in button is on the page
+            gapi.load('auth2', function() {
+                gapi.auth2.init();
+            });
+        });
+
+    </script>
 
 </nav>
 

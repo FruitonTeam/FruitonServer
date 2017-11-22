@@ -40,9 +40,31 @@
 
             </div>
         </div>
+        <div class="divider">
+            <hr class="left"/><span>or</span><hr class="right" />
+        </div>
+
+        <div class="g-signin2" data-onsuccess="onSignIn"></div>
+
     </div>
 
 </div>
+
+<form id="googleSubmitForm" th:action="@{/api/loginGoogleWeb}">
+    <input name="idToken" type="hidden" />
+</form>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+
+<script>
+    function onSignIn(googleUser) {
+        var id_token = googleUser.getAuthResponse().id_token;
+
+        $('input[name="idToken"]').val(id_token);
+
+        $('#googleSubmitForm').submit();
+    }
+</script>
 
 </body>
 </html>
