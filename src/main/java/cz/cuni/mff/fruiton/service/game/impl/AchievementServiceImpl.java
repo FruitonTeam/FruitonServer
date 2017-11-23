@@ -102,8 +102,8 @@ public final class AchievementServiceImpl implements AchievementService {
     private String getBase64AchievementImage(final Achievement achievement) {
         try {
             return Base64.getEncoder().encodeToString(
-                    IOUtils.toByteArray(getClass().getResourceAsStream(
-                            "/static/img/achievement/" + achievement.getImage())));
+                    IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream(
+                            "static/img/achievement/" + achievement.getImage())));
         } catch (IOException e) {
             logger.log(Level.WARNING, "Could not get achievement image ", e);
         }
