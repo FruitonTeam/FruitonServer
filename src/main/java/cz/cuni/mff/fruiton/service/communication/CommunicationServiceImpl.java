@@ -13,7 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Service
-public class CommunicationServiceImpl implements CommunicationService {
+public final class CommunicationServiceImpl implements CommunicationService {
 
     private static final Logger logger = Logger.getLogger(CommunicationServiceImpl.class.getName());
 
@@ -25,7 +25,7 @@ public class CommunicationServiceImpl implements CommunicationService {
     }
 
     @Override
-    public final void send(final Principal principal, final WrapperMessage message) {
+    public void send(final Principal principal, final WrapperMessage message) {
         logger.log(Level.FINEST, "Sending message {0} to user {1}", new Object[] {message, principal});
 
         BinaryMessage msg = new BinaryMessage(message.toByteArray());
@@ -43,7 +43,12 @@ public class CommunicationServiceImpl implements CommunicationService {
     }
 
     @Override
-    public void sendNotification(Principal principal, String base64Image, String title, String text) {
+    public void sendNotification(
+            final Principal principal,
+            final String base64Image,
+            final String title,
+            final String text
+    ) {
         WrapperMessage notification = WrapperMessage.newBuilder()
                 .setNotification(CommonProtos.Notification.newBuilder()
                         .setImage(base64Image)

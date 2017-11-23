@@ -99,7 +99,7 @@ public final class AchievementServiceImpl implements AchievementService {
                 ACHIEVEMENT_UNLOCKED_NOTIFICATION_TITLE, achievement.getName());
     }
 
-    private String getBase64AchievementImage(Achievement achievement) {
+    private String getBase64AchievementImage(final Achievement achievement) {
         try {
             return Base64.getEncoder().encodeToString(
                     IOUtils.toByteArray(getClass().getResourceAsStream(
