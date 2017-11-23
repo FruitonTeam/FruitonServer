@@ -1,9 +1,12 @@
 package cz.cuni.mff.fruiton.service.game.impl;
 
+import cz.cuni.mff.fruiton.component.AchievementHelper;
+import cz.cuni.mff.fruiton.dao.domain.Achievement;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
+import cz.cuni.mff.fruiton.service.game.AchievementService;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.PlayerService;
 import cz.cuni.mff.fruiton.service.util.ImageService;
@@ -13,6 +16,7 @@ import fruiton.kernel.GameState;
 import fruiton.kernel.Kernel;
 import fruiton.kernel.Player;
 import fruiton.kernel.actions.Action;
+import fruiton.kernel.actions.MoveAction;
 import fruiton.kernel.events.Event;
 import haxe.root.Array;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,15 +47,23 @@ public final class GameServiceImpl implements GameService {
 
     private final ImageService imageService;
 
+    private final AchievementService achievementService;
+
+    private final AchievementHelper achievementHelper;
+
     @Autowired
     public GameServiceImpl(
             final CommunicationService communicationService,
             final PlayerService playerService,
-            final ImageService imageService
+            final ImageService imageService,
+            final AchievementService achievementService,
+            final AchievementHelper achievementHelper
     ) {
         this.communicationService = communicationService;
         this.playerService = playerService;
         this.imageService = imageService;
+        this.achievementService = achievementService;
+        this.achievementHelper = achievementHelper;
     }
 
     @Override
@@ -90,7 +102,7 @@ public final class GameServiceImpl implements GameService {
             kernel = new Kernel(player2, player1, fruitons);
         }
 
-        GameData gameData = new GameData(user1, player1, user2, player2, kernel);
+        GameData gameData = new GameData(user1, user2, kernel);
 
         userToGameData.put(user1, gameData);
         userToGameData.put(user2, gameData);
@@ -227,11 +239,8 @@ public final class GameServiceImpl implements GameService {
             throw new IllegalStateException("User " + user + " has no game associated");
         }
 
-        logger.log(Level.FINEST, "User {0} is performing action {2} in game {2}",
+        logger.log(Level.FINEST, "User {0} is performing action {1} in game {2}",
                 new Object[] {user, protobufAction, gameData});
-
-        communicationService.send(gameData.getOpponentUser(user),
-                CommonProtos.WrapperMessage.newBuilder().setAction(protobufAction).build());
 
         Kernel kernel = gameData.kernel;
 
@@ -239,6 +248,8 @@ public final class GameServiceImpl implements GameService {
 
         Array<Event> events = kernel.performAction(kernelAction);
         processEvents(events);
+
+        onAfterAction(user, protobufAction);
     }
 
     private void processEvents(final Array<Event> events) {
@@ -250,6 +261,23 @@ public final class GameServiceImpl implements GameService {
 
     private void processEvent(final Event e) {
         // TODO: specific handling
+    }
+
+    private void onAfterAction(final User user, final GameProtos.Action protobufAction) {
+        GameData gameData = userToGameData.get(user);
+
+        communicationService.send(gameData.getOpponentUser(user),
+                CommonProtos.WrapperMessage.newBuilder().setAction(protobufAction).build());
+
+        incrementAchievementProgressAfterAction(user, protobufAction);
+    }
+
+    private void incrementAchievementProgressAfterAction(final User user, final GameProtos.Action protobufAction) {
+        if (protobufAction.getId() == MoveAction.ID) {
+            for (Achievement achievement : achievementHelper.getMoveActionAchievements()) {
+                achievementService.updateAchievementProgress(user, achievement, 1);
+            }
+        }
     }
 
     @Override
@@ -276,26 +304,20 @@ public final class GameServiceImpl implements GameService {
     private static final class GameData {
 
         private final User user1;
-        private final Player player1;
         private boolean player1Ready;
 
         private final User user2;
-        private final Player player2;
         private boolean player2Ready;
 
         private final Kernel kernel;
 
         private GameData(
                 final User user1,
-                final Player player1,
                 final User user2,
-                final Player player2,
                 final Kernel kernel
         ) {
             this.user1 = user1;
-            this.player1 = player1;
             this.user2 = user2;
-            this.player2 = player2;
             this.kernel = kernel;
         }
 

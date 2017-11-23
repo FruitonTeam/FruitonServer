@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.service.communication;
 
+import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,19 @@ public class CommunicationServiceImpl implements CommunicationService {
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Cannot send websocket message", e);
         }
+    }
+
+    @Override
+    public void sendNotification(Principal principal, String base64Image, String title, String text) {
+        WrapperMessage notification = WrapperMessage.newBuilder()
+                .setNotification(CommonProtos.Notification.newBuilder()
+                        .setImage(base64Image)
+                        .setTitle(title)
+                        .setText(text)
+                        .build())
+                .build();
+
+        send(principal, notification);
     }
 
 }
