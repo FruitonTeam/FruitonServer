@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import javax.validation.constraints.Min;
 
 @Document
-public final class Achievement {
+public final class Achievement implements Comparable<Achievement> {
 
     @Id
     private String id;
@@ -88,5 +88,10 @@ public final class Achievement {
     @Override
     public int hashCode() {
         return name.hashCode();
+    }
+
+    @Override
+    public int compareTo(final Achievement o) {
+        return this.name.compareTo(o.name);
     }
 }
