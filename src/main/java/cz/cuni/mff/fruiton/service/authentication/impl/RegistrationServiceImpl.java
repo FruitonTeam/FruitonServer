@@ -5,6 +5,7 @@ import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
+import cz.cuni.mff.fruiton.service.game.QuestService;
 import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
@@ -31,15 +32,19 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     private final EmailConfirmationService emailConfirmationService;
 
+    private final QuestService questService;
+
     @Autowired
     public RegistrationServiceImpl(
             final UserRepository userRepository,
             final EmailConfirmationService emailConfirmationService,
-            final PasswordEncoder passwordEncoder
+            final PasswordEncoder passwordEncoder,
+            final QuestService questService
     ) {
         this.userRepository = userRepository;
         this.emailConfirmationService = emailConfirmationService;
         this.passwordEncoder = passwordEncoder;
+        this.questService = questService;
     }
 
     @Override
@@ -74,8 +79,13 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     private void saveUser(final User user) {
         userRepository.save(user);
+        onRegistered(user);
+    }
 
+    private void onRegistered(final User user) {
         logger.log(Level.FINE, "Registered user: {0}", user);
+
+        questService.assignNewQuests(user);
     }
 
     private String getGoogleLogin(final GoogleIdToken.Payload payload) {

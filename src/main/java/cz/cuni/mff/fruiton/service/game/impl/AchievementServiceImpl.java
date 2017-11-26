@@ -8,12 +8,10 @@ import cz.cuni.mff.fruiton.dao.repository.AchievementRepository;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.AchievementService;
-import org.apache.commons.io.IOUtils;
+import cz.cuni.mff.fruiton.util.ResourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -95,19 +93,14 @@ public final class AchievementServiceImpl implements AchievementService {
         user.getUnlockedAchievements().add(achievement);
         userRepository.save(user);
 
+        logger.log(Level.FINE, "User {0} unlocked achievement {1}", new Object[] {user, achievement});
+
         communicationService.sendNotification(user, getBase64AchievementImage(achievement),
                 ACHIEVEMENT_UNLOCKED_NOTIFICATION_TITLE, achievement.getName());
     }
 
     private String getBase64AchievementImage(final Achievement achievement) {
-        try {
-            return Base64.getEncoder().encodeToString(
-                    IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream(
-                            "static/img/achievement/" + achievement.getImage())));
-        } catch (IOException e) {
-            logger.log(Level.WARNING, "Could not get achievement image ", e);
-        }
-        return "";
+        return ResourceUtils.getBase64Image("static/img/achievement/" + achievement.getImage());
     }
 
     @Override
