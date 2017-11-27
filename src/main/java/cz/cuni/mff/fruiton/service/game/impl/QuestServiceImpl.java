@@ -20,7 +20,7 @@ public final class QuestServiceImpl implements QuestService {
 
     private static final String QUEST_COMPLETED_NOTIFICATION_TITLE = "Quest completed";
 
-    private static final int DEFAULT_QUEST_NUMBER = 1; // TODO: change to 2/3 when more quests will be available
+    private static final int MAX_QUEST_NUMBER = 1; // TODO: change to 2/3 when more quests will be available
 
     private static final Logger logger = Logger.getLogger(QuestServiceImpl.class.getName());
 
@@ -45,7 +45,7 @@ public final class QuestServiceImpl implements QuestService {
 
     @Override
     public void assignNewQuests(final User user) {
-        if (user.getAssignedQuests() == null || user.getAssignedQuests().size() < DEFAULT_QUEST_NUMBER) {
+        if (user.getAssignedQuests() == null || user.getAssignedQuests().size() < MAX_QUEST_NUMBER) {
             // TODO: change when we will have more quests available
             user.setAssignedQuests(List.of(questRepository.findByName("Winner")));
             userRepository.save(user);
@@ -58,7 +58,7 @@ public final class QuestServiceImpl implements QuestService {
             throw new IllegalArgumentException("Cannot update quest progress for null user");
         }
         if (quest == null) {
-            throw new IllegalArgumentException("Cannot update quest progress for null achievement");
+            throw new IllegalArgumentException("Cannot update quest progress for null quest");
         }
         if (!user.getAssignedQuests().contains(quest)) {
             return;
