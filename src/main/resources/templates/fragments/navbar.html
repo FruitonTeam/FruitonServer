@@ -34,6 +34,12 @@
 
             <ul class="nav navbar-nav navbar-right">
                 <li>
+                    <a href="#"> <!-- TODO: open window with money change history -->
+                        <img th:src="@{'/img/coin.png'}" style="max-width: 15px;" alt="money" />
+                        <span th:text="${#authentication.getPrincipal().getMoney()}"></span>
+                    </a>
+                </li>
+                <li>
                     <img th:src="@{'/img/' + ${#authentication.getPrincipal().getAvatar()}}"
                          class="avatar-navbar img-circle img-thumbnail" alt="avatar" />
                 </li>
