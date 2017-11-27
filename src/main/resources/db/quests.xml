@@ -1,0 +1,11 @@
+<mongoChangeLog>
+    <changeSet changeId="Quests-Init" author="ahornace">
+        <script>
+            db.quest.insert({
+                "name" : "Winner", "description" : "Win 1 game", "image" : "arrow_gun.png", "goal" : 1, "reward" : {
+                    money : 10
+                }
+            });
+        </script>
+    </changeSet>
+</mongoChangeLog>

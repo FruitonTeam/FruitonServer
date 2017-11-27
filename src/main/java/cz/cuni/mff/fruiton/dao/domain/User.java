@@ -52,6 +52,8 @@ public final class User implements Principal, UserDetails {
 
     private int rating = EloRatingServiceImpl.DEFAULT_RATING;
 
+    private int money = 0;
+
     @Transient
     private State state = State.MENU;
 
@@ -63,6 +65,9 @@ public final class User implements Principal, UserDetails {
 
     @DBRef
     private List<Achievement> unlockedAchievements = new LinkedList<>();
+
+    @DBRef
+    private List<Quest> assignedQuests = new LinkedList<>();
 
     public String getId() {
         return id;
@@ -124,6 +129,14 @@ public final class User implements Principal, UserDetails {
         this.rating = rating;
     }
 
+    public int getMoney() {
+        return money;
+    }
+
+    public void setMoney(final int money) {
+        this.money = money;
+    }
+
     public State getState() {
         return state;
     }
@@ -164,8 +177,20 @@ public final class User implements Principal, UserDetails {
         this.unlockedAchievements = unlockedAchievements;
     }
 
+    public List<Quest> getAssignedQuests() {
+        return assignedQuests;
+    }
+
+    public void setAssignedQuests(final List<Quest> assignedQuests) {
+        this.assignedQuests = assignedQuests;
+    }
+
     public boolean isAvatarSet() {
         return avatar != null && !avatar.isEmpty();
+    }
+
+    public void adjustMoney(final int value) {
+        money += value;
     }
 
     public User withLogin(final String login) {
