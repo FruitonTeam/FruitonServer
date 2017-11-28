@@ -18,7 +18,7 @@ public class MvcConfig extends WebMvcConfigurerAdapter {
     public final void addResourceHandlers(final ResourceHandlerRegistry registry) {
         // add mapping to static resources and image directory
         registry.addResourceHandler("/img/**")
-                .addResourceLocations(StorageUtils.getImageRoot().toURI().toString(), "classpath:/static/img/");
+                .addResourceLocations("classpath:/static/img/", StorageUtils.getImageRoot().toURI().toString());
         registry.addResourceHandler("/css/**").addResourceLocations("classpath:/static/css/");
         registry.addResourceHandler("/js/**").addResourceLocations("classpath:/static/js/");
     }
