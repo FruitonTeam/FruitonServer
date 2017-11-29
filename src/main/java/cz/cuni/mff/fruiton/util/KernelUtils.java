@@ -58,7 +58,7 @@ public final class KernelUtils {
             ));
         } else if (AttackAction.ID == protobufAction.getId()) {
             Point from = KernelUtils.positionToPoint(protobufAction.getFrom());
-            int dmg = kernel.currentState.field.get(from).fruiton.damage;
+            int dmg = kernel.currentState.field.get(from).fruiton.currentAttributes.damage;
 
             return new AttackAction(new AttackActionContext(dmg, from,
                     KernelUtils.positionToPoint(protobufAction.getTo())
