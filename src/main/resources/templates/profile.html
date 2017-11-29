@@ -13,7 +13,8 @@
         <div class="col-md-4 col-sm-6 col-xs-12">
             <div class="text-center">
 
-                <img th:src="@{'/img/' + ${user.avatar}}" class="avatar img-circle img-thumbnail" alt="avatar"/>
+                <img th:src="@{'' + ${user.getAvatarWebImageMapping()}}"
+                     class="avatar img-circle img-thumbnail" alt="avatar"/>
 
                 <h3 th:text="${user.login}"></h3>
 

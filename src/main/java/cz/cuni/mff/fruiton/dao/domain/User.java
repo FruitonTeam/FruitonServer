@@ -25,7 +25,9 @@ public final class User implements Principal, UserDetails {
 
     private static final int LOGIN_MIN_LENGTH = 4;
 
-    private static final String DEFAULT_AVATAR = "boy.png";
+    private static final String AVATAR_PATH = "/avatar/";
+
+    private static final String DEFAULT_AVATAR = "/img/boy.png";
 
     private static final String ROLE_USER = "ROLE_USER";
 
@@ -111,9 +113,6 @@ public final class User implements Principal, UserDetails {
     }
 
     public String getAvatar() {
-        if (avatar == null || avatar.isEmpty()) {
-            return DEFAULT_AVATAR;
-        }
         return avatar;
     }
 
@@ -191,6 +190,14 @@ public final class User implements Principal, UserDetails {
 
     public void adjustMoney(final int value) {
         money += value;
+    }
+
+    public String getAvatarWebImageMapping() {
+        if (isAvatarSet()) {
+            return AVATAR_PATH + avatar;
+        } else {
+            return DEFAULT_AVATAR;
+        }
     }
 
     public User withLogin(final String login) {

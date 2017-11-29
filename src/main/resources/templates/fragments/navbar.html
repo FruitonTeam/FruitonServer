@@ -40,7 +40,7 @@
                     </a>
                 </li>
                 <li>
-                    <img th:src="@{'/img/' + ${#authentication.getPrincipal().getAvatar()}}"
+                    <img th:src="@{'' + ${#authentication.getPrincipal().getAvatarWebImageMapping()}}"
                          class="avatar-navbar img-circle img-thumbnail" alt="avatar" />
                 </li>
                 <li><a href="#" onclick="signOut();">Log out</a></li>
