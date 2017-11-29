@@ -41,4 +41,8 @@ public class Game {
         gameService.performAction(from, actionMsg);
     }
 
+    @HandleProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.SURRENDER)
+    public final void handleActionMessage(final User from, final GameProtos.Surrender surrenderMsg) {
+        gameService.playerSurrendered(from);
+    }
 }

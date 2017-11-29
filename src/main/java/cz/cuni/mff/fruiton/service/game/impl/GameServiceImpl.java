@@ -287,12 +287,23 @@ public final class GameServiceImpl implements GameService {
         User opponent = gameData.getOpponentUser(user);
 
         if (playerService.isOnline(opponent)) {
-            // TODO: set correct reason and results
-            sendGameOverMessage(opponent, 0, GameProtos.GameResults.newBuilder().build());
+            // TODO: set correct results
+            sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT, GameProtos.GameResults.newBuilder().build());
         }
     }
 
-    private void sendGameOverMessage(final User to, final int reason, final GameProtos.GameResults results) {
+    public void playerSurrendered(final User surrenderedUser) {
+        GameData gameData = userToGameData.get(surrenderedUser);
+        User other = gameData.getOpponentUser(surrenderedUser);
+        // TODO: set correct results
+        sendGameOverMessage(other, GameProtos.GameOver.Reason.SURRENDER, GameProtos.GameResults.getDefaultInstance());
+    }
+
+    private void sendGameOverMessage(
+            final User to,
+            final GameProtos.GameOver.Reason reason,
+            final GameProtos.GameResults results
+    ) {
         communicationService.send(to, CommonProtos.WrapperMessage.newBuilder()
                 .setGameOver(GameProtos.GameOver.newBuilder()
                         .setReason(reason)

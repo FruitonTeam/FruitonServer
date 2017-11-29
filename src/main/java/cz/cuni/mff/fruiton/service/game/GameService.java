@@ -13,4 +13,6 @@ public interface GameService {
 
     void userDisconnected(User user);
 
+    void playerSurrendered(User surrenderedUser);
+
 }
