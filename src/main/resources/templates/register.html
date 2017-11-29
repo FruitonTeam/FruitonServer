@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(title = 'Register')">
+
+</head>
+<body>
+
+<div class="container main-content">
+
+    <div id="loginbox" class="mainbox col-md-6 col-md-offset-3 col-sm-6 col-sm-offset-3">
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <div class="panel-title text-center">Fruitons registration</div>
+            </div>
+
+            <div class="panel-body">
+
+                <form name="form" role="form" id="register-form" class="form-horizontal" enctype="multipart/form-data"
+                      method="POST" data-toggle="validator" th:action="@{registerWeb}" th:object="${formData}">
+
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                            <input id="login" type="text" class="form-control" name="login" value="" placeholder="Login"
+                                   pattern="^[_A-z0-9]{4,}$" required="required"
+                                   data-pattern-error="Minimum of 4 alphanumeric characters"
+                                   data-remote-error="Login is already used"
+                                   th:attr="data-remote=@{/api/player/isLoginValid}"
+                                   th:field="*{login}"
+                            />
+                        </div>
+                        <div class="help-block with-errors"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+                            <input id="password" type="password" class="form-control" name="password" placeholder="Password"
+                                   data-minlength="6" required="required" th:field="*{password}" />
+                        </div>
+                        <div class="help-block with-errors"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+                            <input type="password" class="form-control" data-match="#password"
+                                placeholder="Confirm password" required="required" data-error="Passwords do not match" />
+                        </div>
+                        <div class="help-block with-errors"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-envelope"></i></span>
+                            <input id="email" type="email" class="form-control" name="email"
+                                   placeholder="Email" required="required"
+                                   th:attr="data-remote=@{/api/player/isEmailValid}"
+                                   data-remote-error="Email is already used"
+                                   th:field="*{email}" />
+                        </div>
+                        <div class="help-block with-errors"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="col-sm-12 controls">
+                            <button type="submit" class="btn btn-primary pull-right">
+                                <i class="glyphicon glyphicon-send"></i> Register
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+
+<script>
+
+</script>
+
+</body>
+</html>

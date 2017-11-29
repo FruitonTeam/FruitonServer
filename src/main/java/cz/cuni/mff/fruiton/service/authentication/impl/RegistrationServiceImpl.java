@@ -4,6 +4,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.UserProtos;
+import cz.cuni.mff.fruiton.dto.form.RegistrationForm;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import cz.cuni.mff.fruiton.service.game.QuestService;
 import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
@@ -18,7 +19,7 @@ import java.util.logging.Logger;
 
 @Service
 @PropertySource("classpath:mail.properties")
-public class RegistrationServiceImpl implements RegistrationService {
+public final class RegistrationServiceImpl implements RegistrationService {
 
     private static final int RANDOM_GOOGLE_SUFFIX_SIZE = 5;
 
@@ -48,7 +49,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
 
     @Override
-    public final void register(final UserProtos.RegistrationData data) {
+    public void register(final UserProtos.RegistrationData data) {
         if (data.getPassword() == null || data.getPassword().isEmpty()) {
             throw new RegistrationException("Cannot register user with password: " + data.getPassword());
         }
@@ -63,7 +64,20 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
 
     @Override
-    public final User register(final GoogleIdToken.Payload payload) {
+    public User register(final RegistrationForm form) {
+        User user = new User()
+                .withLogin(form.getLogin())
+                .withPassword(passwordEncoder.encode(form.getPassword()))
+                .withEmail(form.getEmail());
+
+        saveUser(user);
+        emailConfirmationService.sendEmailConfirmationRequest(user);
+
+        return user;
+    }
+
+    @Override
+    public User register(final GoogleIdToken.Payload payload) {
         String login = getGoogleLogin(payload);
 
         User user = new User()

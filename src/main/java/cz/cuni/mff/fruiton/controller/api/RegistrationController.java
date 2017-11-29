@@ -23,7 +23,7 @@ import javax.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController
+@RestController("apiRegistrationController")
 public class RegistrationController {
 
     private final UserRepository userRepository;
