@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 @Document
 public final class User implements Principal, UserDetails {
 
+    public static final int PASSWORD_MIN_LENGTH = 6;
+
     private static final int LOGIN_MIN_LENGTH = 4;
 
     private static final String AVATAR_PATH = "/avatar/";

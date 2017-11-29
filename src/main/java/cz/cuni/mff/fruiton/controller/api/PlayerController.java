@@ -32,6 +32,20 @@ public final class PlayerController {
         return repository.findByLogin(login) != null;
     }
 
+    @RequestMapping("/api/player/isLoginValid")
+    public ResponseEntity<Void> isLoginValid(@RequestParam final String login) {
+        return respondOkIfNull(repository.findByLogin(login));
+    }
+
+    @RequestMapping("/api/player/isEmailValid")
+    public ResponseEntity<Void> isEmailValid(@RequestParam final String email) {
+        return respondOkIfNull(repository.findByEmail(email));
+    }
+
+    private ResponseEntity<Void> respondOkIfNull(final Object o) {
+        return o == null ? ResponseEntity.ok(null) : new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
+    }
+
     @RequestMapping("/api/player/availableFruitons")
     public List<Integer> getAvailableFruitons(@RequestParam final String login) {
         return playerService.getAvailableFruitons(login);
