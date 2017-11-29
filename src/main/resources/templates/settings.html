@@ -17,7 +17,8 @@
         <!-- profile picture column -->
         <div class="col-md-4 col-sm-6 col-xs-12">
             <div class="text-center">
-                <img th:src="@{'/img/' + ${user.avatar}}" class="avatar img-thumbnail" alt="avatar"/>
+                <img th:src="@{'' + ${#authentication.getPrincipal().getAvatarWebImageMapping()}}"
+                     class="avatar img-thumbnail" alt="avatar"/>
                 <h6>Upload a different photo…</h6>
                 <input id="avatarImgInput" type="file" th:field="*{avatar}" accept="image/*" />
                 <div th:if="${user.isAvatarSet()}">
