@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.service.game.impl;
 
+import cz.cuni.mff.fruiton.component.util.ResourceHelper;
 import cz.cuni.mff.fruiton.dao.domain.Quest;
 import cz.cuni.mff.fruiton.dao.domain.QuestProgress;
 import cz.cuni.mff.fruiton.dao.domain.User;
@@ -8,7 +9,6 @@ import cz.cuni.mff.fruiton.dao.repository.QuestRepository;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.QuestService;
-import cz.cuni.mff.fruiton.util.ResourceUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,16 +31,20 @@ public final class QuestServiceImpl implements QuestService {
 
     private final CommunicationService communicationService;
 
+    private final ResourceHelper resourceHelper;
+
     public QuestServiceImpl(
             final UserRepository userRepository,
             final QuestRepository questRepository,
             final QuestProgressRepository questProgressRepository,
-            final CommunicationService communicationService
+            final CommunicationService communicationService,
+            final ResourceHelper resourceHelper
     ) {
         this.userRepository = userRepository;
         this.questProgressRepository = questProgressRepository;
         this.questRepository = questRepository;
         this.communicationService = communicationService;
+        this.resourceHelper = resourceHelper;
     }
 
     @Override
@@ -91,7 +95,7 @@ public final class QuestServiceImpl implements QuestService {
     }
 
     private String getBase64QuestImage(final Quest quest) {
-        return ResourceUtils.getBase64Image("static/img/quest/" + quest.getImage());
+        return resourceHelper.getBase64Image("static/img/quest/" + quest.getImage());
     }
 
     @Override

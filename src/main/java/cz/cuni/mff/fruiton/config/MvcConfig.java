@@ -1,6 +1,7 @@
 package cz.cuni.mff.fruiton.config;
 
 import cz.cuni.mff.fruiton.util.StorageUtils;
+import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.protobuf.ProtobufHttpMessageConverter;
@@ -16,12 +17,11 @@ public class MvcConfig extends WebMvcConfigurerAdapter {
 
     @Override
     public final void addResourceHandlers(final ResourceHandlerRegistry registry) {
-        // add mapping to static resources and image directory
-        registry.addResourceHandler("/img/**").addResourceLocations("classpath:/static/img/");
+        // add mapping to static resources and avatar directory
+        registry.addResourceHandler("/**")
+                .addResourceLocations(new ResourceProperties().getStaticLocations());
         registry.addResourceHandler("/avatar/**")
                 .addResourceLocations(StorageUtils.getImageRoot().toURI().toString());
-        registry.addResourceHandler("/css/**").addResourceLocations("classpath:/static/css/");
-        registry.addResourceHandler("/js/**").addResourceLocations("classpath:/static/js/");
     }
 
     @Override
