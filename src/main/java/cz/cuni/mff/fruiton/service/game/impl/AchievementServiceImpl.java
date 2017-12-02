@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.service.game.impl;
 
+import cz.cuni.mff.fruiton.component.util.ResourceHelper;
 import cz.cuni.mff.fruiton.dao.domain.Achievement;
 import cz.cuni.mff.fruiton.dao.domain.AchievementProgress;
 import cz.cuni.mff.fruiton.dao.domain.User;
@@ -8,7 +9,6 @@ import cz.cuni.mff.fruiton.dao.repository.AchievementRepository;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.AchievementService;
-import cz.cuni.mff.fruiton.util.ResourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,17 +28,21 @@ public final class AchievementServiceImpl implements AchievementService {
 
     private final CommunicationService communicationService;
 
+    private final ResourceHelper resourceHelper;
+
     @Autowired
     public AchievementServiceImpl(
             final UserRepository userRepository,
             final AchievementRepository achievementRepository,
             final AchievementProgressRepository achievementProgressRepository,
-            final CommunicationService communicationService
+            final CommunicationService communicationService,
+            final ResourceHelper resourceHelper
     ) {
         this.userRepository = userRepository;
         this.achievementRepository = achievementRepository;
         this.achievementProgressRepository = achievementProgressRepository;
         this.communicationService = communicationService;
+        this.resourceHelper = resourceHelper;
     }
 
     @Override
@@ -100,7 +104,7 @@ public final class AchievementServiceImpl implements AchievementService {
     }
 
     private String getBase64AchievementImage(final Achievement achievement) {
-        return ResourceUtils.getBase64Image("static/img/achievement/" + achievement.getImage());
+        return resourceHelper.getBase64Image("static/img/achievement/" + achievement.getImage());
     }
 
     @Override
