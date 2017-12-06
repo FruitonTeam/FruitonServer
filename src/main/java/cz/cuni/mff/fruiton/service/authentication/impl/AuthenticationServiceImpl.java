@@ -5,8 +5,6 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
-import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
-import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -22,7 +20,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,23 +34,15 @@ public final class AuthenticationServiceImpl implements AuthenticationService {
 
     private final PasswordEncoder passwordEncoder;
 
-    private final RegistrationService registrationService;
-
-    private final UserService userService;
-
     @Autowired
     public AuthenticationServiceImpl(
             final UserRepository userRepository,
             final GoogleIdTokenVerifier verifier,
-            final PasswordEncoder passwordEncoder,
-            final RegistrationService registrationService,
-            final UserService userService
+            final PasswordEncoder passwordEncoder
     ) {
         this.userRepository = userRepository;
         this.verifier = verifier;
         this.passwordEncoder = passwordEncoder;
-        this.registrationService = registrationService;
-        this.userService = userService;
     }
 
     @Override
@@ -72,25 +61,19 @@ public final class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public User authenticate(final String idTokenStr) {
+    public User authenticate(final String idToken) {
+        GoogleIdToken.Payload payload = verify(idToken);
+
+        return userRepository.findByGoogleSubject(payload.getSubject());
+    }
+
+    @Override
+    public GoogleIdToken.Payload verify(final String idTokenStr) {
         try {
             GoogleIdToken idToken = verifier.verify(idTokenStr);
 
             if (idToken != null) {
-                GoogleIdToken.Payload payload = idToken.getPayload();
-
-                User user = userRepository.findByGoogleSubject(payload.getSubject());
-                if (user != null) { // user logged via google before
-                    return user;
-                }
-
-                // first login
-                final User registeredUser = registrationService.register(payload);
-                getGooglePictureUrl(payload).ifPresentOrElse(url -> userService.changeAvatar(registeredUser, url),
-                        () -> logger.log(Level.FINER,
-                                "User {0} does not have google avatar, using default one", registeredUser));
-
-                return registeredUser;
+                return idToken.getPayload();
             }
 
         } catch (GeneralSecurityException e) {
@@ -101,15 +84,6 @@ public final class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         throw new AuthenticationServiceException("Could not verify google token");
-    }
-
-    private Optional<String> getGooglePictureUrl(final GoogleIdToken.Payload payload) {
-        String pictureUrl = (String) payload.get("picture");
-        if (pictureUrl != null) {
-            return Optional.of(pictureUrl);
-        } else {
-            return Optional.empty();
-        }
     }
 
     @Override

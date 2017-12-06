@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.support.SpringBootServletInitializer;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = {
@@ -15,6 +16,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 })
 @EntityScan(basePackages = "cz.cuni.mff.arrows.dao")
 @EnableScheduling
+@EnableAsync
 public class Application extends SpringBootServletInitializer {
 
     public static void main(final String[] args) {

@@ -1,10 +1,13 @@
 package cz.cuni.mff.fruiton.controller.api;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.mongodb.DuplicateKeyException;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
+import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import cz.cuni.mff.fruiton.service.authentication.TokenService;
+import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,11 +31,20 @@ public class LoginController {
 
     private final AuthenticationService authService;
     private final TokenService tokenService;
+    private final RegistrationService registrationService;
+    private final UserService userService;
 
     @Autowired
-    public LoginController(final AuthenticationService authService, final TokenService tokenService) {
+    public LoginController(
+            final AuthenticationService authService,
+            final TokenService tokenService,
+            final RegistrationService registrationService,
+            final UserService userService
+    ) {
         this.authService = authService;
         this.tokenService = tokenService;
+        this.registrationService = registrationService;
+        this.userService = userService;
     }
 
     @RequestMapping(value = "/api/login", method = RequestMethod.POST)
@@ -81,6 +93,11 @@ public class LoginController {
     @RequestMapping(value = "/api/loginGoogle")
     public final GoogleLoginResult loginGoogle(@RequestParam final String idToken) {
         User user = authService.authenticate(idToken);
+        if (user == null) {
+            GoogleIdToken.Payload payload = authService.verify(idToken);
+            user = registrationService.register(userService.generateRandomName(payload), payload);
+        }
+
         String token = generateTokenForUser(user);
         return new GoogleLoginResult(user.getLogin(), token);
     }

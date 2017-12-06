@@ -1,16 +1,19 @@
 package cz.cuni.mff.fruiton.service.social.impl;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.ImageService;
+import org.kohsuke.randname.RandomNameGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.thymeleaf.util.StringUtils;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -26,7 +29,13 @@ public final class UserServiceImpl implements UserService {
 
     }
 
+    private static final int NAME_GENERATION_RETRY_COUNT = 5;
+
+    private static final int RANDOM_GOOGLE_SUFFIX_SIZE = 3;
+
     private static final Logger logger = Logger.getLogger(UserServiceImpl.class.getName());
+
+    private final RandomNameGenerator nameGenerator = new RandomNameGenerator();
 
     private final UserRepository repository;
 
@@ -142,6 +151,27 @@ public final class UserServiceImpl implements UserService {
         }
 
         return builder.build();
+    }
+
+    @Override
+    public String generateRandomName(final GoogleIdToken.Payload payload) {
+        int tries = 0;
+
+        String name = nameGenerator.next();
+        while (tries < NAME_GENERATION_RETRY_COUNT && repository.existsByLogin(name)) {
+            name = nameGenerator.next();
+            tries++;
+        }
+
+        if (tries >= NAME_GENERATION_RETRY_COUNT) {
+            // get google first name and remove all non-alpha numeric characters
+            name = ((String) payload.get("given_name")).replaceAll("[^a-zA-Z0-9]", "");
+            while (repository.existsByLogin(name)) {
+                name += StringUtils.randomAlphanumeric(RANDOM_GOOGLE_SUFFIX_SIZE);
+            }
+        }
+
+        return name;
     }
 
 }
