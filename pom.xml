@@ -250,6 +250,11 @@
             <id>spring-releases</id>
             <url>https://repo.spring.io/libs-release</url>
         </repository>
+        <repository>
+            <id>fruiton-artifactory</id>
+            <name>Fruiton Artifactory</name>
+            <url>http://prak.mff.cuni.cz:8081/artifactory/libs-release-local</url>
+        </repository>
     </repositories>
     <pluginRepositories>
         <pluginRepository>
