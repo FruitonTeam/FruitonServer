@@ -2,6 +2,7 @@ package cz.cuni.mff.fruiton.service.social.impl;
 
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
+import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.ImageService;
@@ -120,6 +121,27 @@ public final class UserServiceImpl implements UserService {
             throw new UsernameNotFoundException("Cannot find user for: " + id);
         }
         return user;
+    }
+
+    @Override
+    public GameProtos.LoggedPlayerInfo getLoggedPlayerInfo(final User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("Cannot get logged player's info for null user");
+        }
+        GameProtos.LoggedPlayerInfo.Builder builder =  GameProtos.LoggedPlayerInfo.newBuilder()
+                .setLogin(user.getLogin())
+                .setRating(user.getRating())
+                .setMoney(user.getMoney());
+
+        if (user.isAvatarSet()) {
+            try {
+                builder.setAvatar(imageService.getBase64Avatar(user));
+            } catch (IOException e) {
+                logger.log(Level.WARNING, "Could not get base64 encoded image for {0}", user);
+            }
+        }
+
+        return builder.build();
     }
 
 }
