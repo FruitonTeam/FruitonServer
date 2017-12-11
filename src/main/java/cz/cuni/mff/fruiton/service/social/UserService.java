@@ -1,6 +1,7 @@
 package cz.cuni.mff.fruiton.service.social;
 
 import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dto.GameProtos;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
@@ -16,5 +17,7 @@ public interface UserService {
     User findUserByLogin(String login);
 
     User findUser(String id);
+
+    GameProtos.LoggedPlayerInfo getLoggedPlayerInfo(User user);
 
 }

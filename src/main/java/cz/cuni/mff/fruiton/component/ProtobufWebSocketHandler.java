@@ -1,9 +1,11 @@
 package cz.cuni.mff.fruiton.component;
 
 import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
+import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
@@ -26,17 +28,21 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
     private final MatchMakingService matchMakingService;
     private final GameService gameService;
 
+    private final UserService userService;
+
     @Autowired
     public ProtobufWebSocketHandler(
             final MessageDispatcher dispatcher,
             final SessionService sessionService,
             final MatchMakingService matchMakingService,
-            final GameService gameService
+            final GameService gameService,
+            final UserService userService
     ) {
         this.dispatcher = dispatcher;
         this.sessionService = sessionService;
         this.matchMakingService = matchMakingService;
         this.gameService = gameService;
+        this.userService = userService;
     }
 
     @Override
@@ -53,6 +59,17 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
         logger.log(Level.FINEST, "Opened connection for {0} with id: {1}",
                 new Object[] {session.getPrincipal(), session.getId()});
         sessionService.register(session);
+
+        sendLoggedPlayerInfo(session);
+    }
+
+    private void sendLoggedPlayerInfo(final WebSocketSession session) throws IOException {
+        // method needs to be public because of @Async
+        CommonProtos.WrapperMessage wrapperMessage = CommonProtos.WrapperMessage.newBuilder()
+                .setLoggedPlayerInfo(userService.getLoggedPlayerInfo((User) session.getPrincipal()))
+                .build();
+
+        session.sendMessage(new BinaryMessage(wrapperMessage.toByteArray()));
     }
 
     @Override
