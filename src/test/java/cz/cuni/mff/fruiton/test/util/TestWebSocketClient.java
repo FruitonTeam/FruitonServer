@@ -73,4 +73,13 @@ public class TestWebSocketClient extends WebSocketClient {
         return messageQueue.peek();
     }
 
+    public boolean hasInQueue(CommonProtos.WrapperMessage.MessageCase messageCase) {
+        for (CommonProtos.WrapperMessage msg : messageQueue) {
+            if (msg.getMessageCase() == messageCase) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

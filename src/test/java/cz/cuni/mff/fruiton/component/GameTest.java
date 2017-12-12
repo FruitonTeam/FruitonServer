@@ -17,7 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.net.URISyntaxException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = cz.cuni.mff.fruiton.Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -61,13 +61,12 @@ public class GameTest {
         client1.send(TestUtils.buildFindGameMsgWrapped().toByteArray());
         client2.send(TestUtils.buildFindGameMsgWrapped().toByteArray());
 
-        CommonProtos.WrapperMessage message1 = client1.blockingPoll();
-        CommonProtos.WrapperMessage message2 = client2.blockingPoll();
+        Thread.sleep(5000);
 
-        assertEquals("After successful matchmaking GameReady message is expected from server",
-                CommonProtos.WrapperMessage.MessageCase.GAMEREADY, message1.getMessageCase());
-        assertEquals("After successful matchmaking GameReady message is expected from server",
-                CommonProtos.WrapperMessage.MessageCase.GAMEREADY, message2.getMessageCase());
+        assertTrue("After successful matchmaking GameReady message is expected from server",
+                client1.hasInQueue(CommonProtos.WrapperMessage.MessageCase.GAMEREADY));
+        assertTrue("After successful matchmaking GameReady message is expected from server",
+                client2.hasInQueue(CommonProtos.WrapperMessage.MessageCase.GAMEREADY));
     }
 
 }
