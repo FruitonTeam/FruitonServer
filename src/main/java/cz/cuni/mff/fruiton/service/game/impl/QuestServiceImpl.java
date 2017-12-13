@@ -7,6 +7,7 @@ import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.QuestProgressRepository;
 import cz.cuni.mff.fruiton.dao.repository.QuestRepository;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
+import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.QuestService;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Service
 public final class QuestServiceImpl implements QuestService {
@@ -118,6 +120,26 @@ public final class QuestServiceImpl implements QuestService {
     @Override
     public void completeQuest(final User user, final String questName) {
         completeQuest(user, questRepository.findByName(questName));
+    }
+
+    @Override
+    public List<GameProtos.Quest> getAllQuests(final User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("Cannot get quests for null user");
+        }
+
+        return user.getAssignedQuests().stream().map(q -> {
+            QuestProgress progress = questProgressRepository.findByUserAndQuest(user, q);
+
+            return GameProtos.Quest.newBuilder()
+                    .setName(q.getName())
+                    .setDescription(q.getDescription())
+                    .setImage(getBase64QuestImage(q))
+                    .setGoal(q.getGoal())
+                    .setProgress(progress != null ? progress.getProgress() : 0)
+                    .setReward(q.getReward().toProtobuf())
+                    .build();
+        }).collect(Collectors.toList());
     }
 
 }
