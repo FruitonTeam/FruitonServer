@@ -4,6 +4,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dto.GameProtos;
+import cz.cuni.mff.fruiton.service.game.QuestService;
 import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.ImageService;
@@ -42,6 +43,8 @@ public final class UserServiceImpl implements UserService {
     private final ImageService imageService;
     private final EmailConfirmationService emailConfirmationService;
 
+    private final QuestService questService;
+
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -49,11 +52,13 @@ public final class UserServiceImpl implements UserService {
             final UserRepository repository,
             final ImageService imageService,
             final EmailConfirmationService emailConfirmationService,
+            final QuestService questService,
             final PasswordEncoder passwordEncoder
     ) {
         this.repository = repository;
         this.imageService = imageService;
         this.emailConfirmationService = emailConfirmationService;
+        this.questService = questService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -140,7 +145,8 @@ public final class UserServiceImpl implements UserService {
         GameProtos.LoggedPlayerInfo.Builder builder =  GameProtos.LoggedPlayerInfo.newBuilder()
                 .setLogin(user.getLogin())
                 .setRating(user.getRating())
-                .setMoney(user.getMoney());
+                .setMoney(user.getMoney())
+                .addAllQuests(questService.getAllQuests(user));
 
         if (user.isAvatarSet()) {
             try {
