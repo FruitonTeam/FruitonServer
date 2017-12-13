@@ -9,12 +9,14 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     User findByLogin(String login);
 
+    boolean existsByLogin(String login);
+
     User findByEmail(String email);
+
+    boolean existsByEmail(String email);
 
     User findByGoogleSubject(String googleSubject);
 
     Page<User> findAllByOrderByRatingDesc(Pageable pageable);
-
-    boolean existsByLogin(String login);
 
 }

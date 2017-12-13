@@ -16,7 +16,7 @@
 
             <div class="panel-body">
 
-                <form name="form" role="form" id="register-form" class="form-horizontal" enctype="multipart/form-data"
+                <form name="form" role="form" id="register-form" class="form-horizontal validated-form" enctype="multipart/form-data"
                       method="POST" data-toggle="validator" th:action="@{registerWeb}" th:object="${formData}">
 
                     <div class="form-group">
@@ -26,7 +26,7 @@
                                    pattern="^[_A-z0-9]{4,}$" required="required"
                                    data-pattern-error="Minimum of 4 alphanumeric characters"
                                    data-remote-error="Login is already used"
-                                   th:attr="data-remote=@{/api/player/isLoginValid}"
+                                   th:attr="data-remote=@{/api/player/isLoginAvailable}"
                                    th:field="*{login}"
                             />
                         </div>
@@ -56,7 +56,7 @@
                             <span class="input-group-addon"><i class="glyphicon glyphicon-envelope"></i></span>
                             <input id="email" type="email" class="form-control" name="email"
                                    placeholder="Email" required="required"
-                                   th:attr="data-remote=@{/api/player/isEmailValid}"
+                                   th:attr="data-remote=@{/api/player/isEmailAvailable}"
                                    data-remote-error="Email is already used"
                                    th:field="*{email}" />
                         </div>

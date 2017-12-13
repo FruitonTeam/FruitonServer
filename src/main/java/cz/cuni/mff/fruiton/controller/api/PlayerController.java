@@ -32,18 +32,20 @@ public final class PlayerController {
         return repository.findByLogin(login) != null;
     }
 
-    @RequestMapping("/api/player/isLoginValid")
-    public ResponseEntity<Void> isLoginValid(@RequestParam final String login) {
-        return respondOkIfNull(repository.findByLogin(login));
+    @RequestMapping("/api/player/isLoginAvailable")
+    public ResponseEntity<Void> isLoginAvailable(@RequestParam final String login) {
+        return repository.existsByLogin(login) ? new ResponseEntity<>(HttpStatus.BAD_REQUEST) : ResponseEntity.ok(null);
     }
 
-    @RequestMapping("/api/player/isEmailValid")
-    public ResponseEntity<Void> isEmailValid(@RequestParam final String email) {
-        return respondOkIfNull(repository.findByEmail(email));
+    @RequestMapping("/api/player/isEmailAvailable")
+    public ResponseEntity<Void> isEmailAvailable(@RequestParam final String email) {
+        return repository.existsByEmail(email) ? new ResponseEntity<>(HttpStatus.BAD_REQUEST) : ResponseEntity.ok(null);
     }
 
-    private ResponseEntity<Void> respondOkIfNull(final Object o) {
-        return o == null ? ResponseEntity.ok(null) : new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
+    @RequestMapping("/api/player/isEmailUsed")
+    public ResponseEntity<Void> isEmailUsed(@RequestParam final String email) {
+        return repository.existsByEmail(email) ? ResponseEntity.ok(null) : new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
     }
 
     @RequestMapping("/api/player/availableFruitons")

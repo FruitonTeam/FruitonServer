@@ -50,7 +50,7 @@ body {
  * Registration styles
  */
 
-#register-form > .form-group {
+.validated-form > .form-group {
     margin-left: 0;
     margin-right: 0;
 }

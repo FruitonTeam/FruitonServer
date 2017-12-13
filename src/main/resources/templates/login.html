@@ -16,6 +16,11 @@
 
             <div class="panel-body">
 
+                <div th:if="${showRenewPasswordInfo}" class="alert alert-info">
+                    <strong>Incorrect password!</strong> You can renew your password at
+                    <a th:href="@{/renewPassword}">password renewal page</a>.
+                </div>
+
                 <form name="form" id="form" class="form-horizontal" enctype="multipart/form-data" method="POST">
 
                     <div class="input-group">
