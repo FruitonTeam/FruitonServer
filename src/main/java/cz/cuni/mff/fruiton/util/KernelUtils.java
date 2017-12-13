@@ -11,6 +11,8 @@ import fruiton.kernel.actions.Action;
 import fruiton.kernel.actions.AttackAction;
 import fruiton.kernel.actions.AttackActionContext;
 import fruiton.kernel.actions.EndTurnAction;
+import fruiton.kernel.actions.HealAction;
+import fruiton.kernel.actions.HealActionContext;
 import fruiton.kernel.actions.MoveAction;
 import fruiton.kernel.actions.MoveActionContext;
 import fruiton.kernel.fruitonTeam.FruitonTeamValidator;
@@ -61,6 +63,12 @@ public final class KernelUtils {
             int dmg = kernel.currentState.field.get(from).fruiton.currentAttributes.damage;
 
             return new AttackAction(new AttackActionContext(dmg, from,
+                    KernelUtils.positionToPoint(protobufAction.getTo())
+            ));
+        } else if (HealAction.ID == protobufAction.getId()) {
+            Point from = KernelUtils.positionToPoint(protobufAction.getFrom());
+            int heal = kernel.currentState.field.get(from).fruiton.currentAttributes.heal;
+            return new HealAction(new HealActionContext(heal, from,
                     KernelUtils.positionToPoint(protobufAction.getTo())
             ));
         } else if (EndTurnAction.ID == protobufAction.getId()) {
