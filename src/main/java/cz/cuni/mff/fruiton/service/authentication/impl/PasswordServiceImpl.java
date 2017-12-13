@@ -35,7 +35,11 @@ public class PasswordServiceImpl implements PasswordService {
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public PasswordServiceImpl(UserRepository userRepository, MailService mailService, PasswordEncoder passwordEncoder) {
+    public PasswordServiceImpl(
+            final UserRepository userRepository,
+            final MailService mailService,
+            final PasswordEncoder passwordEncoder
+    ) {
         this.userRepository = userRepository;
         this.mailService = mailService;
         this.passwordEncoder = passwordEncoder;
@@ -43,7 +47,7 @@ public class PasswordServiceImpl implements PasswordService {
 
     /** {@inheritDoc} */
     @Override
-    public void renew(String email) {
+    public void renew(final String email) {
         if (email == null) {
             throw new IllegalArgumentException("Cannot renew password for null email");
         }

@@ -2,7 +2,7 @@ package cz.cuni.mff.fruiton.dto.form;
 
 import org.hibernate.validator.constraints.Email;
 
-public class RenewPasswordForm {
+public final class RenewPasswordForm {
 
     @Email
     private String email;
@@ -11,7 +11,7 @@ public class RenewPasswordForm {
         return email;
     }
 
-    public void setEmail(String email) {
+    public void setEmail(final String email) {
         this.email = email;
     }
 }
