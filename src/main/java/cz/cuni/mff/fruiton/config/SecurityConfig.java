@@ -33,6 +33,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/socket*").permitAll()
                 .antMatchers("/register").permitAll()
                 .antMatchers("/registerWeb").permitAll()
+                .antMatchers("/registerGoogle").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .formLogin()

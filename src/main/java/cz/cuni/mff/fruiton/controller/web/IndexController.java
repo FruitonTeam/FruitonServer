@@ -39,10 +39,13 @@ public final class IndexController {
             final HttpServletResponse response,
             @RequestParam final String idToken
     ) throws IOException {
-        User user = authService.authenticate(idToken);
-        authService.createAuthenticatedSession(user, request);
-
-        response.sendRedirect(context.getContextPath() + "/home");
+        User u = authService.authenticate(idToken);
+        if (u != null) {
+            authService.createAuthenticatedSession(u, request);
+            response.sendRedirect(context.getContextPath() + "/home");
+        } else {
+            response.sendRedirect(context.getContextPath() + "/registerGoogle?token=" + idToken);
+        }
     }
 
 }

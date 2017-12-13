@@ -19,6 +19,6 @@ public interface RegistrationService {
 
     User register(RegistrationForm registrationForm);
 
-    User register(GoogleIdToken.Payload payload);
+    User register(String login, GoogleIdToken.Payload payload);
 
 }

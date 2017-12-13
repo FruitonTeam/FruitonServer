@@ -15,4 +15,6 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     Page<User> findAllByOrderByRatingDesc(Pageable pageable);
 
+    boolean existsByLogin(String login);
+
 }

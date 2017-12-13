@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.service.social;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,5 +20,7 @@ public interface UserService {
     User findUser(String id);
 
     GameProtos.LoggedPlayerInfo getLoggedPlayerInfo(User user);
+
+    String generateRandomName(GoogleIdToken.Payload payload);
 
 }
