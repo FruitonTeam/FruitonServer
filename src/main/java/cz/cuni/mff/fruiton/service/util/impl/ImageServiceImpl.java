@@ -61,7 +61,7 @@ public final class ImageServiceImpl implements ImageService {
 
         FileUtils.copyURLToFile(new URL(url), imageFile);
 
-        return imageName;
+        return imageFile.getName();
     }
 
     @Override

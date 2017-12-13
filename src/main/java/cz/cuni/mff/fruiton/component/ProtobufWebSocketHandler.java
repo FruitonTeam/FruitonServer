@@ -64,7 +64,6 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
     }
 
     private void sendLoggedPlayerInfo(final WebSocketSession session) throws IOException {
-        // method needs to be public because of @Async
         CommonProtos.WrapperMessage wrapperMessage = CommonProtos.WrapperMessage.newBuilder()
                 .setLoggedPlayerInfo(userService.getLoggedPlayerInfo((User) session.getPrincipal()))
                 .build();
