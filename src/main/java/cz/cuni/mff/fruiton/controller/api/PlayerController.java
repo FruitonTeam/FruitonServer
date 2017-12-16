@@ -1,6 +1,8 @@
 package cz.cuni.mff.fruiton.controller.api;
 
+import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
+import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
 import cz.cuni.mff.fruiton.service.game.PlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,10 +23,17 @@ public final class PlayerController {
 
     private final PlayerService playerService;
 
+    private final AuthenticationService authService;
+
     @Autowired
-    public PlayerController(final UserRepository repository, final PlayerService playerService) {
+    public PlayerController(
+            final UserRepository repository,
+            final PlayerService playerService,
+            final AuthenticationService authService
+    ) {
         this.repository = repository;
         this.playerService = playerService;
+        this.authService = authService;
     }
 
     @RequestMapping("/api/player/exists")
@@ -45,12 +54,12 @@ public final class PlayerController {
     @RequestMapping("/api/player/isEmailUsed")
     public ResponseEntity<Void> isEmailUsed(@RequestParam final String email) {
         return repository.existsByEmail(email) ? ResponseEntity.ok(null) : new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
     }
 
-    @RequestMapping("/api/player/availableFruitons")
-    public List<Integer> getAvailableFruitons(@RequestParam final String login) {
-        return playerService.getAvailableFruitons(login);
+    @RequestMapping("/api/secured/player/availableFruitons")
+    public List<Integer> getAvailableFruitons() {
+        User user = authService.getLoggedInUser();
+        return playerService.getAvailableFruitons(user);
     }
 
     @RequestMapping("/api/player/avatar")

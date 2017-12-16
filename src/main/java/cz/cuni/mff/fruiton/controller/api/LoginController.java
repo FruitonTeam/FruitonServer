@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -54,13 +53,7 @@ public class LoginController {
     }
 
     private String generateTokenForUser(final User user) {
-        String userToken = generateToken();
-        tokenService.register(userToken, user);
-        return userToken;
-    }
-
-    private String generateToken() {
-        return UUID.randomUUID().toString();
+        return tokenService.register(user);
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)

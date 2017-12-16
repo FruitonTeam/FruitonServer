@@ -87,6 +87,11 @@ public final class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
+    public User getLoggedInUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    @Override
     public void createAuthenticatedSession(final User user, final HttpServletRequest request) {
         Authentication auth = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);

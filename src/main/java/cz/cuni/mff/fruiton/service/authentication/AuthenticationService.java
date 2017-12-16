@@ -15,4 +15,6 @@ public interface AuthenticationService {
 
     GoogleIdToken.Payload verify(String idTokenStr);
 
+    User getLoggedInUser();
+
 }

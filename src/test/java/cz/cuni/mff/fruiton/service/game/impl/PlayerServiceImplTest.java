@@ -39,7 +39,7 @@ public class PlayerServiceImplTest {
     public void testDefaultFruitons() {
         TestUtils.defaultRegister(registrationService, userRepository);
 
-        List<Integer> playersFruitons = playerService.getAvailableFruitons(TestUtils.DEFAULT_LOGIN);
+        List<Integer> playersFruitons = playerService.getAvailableFruitons(userRepository.findByLogin(TestUtils.DEFAULT_LOGIN));
         for (int defaultUnlockedFruiton : defaultUnlockedFruitons) {
             assertTrue("Returned values must contain default values", playersFruitons.contains(defaultUnlockedFruiton));
         }

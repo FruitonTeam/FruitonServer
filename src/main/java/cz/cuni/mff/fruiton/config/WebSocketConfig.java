@@ -51,7 +51,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
                             final Map<String, Object> attributes
                     ) {
                         String token = request.getHeaders().get(TOKEN_HEADER_KEY).get(0);
-                        return tokenService.getUserAndInvalidateToken(token);
+                        return tokenService.getUser(token);
                     }
 
                 });
