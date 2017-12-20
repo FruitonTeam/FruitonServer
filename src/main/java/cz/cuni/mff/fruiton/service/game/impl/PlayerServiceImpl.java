@@ -88,20 +88,10 @@ public final class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public List<Integer> getAvailableFruitons(final String login) {
-        User user = userRepository.findByLogin(login);
-        if (user == null) {
-            throw new IllegalArgumentException("Unknown user " + login);
-        }
-
-        return getAvailableFruitons(user);
-    }
-
-    private List<Integer> getAvailableFruitons(final User user) {
+    public List<Integer> getAvailableFruitons(final User user) {
         if (user == null) {
             throw new IllegalArgumentException("Cannot get available fruitons for null user");
         }
-
         return ListUtils.union(defaultUnlockedFruitons, user.getUnlockedFruitons());
     }
 

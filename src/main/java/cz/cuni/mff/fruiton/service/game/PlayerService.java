@@ -14,7 +14,7 @@ public interface PlayerService {
 
     boolean isOnline(String login);
 
-    List<Integer> getAvailableFruitons(String login);
+    List<Integer> getAvailableFruitons(User user);
 
     void addTeam(User user, FruitonTeam fruitonTeam);
 

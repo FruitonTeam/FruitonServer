@@ -4,10 +4,14 @@ import cz.cuni.mff.fruiton.dao.domain.User;
 
 public interface TokenService {
 
-    void register(String token, User user);
+    String register(User user);
 
-    User getUserAndInvalidateToken(String token);
+    void unregister(User user);
+
+    User getUser(String token);
 
     boolean isValid(String token);
+
+    void prolongLease(String token);
 
 }
