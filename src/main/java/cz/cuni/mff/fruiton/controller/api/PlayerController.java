@@ -37,6 +37,11 @@ public final class PlayerController {
         return repository.existsByLogin(login) ? new ResponseEntity<>(HttpStatus.BAD_REQUEST) : ResponseEntity.ok(null);
     }
 
+    @RequestMapping("/api/player/isLoginUsed")
+    public ResponseEntity<Void> isLoginUsed(@RequestParam("username") final String login) {
+        return repository.existsByLogin(login) ? ResponseEntity.ok(null) : new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
     @RequestMapping("/api/player/isEmailAvailable")
     public ResponseEntity<Void> isEmailAvailable(@RequestParam final String email) {
         return repository.existsByEmail(email) ? new ResponseEntity<>(HttpStatus.BAD_REQUEST) : ResponseEntity.ok(null);
