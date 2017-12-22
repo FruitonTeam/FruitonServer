@@ -6,6 +6,8 @@ import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.game.PlayerService;
+import cz.cuni.mff.fruiton.util.KernelUtils;
+import fruiton.kernel.Fruiton;
 import org.apache.commons.collections4.ListUtils;
 import cz.cuni.mff.fruiton.service.util.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import java.util.List;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @PropertySource("classpath:game.properties")
@@ -93,6 +96,14 @@ public final class PlayerServiceImpl implements PlayerService {
             throw new IllegalArgumentException("Cannot get available fruitons for null user");
         }
         return ListUtils.union(defaultUnlockedFruitons, user.getUnlockedFruitons());
+    }
+
+    @Override
+    public List<Fruiton> getFruitonsAvailableForSelling(final User user) {
+        List<Integer> fruitonsForSell = user.getUnlockedFruitons();
+        fruitonsForSell.removeAll(defaultUnlockedFruitons);
+
+        return fruitonsForSell.stream().distinct().map(KernelUtils::getFruiton).collect(Collectors.toList());
     }
 
 }

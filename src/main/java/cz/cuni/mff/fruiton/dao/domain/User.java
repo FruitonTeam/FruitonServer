@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.validation.constraints.Pattern;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -147,11 +148,7 @@ public final class User implements Principal, UserDetails {
     }
 
     public List<Integer> getUnlockedFruitons() {
-        return unlockedFruitons;
-    }
-
-    public void setUnlockedFruitons(final List<Integer> unlockedFruitons) {
-        this.unlockedFruitons = unlockedFruitons;
+        return new ArrayList<>(unlockedFruitons); // make a copy
     }
 
     public List<FruitonTeam> getTeams() {
@@ -192,6 +189,14 @@ public final class User implements Principal, UserDetails {
 
     public void adjustMoney(final int value) {
         money += value;
+    }
+
+    public void unlockFruiton(final int fruitonId) {
+        unlockedFruitons.add(fruitonId);
+    }
+
+    public void removeFruitonFromUnlockedFruitons(final int fruitonId) {
+        unlockedFruitons.remove(Integer.valueOf(fruitonId));
     }
 
     public String getAvatarWebImageMapping() {

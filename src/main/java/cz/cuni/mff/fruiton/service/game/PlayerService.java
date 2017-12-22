@@ -2,6 +2,7 @@ package cz.cuni.mff.fruiton.service.game;
 
 import cz.cuni.mff.fruiton.dao.domain.FruitonTeam;
 import cz.cuni.mff.fruiton.dao.domain.User;
+import fruiton.kernel.Fruiton;
 
 import java.util.List;
 
@@ -21,5 +22,7 @@ public interface PlayerService {
     void removeTeam(User user, String teamName);
 
     Optional<String> getBase64Avatar(String login) throws IOException;
+
+    List<Fruiton> getFruitonsAvailableForSelling(User user);
 
 }

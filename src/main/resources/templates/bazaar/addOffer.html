@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(title = 'Bazaar')">
+
+</head>
+<body>
+
+<nav th:replace="fragments/navbar :: navbar"></nav>
+
+<div class="container main-content">
+
+    <div th:switch="${fruitons.isEmpty()}">
+        <div th:case="${true}">
+            <div class="jumbotron">
+                <h2>You have no fruiton eligible for selling :(</h2>
+                <p>Play some games to win some :)</p>
+            </div>
+        </div>
+
+        <div th:case="${false}">
+            <form th:object="${formModel}" method="post" data-toggle="validator">
+
+                <div class="form-group">
+                    <select class="form-control" th:field="*{fruitonId}" id="fruiton">
+                        <option th:each="fruiton : ${fruitons}" th:text="${fruiton.model}"
+                                th:value="${fruiton.id}"></option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <input id="price" type="number" class="form-control" th:field="*{price}" min="1"
+                           placeholder="Price" required="required" />
+                </div>
+
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>
