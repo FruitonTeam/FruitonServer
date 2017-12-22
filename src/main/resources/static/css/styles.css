@@ -14,6 +14,7 @@ body {
     max-height: 40px;
     padding: 0;
     margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 /*
@@ -106,4 +107,56 @@ body {
 
 .abcRioButton {
     margin: 0 auto;
+}
+
+/*
+ * Dropdown social
+ */
+
+ul.dropdown-social-menu {
+    min-width:250px;
+}
+
+ul.dropdown-social-menu li .item {
+    display:block;
+    padding:3px 10px;
+    margin: 3px 0;
+}
+
+ul.dropdown-social-menu li .item:hover {
+    background-color:#f3f3f3;
+}
+
+ul.dropdown-social-menu li .item:after {
+    visibility: hidden;
+    display: block;
+    font-size: 0;
+    content: " ";
+    clear: both;
+    height: 0;
+}
+
+ul.dropdown-social-menu li .item-left {
+    float:left;
+}
+
+ul.dropdown-social-menu li .item-left img,
+ul.dropdown-social-menu li .item-left span.item-info {
+    float:left;
+}
+
+ul.dropdown-social-menu li .item-left span.item-info {
+    margin-left:10px;
+}
+
+ul.dropdown-social-menu li .item-left span.item-info span {
+    display:block;
+}
+
+ul.dropdown-social-menu li .item-right {
+    float:right;
+}
+
+ul.dropdown-social-menu li .item-right button {
+    margin-top:14px;
 }
