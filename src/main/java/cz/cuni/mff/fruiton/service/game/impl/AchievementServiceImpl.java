@@ -12,6 +12,8 @@ import cz.cuni.mff.fruiton.service.game.AchievementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -111,6 +113,39 @@ public final class AchievementServiceImpl implements AchievementService {
     public void unlockAchievement(final User user, final String achievementName) {
         Achievement achievement = achievementRepository.findByName(achievementName);
         unlockAchievement(user, achievement);
+    }
+
+    @Override
+    public List<AchievementStatusInfo> getAchievementStatusesForUser(final User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("Cannot get achievement status for null user");
+        }
+
+        List<Achievement> allAchievements = achievementRepository.findAll();
+
+        List<Achievement> userUnlockedAchievements = user.getUnlockedAchievements();
+
+        List<AchievementProgress> achievementProgresses = achievementProgressRepository.findByUser(user);
+
+        List<AchievementStatusInfo> achievementStatusInfos = new ArrayList<>(allAchievements.size());
+        for (Achievement achievement : allAchievements) {
+            AchievementStatusInfo info = new AchievementStatusInfo();
+            info.setAchievement(achievement);
+
+            if (userUnlockedAchievements.contains(achievement)) {
+                info.setUnlocked(true);
+            } else {
+                for (AchievementProgress progress : achievementProgresses) {
+                    if (achievement.equals(progress.getAchievement())) {
+                        info.setProgress(progress.getProgress());
+                        break;
+                    }
+                }
+            }
+            achievementStatusInfos.add(info);
+        }
+
+        return achievementStatusInfos;
     }
 
 }
