@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(title = 'Bazaar')">
+
+</head>
+<body>
+
+<nav th:replace="fragments/navbar :: navbar"></nav>
+
+<div class="container main-content">
+
+    <h2 th:text="${fruitonName}"></h2>
+
+    <h3>Offers</h3>
+
+    <div class="list-group">
+        <a class="list-group-item" th:each="offer : ${offers}" href="#">
+            Offered by:
+            <span class="btn-link" th:text="${offer.offeredBy.login}"
+                  th:onclick="'window.location.href = \'' + @{'/profile/' + ${offer.offeredBy.login}} + '\''">
+            </span>
+
+            <div class="pull-right" th:switch="${#authentication.getPrincipal().getMoney() >= offer.price
+                    and !#authentication.getPrincipal().equals(offer.offeredBy)}">
+                <span>Price: </span><strong><span th:text="${offer.price}"></span></strong>
+
+                <span th:case="${true}" class="btn btn-xs btn-success"
+                      th:onclick="'window.location.href = \'' + @{'/bazaar/buy?offerId=' + ${offer.id}} + '\''">
+                    <span aria-hidden="true" class="glyphicon glyphicon-shopping-cart">Buy</span>
+                </span>
+                <span th:case="${false}" class="btn btn-xs btn-default disabled">
+                    <span aria-hidden="true" class="glyphicon glyphicon-shopping-cart">Buy</span>
+                </span>
+            </div>
+        </a>
+    </div>
+
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>

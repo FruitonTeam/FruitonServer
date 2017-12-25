@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(title = 'Bazaar')">
+
+</head>
+<body>
+
+<nav th:replace="fragments/navbar :: navbar"></nav>
+
+<div class="container main-content">
+
+    <h2>Bazaar</h2>
+
+    <div class="row">
+
+        <div class="col-md-3">
+            <div id="sidebar" class="well sidebar-nav">
+                <h5><i class="glyphicon glyphicon-home"></i>
+                    <small><b>ACTIONS</b></small>
+                </h5>
+                <ul class="nav nav-pills nav-stacked">
+                    <li><a th:href="@{/bazaar/addOffer}">Add offer</a></li>
+                    <li><a th:href="@{/bazaar/myOffers}">My offers</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <h3>Best offers</h3>
+            <div class="list-group">
+                <a class="list-group-item" th:each="offer : ${bestOffers}" th:href="@{'/bazaar/' + ${offer.fruitonId}}">
+                    <span th:text="${offer.fruitonName}"></span>
+                    <div class="pull-right">
+                        <span>Min price: </span><strong><span th:text="${offer.price}"></span></strong>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>

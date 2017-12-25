@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(title = 'Bazaar')">
+
+</head>
+<body>
+
+<nav th:replace="fragments/navbar :: navbar"></nav>
+
+<div class="container main-content">
+
+    <h2>My offers</h2>
+
+    <div class="row">
+
+        <div th:switch="${offers.isEmpty()}">
+            <div th:case="${true}" class="jumbotron">
+                <p>You have no offers.</p>
+            </div>
+
+            <div th:case="${false}" class="list-group">
+                <a class="list-group-item" th:each="offer : ${offers}" href="#">
+                    <span th:text="${offer.item.fruitonName}"></span>
+                    <div class="pull-right">
+                        <span>Price: </span><strong><span th:text="${offer.item.price}"></span></strong>
+                        <span class="btn btn-xs btn-danger"
+                              th:onclick="'window.location.href = \'/bazaar/removeOffer?offerId=' + ${offer.id} + '\''">
+                            <span aria-hidden="true" class="glyphicon glyphicon-remove"></span>
+                        </span>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>

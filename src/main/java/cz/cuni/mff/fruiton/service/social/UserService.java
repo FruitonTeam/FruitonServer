@@ -23,4 +23,10 @@ public interface UserService {
 
     String generateRandomName(GoogleIdToken.Payload payload);
 
+    void removeFruitonFromUnlockedFruitons(User user, int fruitonId);
+
+    void unlockFruiton(User user, int fruitonId);
+
+    void adjustMoney(User user, int change);
+
 }

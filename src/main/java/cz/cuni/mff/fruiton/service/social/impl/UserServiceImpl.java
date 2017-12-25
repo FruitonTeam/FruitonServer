@@ -180,4 +180,33 @@ public final class UserServiceImpl implements UserService {
         return name;
     }
 
+    @Override
+    public void removeFruitonFromUnlockedFruitons(final User user, final int fruitonId) {
+        if (user == null) {
+            throw new IllegalArgumentException("Cannot remove unlocked fruiton for null user");
+        }
+
+        user.removeFruitonFromUnlockedFruitons(fruitonId);
+        repository.save(user);
+    }
+
+    @Override
+    public void unlockFruiton(final User user, final int fruitonId) {
+        if (user == null) {
+            throw new IllegalArgumentException("Cannot unlock fruiton for null user");
+        }
+
+        user.unlockFruiton(fruitonId);
+        repository.save(user);
+    }
+
+    @Override
+    public void adjustMoney(final User user, final int change) {
+        if (user == null) {
+            throw new IllegalArgumentException("Cannot adjust money for null user");
+        }
+        user.adjustMoney(change);
+        repository.save(user);
+    }
+
 }

@@ -34,7 +34,7 @@
                                    pattern="^[_A-z0-9]{4,}$" required="required"
                                    data-pattern-error="Minimum of 4 alphanumeric characters"
                                    data-remote-error="Login is already used"
-                                   th:attr="data-remote=@{/api/player/isLoginValid}"
+                                   th:attr="data-remote=@{/api/player/isLoginAvailable}"
                                    th:field="*{login}" />
                         </div>
                         <div class="help-block with-errors"></div>
