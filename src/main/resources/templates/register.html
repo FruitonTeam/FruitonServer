@@ -27,8 +27,7 @@
                                    data-pattern-error="Minimum of 4 alphanumeric characters"
                                    data-remote-error="Login is already used"
                                    th:attr="data-remote=@{/api/player/isLoginAvailable}"
-                                   th:field="*{login}"
-                            />
+                                   th:field="*{login}" maxlength="50" />
                         </div>
                         <div class="help-block with-errors"></div>
                     </div>
@@ -37,7 +36,7 @@
                         <div class="input-group">
                             <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
                             <input id="password" type="password" class="form-control" name="password" placeholder="Password"
-                                   data-minlength="6" required="required" th:field="*{password}" />
+                                   data-minlength="6" required="required" th:field="*{password}" maxlength="50" />
                         </div>
                         <div class="help-block with-errors"></div>
                     </div>
@@ -46,7 +45,8 @@
                         <div class="input-group">
                             <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
                             <input type="password" class="form-control" data-match="#password"
-                                placeholder="Confirm password" required="required" data-error="Passwords do not match" />
+                                   placeholder="Confirm password" required="required" data-error="Passwords do not match"
+                                   maxlength="50"/>
                         </div>
                         <div class="help-block with-errors"></div>
                     </div>
@@ -58,7 +58,7 @@
                                    placeholder="Email" required="required"
                                    th:attr="data-remote=@{/api/player/isEmailAvailable}"
                                    data-remote-error="Email is already used"
-                                   th:field="*{email}" />
+                                   th:field="*{email}" maxlength="50" />
                         </div>
                         <div class="help-block with-errors"></div>
                     </div>

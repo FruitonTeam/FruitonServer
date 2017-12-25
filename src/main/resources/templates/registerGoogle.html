@@ -35,7 +35,7 @@
                                    data-pattern-error="Minimum of 4 alphanumeric characters"
                                    data-remote-error="Login is already used"
                                    th:attr="data-remote=@{/api/player/isLoginAvailable}"
-                                   th:field="*{login}" />
+                                   th:field="*{login}" maxlength="50" />
                         </div>
                         <div class="help-block with-errors"></div>
                     </div>

@@ -8,12 +8,14 @@ import javax.validation.constraints.Size;
 
 public final class RegistrationForm {
 
+    @Size(max = User.LOGIN_MAX_LENGTH)
     @Pattern(regexp = "^[_A-z0-9]{4,}$")
     private String login;
 
-    @Size(min = User.PASSWORD_MIN_LENGTH)
+    @Size(min = User.PASSWORD_MIN_LENGTH, max = User.PASSWORD_MAX_LENGTH)
     private String password;
 
+    @Size(max = User.EMAIL_MAX_LENGTH)
     @Email
     private String email;
 
