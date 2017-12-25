@@ -1,7 +1,8 @@
 package cz.cuni.mff.fruiton.controller.web;
 
-import cz.cuni.mff.fruiton.dao.repository.AchievementRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
+import cz.cuni.mff.fruiton.service.game.AchievementService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,16 +10,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 public final class AchievementsController {
 
-    private final AchievementRepository repository;
+    private final AuthenticationService authService;
 
-    @Autowired
-    public AchievementsController(final AchievementRepository repository) {
-        this.repository = repository;
+    private final AchievementService achievementService;
+
+    public AchievementsController(final AuthenticationService authService, final AchievementService achievementService) {
+        this.authService = authService;
+        this.achievementService = achievementService;
     }
 
     @RequestMapping(value = "/achievements")
     public String getAchievements(final Model model) {
-        model.addAttribute("achievements", repository.findAll());
+        User user = authService.getLoggedInUser();
+
+        model.addAttribute("achievementStatuses", achievementService.getAchievementStatusesForUser(user));
         return "achievements";
     }
 

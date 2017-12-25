@@ -17,6 +17,10 @@ body {
     margin-bottom: 5px;
 }
 
+.grayscale {
+    filter: grayscale(100%);
+}
+
 /*
  * Login styles
  */
