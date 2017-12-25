@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(title = 'Fruiton detail')">
+
+</head>
+<body>
+
+<nav th:replace="fragments/navbar :: navbar"></nav>
+
+<div class="container main-content">
+
+    <div class="jumbotron">
+
+        <h2 th:text="${fruiton.name}"></h2>
+
+        <img th:src="@{/img/fruiton_thumb.png}" style="max-width: 256px;" class="thumbnail" alt="Fruiton image" />
+
+        <h3>Attributes</h3>
+        <p>
+            <strong>Attack: </strong><span th:text="${fruiton.damage}"></span><br/>
+            <strong>Health: </strong><span th:text="${fruiton.hp}"></span><br/>
+        </p>
+
+    </div>
+
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>

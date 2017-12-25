@@ -28,6 +28,9 @@
                 <li th:classappend="${#httpServletRequest.getRequestURI().contains('/achievements') ? 'active':''}">
                     <a th:href="@{/achievements}">Achievements</a>
                 </li>
+                <li th:classappend="${#httpServletRequest.getRequestURI().contains('/collection') ? 'active':''}">
+                    <a th:href="@{/collection}">Collection</a>
+                </li>
                 <li th:classappend="${#httpServletRequest.getRequestURI().contains('/bazaar') ? 'active':''}">
                     <a th:href="@{/bazaar}">Bazaar</a>
                 </li>

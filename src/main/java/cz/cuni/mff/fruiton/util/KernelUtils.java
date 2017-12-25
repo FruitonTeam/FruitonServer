@@ -22,6 +22,9 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public final class KernelUtils {
 
@@ -50,6 +53,10 @@ public final class KernelUtils {
 
     public static Fruiton getFruiton(final int id) {
         return FruitonFactory.makeFruiton(id, getFruitonDb());
+    }
+
+    public static List<Integer> getAllFruitonIds() {
+        return Arrays.stream(getFruitonDb().fruitonDb._keys).filter(key -> key != 0).boxed().collect(Collectors.toList());
     }
 
     public static Action getActionFromProtobuf(final GameProtos.Action protobufAction, final Kernel kernel) {
