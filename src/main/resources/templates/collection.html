@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(title = 'Collection')">
+
+</head>
+<body>
+
+<nav th:replace="fragments/navbar :: navbar"></nav>
+
+<div class="container main-content">
+
+    <div th:each="fruiton, idx : ${fruitons}">
+
+        <div th:classappend="${idx.count % 6 == 0 ? 'row' : ''}">
+
+            <div class="col-sm-2">
+                <a th:href="@{/collection/fruiton(id=${fruiton.id})}" class="thumbnail">
+                    <img th:src="@{/img/fruiton_thumb.png}" alt="Fruiton image" style="width:100%"/>
+                    <div class="caption">
+                        <div class="text-center">
+                            <strong><span th:text="${fruiton.name}"></span></strong><br/>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>
