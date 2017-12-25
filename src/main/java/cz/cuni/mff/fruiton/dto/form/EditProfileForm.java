@@ -4,11 +4,15 @@ import cz.cuni.mff.fruiton.dao.domain.User;
 import org.hibernate.validator.constraints.Email;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.constraints.Size;
+
 public class EditProfileForm {
 
+    @Size(max = User.PASSWORD_MAX_LENGTH)
     private String password;
 
     @Email
+    @Size(max = User.EMAIL_MAX_LENGTH)
     private String email;
 
     private MultipartFile avatar;
