@@ -2,6 +2,7 @@ package cz.cuni.mff.fruiton.component;
 
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.CommonProtos;
+import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
@@ -14,8 +15,11 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Component
 public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
@@ -61,6 +65,10 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
         sessionService.register(session);
 
         sendLoggedPlayerInfo(session);
+
+        if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
+            sendPlayersOnTheSameNetworkInfo(session);
+        }
     }
 
     private void sendLoggedPlayerInfo(final WebSocketSession session) throws IOException {
@@ -71,9 +79,35 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
         session.sendMessage(new BinaryMessage(wrapperMessage.toByteArray()));
     }
 
+    private void sendPlayersOnTheSameNetworkInfo(final WebSocketSession session) throws IOException {
+        Set<WebSocketSession> otherPlayersSessions = sessionService.getOtherSessionsOnTheSameNetwork(session);
+
+        session.sendMessage(new BinaryMessage(getPlayersOnlineMessage(
+                otherPlayersSessions.stream().map(s -> s.getPrincipal().getName()).collect(Collectors.toSet()))
+                .toByteArray()));
+
+        BinaryMessage playerOnlineMsg = new BinaryMessage(
+                getPlayersOnlineMessage(Collections.singleton(session.getPrincipal().getName())).toByteArray());
+        for (WebSocketSession s : otherPlayersSessions) {
+            s.sendMessage(playerOnlineMsg);
+        }
+    }
+
+    private CommonProtos.WrapperMessage getPlayersOnlineMessage(final Set<String> onlinePlayers) {
+        return CommonProtos.WrapperMessage.newBuilder().setPlayersOnSameNetworkOnline(
+                GameProtos.PlayersOnSameNetworkOnline.newBuilder()
+                        .addAllLogins(onlinePlayers)
+                        .build())
+                .build();
+    }
+
     @Override
-    public final void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) throws Exception {
+    public final void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) throws IOException {
         logger.log(Level.FINEST, "Closed connection for {0} with status: {1}", new Object[] {session.getPrincipal(), status});
+        if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
+            sendPlayerOnTheSameNetworkDisconnected(session);
+        }
+
         sessionService.unregister(session);
 
         User user = (User) session.getPrincipal();
@@ -82,6 +116,22 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
         } else if (user.getState() == User.State.IN_GAME) {
             gameService.userDisconnected(user);
         }
+    }
+
+    private void sendPlayerOnTheSameNetworkDisconnected(final WebSocketSession session) throws IOException {
+        BinaryMessage message = new BinaryMessage(getPlayerOfflineMessage(session.getPrincipal().getName()).toByteArray());
+
+        for (WebSocketSession playerSession : sessionService.getOtherSessionsOnTheSameNetwork(session)) {
+            playerSession.sendMessage(message);
+        }
+    }
+
+    private CommonProtos.WrapperMessage getPlayerOfflineMessage(final String offlinePlayer) {
+        return CommonProtos.WrapperMessage.newBuilder().setPlayerOnSameNetworkOffline(
+                GameProtos.PlayerOnSameNetworkOffline.newBuilder()
+                        .setLogin(offlinePlayer)
+                        .build())
+                .build();
     }
 
 }
