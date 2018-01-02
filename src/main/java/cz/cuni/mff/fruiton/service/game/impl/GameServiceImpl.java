@@ -7,8 +7,11 @@ import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.AchievementService;
+import cz.cuni.mff.fruiton.service.game.FruitonService;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.PlayerService;
+import cz.cuni.mff.fruiton.service.game.QuestService;
+import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.ImageService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import fruiton.kernel.Fruiton;
@@ -23,7 +26,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,6 +37,8 @@ import java.util.logging.Logger;
 
 @Service
 public final class GameServiceImpl implements GameService {
+
+    private static final int STANDARD_MONEY_REWARD = 50;
 
     private static final Logger logger = Logger.getLogger(GameServiceImpl.class.getName());
 
@@ -51,19 +58,31 @@ public final class GameServiceImpl implements GameService {
 
     private final AchievementHelper achievementHelper;
 
+    private final UserService userService;
+
+    private final FruitonService fruitonService;
+
+    private final QuestService questService;
+
     @Autowired
     public GameServiceImpl(
             final CommunicationService communicationService,
             final PlayerService playerService,
             final ImageService imageService,
             final AchievementService achievementService,
-            final AchievementHelper achievementHelper
+            final AchievementHelper achievementHelper,
+            final UserService userService,
+            final FruitonService fruitonService,
+            final QuestService questService
     ) {
         this.communicationService = communicationService;
         this.playerService = playerService;
         this.imageService = imageService;
         this.achievementService = achievementService;
         this.achievementHelper = achievementHelper;
+        this.userService = userService;
+        this.fruitonService = fruitonService;
+        this.questService = questService;
     }
 
     @Override
@@ -287,16 +306,43 @@ public final class GameServiceImpl implements GameService {
         User opponent = gameData.getOpponentUser(user);
 
         if (playerService.isOnline(opponent)) {
-            // TODO: set correct results
-            sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT, GameProtos.GameResults.newBuilder().build());
+            sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT, generateWinnerGameResults(opponent));
         }
     }
 
+    @Override
     public void playerSurrendered(final User surrenderedUser) {
         GameData gameData = userToGameData.get(surrenderedUser);
         User other = gameData.getOpponentUser(surrenderedUser);
-        // TODO: set correct results
-        sendGameOverMessage(other, GameProtos.GameOver.Reason.SURRENDER, GameProtos.GameResults.getDefaultInstance());
+        sendGameOverMessage(other, GameProtos.GameOver.Reason.SURRENDER, generateWinnerGameResults(other));
+    }
+
+    private GameProtos.GameResults generateWinnerGameResults(final User user) {
+        List<Integer> unlockedFruitons = fruitonService.getRandomFruitons();
+        for (int fruiton : unlockedFruitons) {
+            userService.unlockFruiton(user, fruiton);
+        }
+
+        List<GameProtos.Quest> completedQuests = processWinnerCompletedQuests(user);
+
+        userService.adjustMoney(user, STANDARD_MONEY_REWARD);
+
+        return GameProtos.GameResults.newBuilder()
+                .setMoney(STANDARD_MONEY_REWARD)
+                .addAllUnlockedFruitons(unlockedFruitons)
+                .addAllQuests(completedQuests)
+                .build();
+    }
+
+    private List<GameProtos.Quest> processWinnerCompletedQuests(final User user) {
+        List<GameProtos.Quest> quests = questService.getAllQuests(user);
+        for (GameProtos.Quest q : quests) {
+            if (q.getName().equals("Winner")) {
+                questService.completeQuest(user, "Winner");
+                return Collections.singletonList(q);
+            }
+        }
+        return Collections.emptyList();
     }
 
     private void sendGameOverMessage(
