@@ -1,8 +1,8 @@
 package cz.cuni.mff.fruiton.service.game.impl;
 
 import cz.cuni.mff.fruiton.component.AchievementHelper;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.Achievement;
-import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
@@ -13,6 +13,7 @@ import cz.cuni.mff.fruiton.service.game.PlayerService;
 import cz.cuni.mff.fruiton.service.game.QuestService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.ImageService;
+import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import fruiton.kernel.Fruiton;
 import fruiton.kernel.GameState;
@@ -46,13 +47,12 @@ public final class GameServiceImpl implements GameService {
 
     private final Random random = new Random();
 
-    private final Map<User, GameData> userToGameData = new Hashtable<>();
+    private final Map<UserIdHolder, GameData> userToGameData = new Hashtable<>();
 
     private final CommunicationService communicationService;
 
     private final PlayerService playerService;
 
-    private final ImageService imageService;
 
     private final AchievementService achievementService;
 
@@ -68,7 +68,6 @@ public final class GameServiceImpl implements GameService {
     public GameServiceImpl(
             final CommunicationService communicationService,
             final PlayerService playerService,
-            final ImageService imageService,
             final AchievementService achievementService,
             final AchievementHelper achievementHelper,
             final UserService userService,
@@ -77,7 +76,6 @@ public final class GameServiceImpl implements GameService {
     ) {
         this.communicationService = communicationService;
         this.playerService = playerService;
-        this.imageService = imageService;
         this.achievementService = achievementService;
         this.achievementHelper = achievementHelper;
         this.userService = userService;
@@ -87,16 +85,13 @@ public final class GameServiceImpl implements GameService {
 
     @Override
     public void createGame(
-            final User user1,
+            final UserIdHolder user1,
             final GameProtos.FruitonTeam team1,
-            final User user2,
+            final UserIdHolder user2,
             final GameProtos.FruitonTeam team2
     ) {
         logger.log(Level.FINE, "Creating game between {0} and {1} with teams {2} and {3}",
                 new Object[] {user1, user2, team1, team2});
-
-        user1.setState(User.State.IN_GAME);
-        user2.setState(User.State.IN_GAME);
 
         Player player1 = new Player(ATOMIC_INT.getAndIncrement());
         Player player2 = new Player(ATOMIC_INT.getAndIncrement());
@@ -173,8 +168,8 @@ public final class GameServiceImpl implements GameService {
     }
 
     private void sendGameReadyMessages(
-            final User user1,
-            final User user2,
+            final UserIdHolder user1,
+            final UserIdHolder user2,
             final GameProtos.FruitonTeam team1,
             final GameProtos.FruitonTeam team2,
             final boolean firstUserStartsFirst
@@ -186,8 +181,8 @@ public final class GameServiceImpl implements GameService {
     }
 
     private void sendGameReadyMessage(
-            final User recipient,
-            final User opponent,
+            final UserIdHolder recipient,
+            final UserIdHolder opponent,
             final GameProtos.FruitonTeam opponentTeam,
             final boolean startsFirst
     ) {
@@ -202,25 +197,12 @@ public final class GameServiceImpl implements GameService {
                 .build());
     }
 
-    private GameProtos.PlayerInfo getPlayerInfo(final User player) {
-
-        GameProtos.PlayerInfo.Builder builder = GameProtos.PlayerInfo.newBuilder()
-                .setLogin(player.getLogin())
-                .setRating(player.getRating());
-
-        if (player.isAvatarSet()) {
-            try {
-                builder.setAvatar(imageService.getBase64Avatar(player));
-            } catch (IOException e) {
-                logger.log(Level.WARNING, "Could not encode avatar for user {0}", player);
-            }
-        }
-
-        return builder.build();
+    private GameProtos.PlayerInfo getPlayerInfo(final UserIdHolder player) {
+        return userService.getProtobufPlayerInfo(player);
     }
 
     @Override
-    public void setPlayerReady(final User user) {
+    public void setPlayerReady(final UserIdHolder user) {
         logger.log(Level.FINEST, "Setting user {0} ready", user);
 
         GameData gameData = userToGameData.get(user);
@@ -245,14 +227,14 @@ public final class GameServiceImpl implements GameService {
         gameData.kernel.startGame();
     }
 
-    private void sendGameStartsMessage(final User to) {
+    private void sendGameStartsMessage(final UserIdHolder to) {
         communicationService.send(to, CommonProtos.WrapperMessage.newBuilder()
                 .setGameStarts(GameProtos.GameStarts.newBuilder().build())
                 .build());
     }
 
     @Override
-    public void performAction(final User user, final GameProtos.Action protobufAction) {
+    public void performAction(final UserIdHolder user, final GameProtos.Action protobufAction) {
         GameData gameData = userToGameData.get(user);
         if (gameData == null) {
             throw new IllegalStateException("User " + user + " has no game associated");
@@ -282,7 +264,7 @@ public final class GameServiceImpl implements GameService {
         // TODO: specific handling
     }
 
-    private void onAfterAction(final User user, final GameProtos.Action protobufAction) {
+    private void onAfterAction(final UserIdHolder user, final GameProtos.Action protobufAction) {
         GameData gameData = userToGameData.get(user);
 
         communicationService.send(gameData.getOpponentUser(user),
@@ -291,7 +273,7 @@ public final class GameServiceImpl implements GameService {
         incrementAchievementProgressAfterAction(user, protobufAction);
     }
 
-    private void incrementAchievementProgressAfterAction(final User user, final GameProtos.Action protobufAction) {
+    private void incrementAchievementProgressAfterAction(final UserIdHolder user, final GameProtos.Action protobufAction) {
         if (protobufAction.getId() == MoveAction.ID) {
             for (Achievement achievement : achievementHelper.getMoveActionAchievements()) {
                 achievementService.updateAchievementProgress(user, achievement, 1);
@@ -300,10 +282,10 @@ public final class GameServiceImpl implements GameService {
     }
 
     @Override
-    public void userDisconnected(final User user) {
+    public void userDisconnected(final UserIdHolder user) {
         GameData gameData = userToGameData.get(user);
 
-        User opponent = gameData.getOpponentUser(user);
+        UserIdHolder opponent = gameData.getOpponentUser(user);
 
         if (playerService.isOnline(opponent)) {
             sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT, generateWinnerGameResults(opponent));
@@ -311,7 +293,7 @@ public final class GameServiceImpl implements GameService {
     }
 
     @Override
-    public void playerSurrendered(final User surrenderedUser) {
+    public void playerSurrendered(final UserIdHolder surrenderedUser) {
         GameData gameData = userToGameData.get(surrenderedUser);
         User other = gameData.getOpponentUser(surrenderedUser);
         sendGameOverMessage(other, GameProtos.GameOver.Reason.SURRENDER, generateWinnerGameResults(other));
@@ -343,10 +325,13 @@ public final class GameServiceImpl implements GameService {
             }
         }
         return Collections.emptyList();
+        UserIdHolder other = gameData.getOpponentUser(surrenderedUser);
+        // TODO: set correct results
+        sendGameOverMessage(other, GameProtos.GameOver.Reason.SURRENDER, GameProtos.GameResults.getDefaultInstance());
     }
 
     private void sendGameOverMessage(
-            final User to,
+            final UserIdHolder to,
             final GameProtos.GameOver.Reason reason,
             final GameProtos.GameResults results
     ) {
@@ -360,17 +345,17 @@ public final class GameServiceImpl implements GameService {
 
     private static final class GameData {
 
-        private final User user1;
+        private final UserIdHolder user1;
         private boolean player1Ready;
 
-        private final User user2;
+        private final UserIdHolder user2;
         private boolean player2Ready;
 
         private final Kernel kernel;
 
         private GameData(
-                final User user1,
-                final User user2,
+                final UserIdHolder user1,
+                final UserIdHolder user2,
                 final Kernel kernel
         ) {
             this.user1 = user1;
@@ -378,7 +363,7 @@ public final class GameServiceImpl implements GameService {
             this.kernel = kernel;
         }
 
-        private User getOpponentUser(final User user) {
+        private UserIdHolder getOpponentUser(final UserIdHolder user) {
             if (user.equals(user1)) {
                 return user2;
             } else if (user.equals(user2)) {
@@ -388,7 +373,7 @@ public final class GameServiceImpl implements GameService {
             }
         }
 
-        private void setPlayerReady(final User user) {
+        private void setPlayerReady(final UserIdHolder user) {
             if (user.equals(user1)) {
                 player1Ready = true;
             } else if (user.equals(user2)) {

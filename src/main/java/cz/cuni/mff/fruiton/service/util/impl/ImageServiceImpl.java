@@ -104,9 +104,9 @@ public final class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    public String getBase64Avatar(final User user) throws IOException {
+    public String getBase64Avatar(final String avatar) throws IOException {
         return Base64.getEncoder().encodeToString(Files.readAllBytes(
-                Paths.get(StorageUtils.IMAGE_PATH, user.getAvatar())));
+                Paths.get(StorageUtils.IMAGE_PATH, avatar)));
     }
 
 }

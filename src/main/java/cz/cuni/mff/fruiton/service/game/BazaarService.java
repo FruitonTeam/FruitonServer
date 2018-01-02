@@ -1,7 +1,7 @@
 package cz.cuni.mff.fruiton.service.game;
 
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.BazaarOffer;
-import cz.cuni.mff.fruiton.dao.domain.User;
 
 import java.util.List;
 
@@ -73,13 +73,13 @@ public interface BazaarService {
 
     List<BazaarOfferListItem> getBestOffers();
 
-    void createOffer(User user, int fruitonId, int price);
+    void createOffer(UserIdHolder idHolder, int fruitonId, int price);
 
-    List<BazaarOfferListItemWithId> getOffersForUser(User user);
+    List<BazaarOfferListItemWithId> getOffersForUser(UserIdHolder idHolder);
 
-    void removeOffer(String offerId, User user);
+    void removeOffer(String offerId, UserIdHolder idHolder);
 
-    void buy(String offerId, User user);
+    void buy(String offerId, UserIdHolder idHolder);
 
     List<BazaarOffer> getOrderedOffersForFruiton(int fruitonId);
 

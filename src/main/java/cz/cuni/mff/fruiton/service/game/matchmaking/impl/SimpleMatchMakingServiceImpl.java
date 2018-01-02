@@ -1,6 +1,6 @@
 package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
 
-import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.GameProtos.FindGame;
 import cz.cuni.mff.fruiton.dto.GameProtos.FruitonTeam;
 import cz.cuni.mff.fruiton.service.game.GameService;
@@ -11,10 +11,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.Deque;
-import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,9 +24,9 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
 
     private static final Logger logger = Logger.getLogger(SimpleMatchMakingServiceImpl.class.getName());
 
-    private final Deque<User> waitingForOpponent = new LinkedList<>();
+    private final Deque<UserIdHolder> waitingForOpponent = new LinkedList<>();
 
-    private final Map<User, FruitonTeam> teams = new Hashtable<>();
+    private final Map<UserIdHolder, FruitonTeam> teams = new ConcurrentHashMap<>();
 
     private final GameService gameService;
 
@@ -36,14 +36,12 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
     }
 
     @Override
-    public synchronized void findGame(final User user, final FindGame findGameMsg) {
+    public synchronized void findGame(final UserIdHolder user, final FindGame findGameMsg) {
         if (!KernelUtils.isTeamValid(findGameMsg.getTeam())) {
             throw new IllegalArgumentException("Invalid team " + findGameMsg.getTeam());
         }
 
-        user.setState(User.State.MATCHMAKING);
-
-        Optional<User> opponent = getOpponent();
+        Optional<UserIdHolder> opponent = getOpponent();
         if (opponent.isPresent()) {
             gameService.createGame(user, findGameMsg.getTeam(), opponent.get(), teams.remove(opponent.get()));
         } else {
@@ -55,15 +53,13 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
         }
     }
 
-    private Optional<User> getOpponent() {
+    private Optional<UserIdHolder> getOpponent() {
         return Optional.ofNullable(waitingForOpponent.poll());
     }
 
     @Override
-    public synchronized void removeFromMatchMaking(final User user) {
+    public synchronized void removeFromMatchMaking(final UserIdHolder user) {
         logger.log(Level.FINE, "Removing {0} from matchmaking", user);
-
-        user.setState(User.State.MENU);
 
         if (waitingForOpponent.contains(user)) {
             waitingForOpponent.remove(user);

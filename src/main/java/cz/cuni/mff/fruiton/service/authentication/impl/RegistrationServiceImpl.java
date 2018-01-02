@@ -1,6 +1,7 @@
 package cz.cuni.mff.fruiton.service.authentication.impl;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.UserProtos;
@@ -84,7 +85,7 @@ public final class RegistrationServiceImpl implements RegistrationService {
     }
 
     @Override
-    public User register(final RegistrationForm form) {
+    public UserIdHolder register(final RegistrationForm form) {
         User user = new User()
                 .withLogin(form.getLogin())
                 .withPassword(passwordEncoder.encode(form.getPassword()))
@@ -93,11 +94,11 @@ public final class RegistrationServiceImpl implements RegistrationService {
         saveUser(user);
         emailConfirmationService.sendEmailConfirmationRequest(user);
 
-        return user;
+        return UserIdHolder.of(user);
     }
 
     @Override
-    public User register(final String login, final GoogleIdToken.Payload payload) {
+    public UserIdHolder register(final String login, final GoogleIdToken.Payload payload) {
         User user = new User()
                 .withLogin(login)
                 .withPassword(passwordEncoder.encode(StringUtils.randomAlphanumeric(RANDOM_GOOGLE_PASSWORD_SIZE)))
@@ -107,14 +108,14 @@ public final class RegistrationServiceImpl implements RegistrationService {
 
         saveUser(user);
 
-        getGooglePictureUrl(payload).ifPresentOrElse(url -> userService.changeAvatar(user, url),
+        getGooglePictureUrl(payload).ifPresentOrElse(url -> userService.changeAvatar(UserIdHolder.of(user), url),
                 () -> logger.log(Level.FINER,
                         "User {0} does not have google avatar, using default one", user));
 
         mailService.send(payload.getEmail(), googleWelcomeMailSubject,
                 MessageFormat.format(googleWelcomeMailTemplate, login, RENEW_PASSWORD_URL));
 
-        return user;
+        return UserIdHolder.of(user);
     }
 
     private void saveUser(final User user) {

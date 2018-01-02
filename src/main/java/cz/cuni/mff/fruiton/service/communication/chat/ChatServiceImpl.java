@@ -1,6 +1,7 @@
 package cz.cuni.mff.fruiton.service.communication.chat;
 
 import cz.cuni.mff.fruiton.chat.MessageStatus;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.Message;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.MessageRepository;
@@ -35,9 +36,9 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public final void accept(final User sender, final ChatProtos.ChatMessage message) {
+    public final void accept(final UserIdHolder sender, final ChatProtos.ChatMessage message) {
         Message msgToPersist = new Message();
-        msgToPersist.setSender(sender);
+        msgToPersist.setSender(userRepository.findOne(sender.getId()));
 
         User recipient = userRepository.findByLogin(message.getRecipient());
         msgToPersist.setRecipient(recipient);
@@ -46,8 +47,8 @@ public class ChatServiceImpl implements ChatService {
 
         messageRepository.save(msgToPersist);
 
-        if (playerService.isOnline(recipient)) {
-            communicationService.send(recipient, WrapperMessage.newBuilder().setChatMessage(message).build());
+        if (playerService.isOnline(UserIdHolder.of(recipient))) {
+            communicationService.send(UserIdHolder.of(recipient), WrapperMessage.newBuilder().setChatMessage(message).build());
             msgToPersist.setStatus(MessageStatus.DELIVERED);
             messageRepository.save(msgToPersist);
         }

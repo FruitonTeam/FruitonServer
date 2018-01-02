@@ -1,6 +1,7 @@
 package cz.cuni.mff.fruiton.service.game.impl;
 
 import cz.cuni.mff.fruiton.component.util.ResourceHelper;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.Achievement;
 import cz.cuni.mff.fruiton.dao.domain.AchievementProgress;
 import cz.cuni.mff.fruiton.dao.domain.User;
@@ -9,6 +10,7 @@ import cz.cuni.mff.fruiton.dao.repository.AchievementRepository;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.AchievementService;
+import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +31,7 @@ public final class AchievementServiceImpl implements AchievementService {
     private final AchievementProgressRepository achievementProgressRepository;
 
     private final CommunicationService communicationService;
+    private final UserService userService;
 
     private final ResourceHelper resourceHelper;
 
@@ -38,24 +41,26 @@ public final class AchievementServiceImpl implements AchievementService {
             final AchievementRepository achievementRepository,
             final AchievementProgressRepository achievementProgressRepository,
             final CommunicationService communicationService,
-            final ResourceHelper resourceHelper
+            final ResourceHelper resourceHelper,
+            final UserService userService
     ) {
         this.userRepository = userRepository;
         this.achievementRepository = achievementRepository;
         this.achievementProgressRepository = achievementProgressRepository;
         this.communicationService = communicationService;
         this.resourceHelper = resourceHelper;
+        this.userService = userService;
     }
 
     @Override
-    public void updateAchievementProgress(final User user, final Achievement achievement, final int incrementValue) {
-        if (user == null) {
+    public void updateAchievementProgress(final UserIdHolder idHolder, final Achievement achievement, final int incrementValue) {
+        if (idHolder == null) {
             throw new IllegalArgumentException("Cannot update achievement progress for null user");
         }
         if (achievement == null) {
             throw new IllegalArgumentException("Cannot update achievement progress for null achievement");
         }
-        if (user.getUnlockedAchievements().contains(achievement)) {
+        if (userService.getUnlockedAchievements(idHolder).contains(achievement)) {
             return;
         }
         if (incrementValue < 0) {
@@ -64,6 +69,8 @@ public final class AchievementServiceImpl implements AchievementService {
         if (incrementValue == 0) {
             return;
         }
+
+        User user = userRepository.findOne(idHolder.getId());
 
         AchievementProgress achievementProgress = achievementProgressRepository.findByUserAndAchievement(user, achievement);
         if (achievementProgress == null) {
@@ -76,28 +83,27 @@ public final class AchievementServiceImpl implements AchievementService {
             if (achievementProgress.getId() != null) { // progress is stored in db, we need to delete it
                 achievementProgressRepository.delete(achievementProgress);
             }
-            unlockAchievement(user, achievement);
+            userService.unlockAchievement(idHolder, achievement);
         } else {
             achievementProgressRepository.save(achievementProgress);
         }
     }
 
     @Override
-    public void updateAchievementProgress(final User user, final String achievementName, final int incrementValue) {
+    public void updateAchievementProgress(final UserIdHolder user, final String achievementName, final int incrementValue) {
         Achievement achievement = achievementRepository.findByName(achievementName);
-        unlockAchievement(user, achievement);
+        updateAchievementProgress(user, achievement, incrementValue);
     }
 
     @Override
-    public void unlockAchievement(final User user, final Achievement achievement) {
+    public void unlockAchievement(final UserIdHolder user, final Achievement achievement) {
         if (user == null) {
             throw new IllegalArgumentException("Cannot unlock achievement for null user");
         }
         if (achievement == null) {
             throw new IllegalArgumentException("Cannot unlock achievement for null achievement");
         }
-        user.getUnlockedAchievements().add(achievement);
-        userRepository.save(user);
+        userService.unlockAchievement(user, achievement);
 
         logger.log(Level.FINE, "User {0} unlocked achievement {1}", new Object[] {user, achievement});
 
@@ -110,22 +116,23 @@ public final class AchievementServiceImpl implements AchievementService {
     }
 
     @Override
-    public void unlockAchievement(final User user, final String achievementName) {
+    public void unlockAchievement(final UserIdHolder user, final String achievementName) {
         Achievement achievement = achievementRepository.findByName(achievementName);
         unlockAchievement(user, achievement);
     }
 
     @Override
-    public List<AchievementStatusInfo> getAchievementStatusesForUser(final User user) {
-        if (user == null) {
+    public List<AchievementStatusInfo> getAchievementStatusesForUser(final UserIdHolder idHolder) {
+        if (idHolder == null) {
             throw new IllegalArgumentException("Cannot get achievement status for null user");
         }
 
         List<Achievement> allAchievements = achievementRepository.findAll();
 
-        List<Achievement> userUnlockedAchievements = user.getUnlockedAchievements();
+        List<Achievement> userUnlockedAchievements = userService.getUnlockedAchievements(idHolder);
 
-        List<AchievementProgress> achievementProgresses = achievementProgressRepository.findByUser(user);
+        List<AchievementProgress> achievementProgresses = achievementProgressRepository.findByUser(
+                userRepository.findOne(idHolder.getId()));
 
         List<AchievementStatusInfo> achievementStatusInfos = new ArrayList<>(allAchievements.size());
         for (Achievement achievement : allAchievements) {

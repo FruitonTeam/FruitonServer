@@ -1,9 +1,8 @@
 package cz.cuni.mff.fruiton.controller.api;
 
-import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
-import cz.cuni.mff.fruiton.service.game.PlayerService;
+import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,18 +20,18 @@ public final class PlayerController {
 
     private final UserRepository repository;
 
-    private final PlayerService playerService;
+    private final UserService userService;
 
     private final AuthenticationService authService;
 
     @Autowired
     public PlayerController(
             final UserRepository repository,
-            final PlayerService playerService,
+            final UserService userService,
             final AuthenticationService authService
     ) {
         this.repository = repository;
-        this.playerService = playerService;
+        this.userService = userService;
         this.authService = authService;
     }
 
@@ -63,13 +62,12 @@ public final class PlayerController {
 
     @RequestMapping("/api/secured/player/availableFruitons")
     public List<Integer> getAvailableFruitons() {
-        User user = authService.getLoggedInUser();
-        return playerService.getAvailableFruitons(user);
+        return userService.getAvailableFruitons(authService.getLoggedInUser());
     }
 
     @RequestMapping("/api/player/avatar")
     public ResponseEntity<String> getAvatar(@RequestParam final String login) throws IOException {
-        Optional<String> encodedAvatar = playerService.getBase64Avatar(login);
+        Optional<String> encodedAvatar = userService.getBase64Avatar(login);
         if (encodedAvatar.isPresent()) {
             return new ResponseEntity<>(encodedAvatar.get(), HttpStatus.OK);
         }

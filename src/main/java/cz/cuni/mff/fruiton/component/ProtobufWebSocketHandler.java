@@ -1,11 +1,9 @@
 package cz.cuni.mff.fruiton.component;
 
-import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
-import cz.cuni.mff.fruiton.service.game.GameService;
-import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -29,23 +27,16 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
     private final MessageDispatcher dispatcher;
     private final SessionService sessionService;
 
-    private final MatchMakingService matchMakingService;
-    private final GameService gameService;
-
     private final UserService userService;
 
     @Autowired
     public ProtobufWebSocketHandler(
             final MessageDispatcher dispatcher,
             final SessionService sessionService,
-            final MatchMakingService matchMakingService,
-            final GameService gameService,
             final UserService userService
     ) {
         this.dispatcher = dispatcher;
         this.sessionService = sessionService;
-        this.matchMakingService = matchMakingService;
-        this.gameService = gameService;
         this.userService = userService;
     }
 
@@ -73,7 +64,7 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
     private void sendLoggedPlayerInfo(final WebSocketSession session) throws IOException {
         CommonProtos.WrapperMessage wrapperMessage = CommonProtos.WrapperMessage.newBuilder()
-                .setLoggedPlayerInfo(userService.getLoggedPlayerInfo((User) session.getPrincipal()))
+                .setLoggedPlayerInfo(userService.getLoggedPlayerInfo((UserIdHolder) session.getPrincipal()))
                 .build();
 
         session.sendMessage(new BinaryMessage(wrapperMessage.toByteArray()));
@@ -109,13 +100,6 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
         }
 
         sessionService.unregister(session);
-
-        User user = (User) session.getPrincipal();
-        if (user.getState() == User.State.MATCHMAKING) {
-            matchMakingService.removeFromMatchMaking(user);
-        } else if (user.getState() == User.State.IN_GAME) {
-            gameService.userDisconnected(user);
-        }
     }
 
     private void sendPlayerOnTheSameNetworkDisconnected(final WebSocketSession session) throws IOException {

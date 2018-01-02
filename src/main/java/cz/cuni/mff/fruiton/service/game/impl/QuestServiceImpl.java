@@ -1,6 +1,7 @@
 package cz.cuni.mff.fruiton.service.game.impl;
 
 import cz.cuni.mff.fruiton.component.util.ResourceHelper;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.Quest;
 import cz.cuni.mff.fruiton.dao.domain.QuestProgress;
 import cz.cuni.mff.fruiton.dao.domain.User;
@@ -92,7 +93,7 @@ public final class QuestServiceImpl implements QuestService {
             questProgressRepository.save(questProgress);
         }
 
-        communicationService.sendNotification(user, getBase64QuestImage(quest),
+        communicationService.sendNotification(UserIdHolder.of(user), getBase64QuestImage(quest),
                 QUEST_COMPLETED_NOTIFICATION_TITLE, quest.getName());
     }
 

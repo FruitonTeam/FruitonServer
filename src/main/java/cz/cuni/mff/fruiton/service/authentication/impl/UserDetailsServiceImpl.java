@@ -1,8 +1,8 @@
 package cz.cuni.mff.fruiton.service.authentication.impl;
 
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -17,13 +17,13 @@ public final class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
+    public UserIdHolder loadUserByUsername(final String username) throws UsernameNotFoundException {
         User user = userRepository.findByLogin(username);
         if (user == null) {
             throw new UsernameNotFoundException("No user found with username: " + username);
         }
 
-        return user;
+        return UserIdHolder.of(user);
     }
 
 }

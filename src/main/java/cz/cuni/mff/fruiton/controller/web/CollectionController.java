@@ -1,9 +1,8 @@
 package cz.cuni.mff.fruiton.controller.web;
 
-import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
 import cz.cuni.mff.fruiton.service.game.FruitonService;
-import cz.cuni.mff.fruiton.service.game.PlayerService;
+import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,28 +12,27 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public final class CollectionController {
 
-    private final AuthenticationService authService;
-
     private final FruitonService fruitonService;
 
-    private final PlayerService playerService;
+    private final UserService userService;
+
+    private final AuthenticationService authService;
 
     @Autowired
     public CollectionController(
-            final AuthenticationService authService,
             final FruitonService fruitonService,
-            final PlayerService playerService
+            final UserService userService,
+            final AuthenticationService authService
     ) {
-        this.authService = authService;
         this.fruitonService = fruitonService;
-        this.playerService = playerService;
+        this.userService = userService;
+        this.authService = authService;
     }
 
     @GetMapping("/collection")
     public String collection(final Model model) {
-        User user = authService.getLoggedInUser();
-
-        model.addAttribute("fruitons", fruitonService.getFruitonInfos(playerService.getAvailableFruitons(user)));
+        model.addAttribute("fruitons", fruitonService.getFruitonInfos(
+                userService.getAvailableFruitons(authService.getLoggedInUser())));
 
         return "collection";
     }

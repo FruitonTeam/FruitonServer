@@ -1,7 +1,7 @@
 package cz.cuni.mff.fruiton.component;
 
 import cz.cuni.mff.fruiton.annotation.HandleProtobufMessage;
-import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.ChatProtos;
 import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
 import cz.cuni.mff.fruiton.service.communication.chat.ChatService;
@@ -24,7 +24,7 @@ public class Chat {
     }
 
     @HandleProtobufMessage(messageCase = WrapperMessage.MessageCase.CHATMESSAGE)
-    public final void handleChatMessage(final User from, final ChatProtos.ChatMessage msg) {
+    public final void handleChatMessage(final UserIdHolder from, final ChatProtos.ChatMessage msg) {
         logger.log(Level.FINE, "Chat message received from {0} with content: {1}", new Object[] {from, msg});
 
         chatService.accept(from, msg);

@@ -5,24 +5,17 @@ import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.validation.constraints.Pattern;
-import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Document
-public final class User implements Principal, UserDetails {
+public final class User {
 
     public static final int LOGIN_MAX_LENGTH = 50;
 
@@ -37,8 +30,6 @@ public final class User implements Principal, UserDetails {
     private static final String AVATAR_PATH = "/avatar/";
 
     private static final String DEFAULT_AVATAR = "/img/boy.png";
-
-    private static final String ROLE_USER = "ROLE_USER";
 
     @Id
     private String id;
@@ -64,9 +55,6 @@ public final class User implements Principal, UserDetails {
     private int rating = EloRatingServiceImpl.DEFAULT_RATING;
 
     private int money = 0;
-
-    @Transient
-    private State state = State.MENU;
 
     private List<Integer> unlockedFruitons = new LinkedList<>();
 
@@ -96,7 +84,6 @@ public final class User implements Principal, UserDetails {
         this.login = login;
     }
 
-    @Override
     public String getPassword() {
         return password;
     }
@@ -143,14 +130,6 @@ public final class User implements Principal, UserDetails {
 
     public void setMoney(final int money) {
         this.money = money;
-    }
-
-    public State getState() {
-        return state;
-    }
-
-    public void setState(final State state) {
-        this.state = state;
     }
 
     public List<Integer> getUnlockedFruitons() {
@@ -229,49 +208,6 @@ public final class User implements Principal, UserDetails {
     }
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return getGrantedAuthorities(getRoles());
-    }
-
-    private List<GrantedAuthority> getGrantedAuthorities(final Collection<String> roles) {
-        return roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
-    }
-
-    private List<String> getRoles() {
-        return List.of(ROLE_USER);
-    }
-
-    @Transient
-    @Override
-    public String getUsername() {
-        return login;
-    }
-
-    @Transient
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Transient
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Transient
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Transient
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
-
-    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -297,16 +233,6 @@ public final class User implements Principal, UserDetails {
                 + ", login='" + login + '\''
                 + ", email='" + email + '\''
                 + '}';
-    }
-
-    @Override
-    @Transient
-    public String getName() {
-        return login;
-    }
-
-    public enum State {
-        MENU, MATCHMAKING, IN_GAME
     }
 
 }
