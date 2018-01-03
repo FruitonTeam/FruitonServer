@@ -70,4 +70,6 @@ public interface FruitonService {
 
     FruitonInfo getFruitonInfo(int fruitonId);
 
+    List<Integer> getRandomFruitons();
+
 }
