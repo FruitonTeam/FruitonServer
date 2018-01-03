@@ -8,6 +8,7 @@ import cz.cuni.mff.fruiton.test.util.TestUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -15,7 +16,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = cz.cuni.mff.fruiton.Application.class)
+@SpringBootTest(classes = cz.cuni.mff.fruiton.Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class QuestServiceImplTest {
 
@@ -30,9 +31,16 @@ public class QuestServiceImplTest {
     @Autowired
     private UserRepository userRepository;
 
+    @LocalServerPort
+    private int port;
+
     @Test
     public void completeQuestTest() {
         User user = TestUtils.defaultRegister(registrationService, userRepository);
+
+        // quests are assigned on login
+        TestUtils.login(TestUtils.DEFAULT_LOGIN, TestUtils.DEFAULT_PASSWORD, port);
+
         questService.completeQuest(UserIdHolder.of(user), QUEST_NAME);
 
         user = userRepository.findOne(user.getId());

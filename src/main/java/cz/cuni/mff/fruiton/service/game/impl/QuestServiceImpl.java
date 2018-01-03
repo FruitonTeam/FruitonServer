@@ -117,8 +117,9 @@ public final class QuestServiceImpl implements QuestService {
 
         user.adjustMoney(quest.getReward().getMoney());
         user.getAssignedQuests().remove(quest);
+        user.completedQuestToday();
 
-        assignNewQuests(user);
+        userRepository.save(user);
     }
 
     @Override
