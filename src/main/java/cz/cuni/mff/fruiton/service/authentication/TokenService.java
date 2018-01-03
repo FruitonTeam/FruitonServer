@@ -1,14 +1,14 @@
 package cz.cuni.mff.fruiton.service.authentication;
 
-import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 
 public interface TokenService {
 
-    String register(User user);
+    String register(UserIdHolder user);
 
-    void unregister(User user);
+    void unregister(UserIdHolder user);
 
-    User getUser(String token);
+    UserIdHolder getUser(String token);
 
     boolean isValid(String token);
 

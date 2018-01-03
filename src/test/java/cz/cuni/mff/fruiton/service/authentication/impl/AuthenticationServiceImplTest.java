@@ -1,6 +1,6 @@
 package cz.cuni.mff.fruiton.service.authentication.impl;
 
-import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.UserProtos.RegistrationData;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import org.junit.Test;
@@ -36,9 +36,9 @@ public class AuthenticationServiceImplTest {
         RegistrationData data = getRegistrationData(EMAIL, LOGIN, PASSWORD);
         registrationService.register(data);
 
-        User user = authenticationService.authenticate(LOGIN, PASSWORD);
+        UserIdHolder user = authenticationService.authenticate(LOGIN, PASSWORD);
         assertNotNull("Authentication fail", user);
-        assertEquals("Login should be equal", LOGIN, user.getLogin());
+        assertEquals("Login should be equal", LOGIN, user.getUsername());
     }
 
     @Test(expected = UsernameNotFoundException.class)

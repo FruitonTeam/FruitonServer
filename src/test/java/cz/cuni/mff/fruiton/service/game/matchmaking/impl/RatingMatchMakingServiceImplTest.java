@@ -1,15 +1,18 @@
 package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
 
-import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
+import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.game.GameService;
+import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.test.util.TestUtils;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -32,26 +35,32 @@ public class RatingMatchMakingServiceImplTest {
     @Mock
     private GameService gameService;
 
-    @InjectMocks
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private UserService userService;
+
     private RatingMatchMakingServiceImpl ratingMatchMakingService;
 
     @Captor
-    private ArgumentCaptor<User> userCaptor1;
+    private ArgumentCaptor<UserIdHolder> userCaptor1;
 
     @Captor
-    private ArgumentCaptor<User> userCaptor2;
+    private ArgumentCaptor<UserIdHolder> userCaptor2;
+
+    @Before
+    public void setup() {
+        ratingMatchMakingService = new RatingMatchMakingServiceImpl(gameService, userService);
+    }
 
     @Test
     public void testMatchMakingService() {
-        User user1 = new User().withLogin("login1");
-        user1.setRating(1000);
-        User user2 = new User().withLogin("login2");
-        user2.setRating(1000);
+        UserIdHolder user1 = TestUtils.createUser(userRepository, "login1", 1000);
+        UserIdHolder user2 = TestUtils.createUser(userRepository, "login2", 1000);
 
-        User user3 = new User().withLogin("login3");
-        user3.setRating(400);
-        User user4 = new User().withLogin("login4");
-        user4.setRating(400);
+        UserIdHolder user3 = TestUtils.createUser(userRepository, "login3", 400);
+        UserIdHolder user4 = TestUtils.createUser(userRepository, "login4", 400);
 
         synchronized (ratingMatchMakingService) {
             ratingMatchMakingService.findGame(user1, TestUtils.buildFindGameMsg());
@@ -70,7 +79,12 @@ public class RatingMatchMakingServiceImplTest {
         assertMatchedAgainstEachOther(user1, user2, userCaptor1.getAllValues(), userCaptor2.getAllValues());
     }
 
-    private void assertMatchedAgainstEachOther(User user1, User user2, List<User> matched1, List<User> matched2) {
+    private void assertMatchedAgainstEachOther(
+            final UserIdHolder user1,
+            final UserIdHolder user2,
+            final List<UserIdHolder> matched1,
+            final List<UserIdHolder> matched2
+    ) {
         for (int i = 0; i < matched1.size(); i++) {
             if ((matched1.get(i).equals(user1) && matched2.get(i).equals(user2))
                     || matched1.get(i).equals(user2) && matched2.get(i).equals(user1)) {
@@ -83,13 +97,9 @@ public class RatingMatchMakingServiceImplTest {
 
     @Test
     public void testIncreasingDeltaRatingWindow() {
-        User user1 = new User().withLogin("login1");
-        user1.setRating(100);
-        User user2 = new User().withLogin("login2");
-        user2.setRating(1500);
-
-        User user3 = new User().withLogin("login3");
-        user3.setRating(2000);
+        UserIdHolder user1 = TestUtils.createUser(userRepository, "login1", 100);
+        UserIdHolder user2 = TestUtils.createUser(userRepository, "login2", 1500);
+        UserIdHolder user3 = TestUtils.createUser(userRepository, "login3", 2000);
 
         synchronized (ratingMatchMakingService) {
             ratingMatchMakingService.findGame(user1, TestUtils.buildFindGameMsg());
@@ -99,8 +109,8 @@ public class RatingMatchMakingServiceImplTest {
 
             ratingMatchMakingService.match();
 
-            verify(gameService, never()).createGame(any(User.class), any(GameProtos.FruitonTeam.class),
-                    any(User.class), any(GameProtos.FruitonTeam.class));
+            verify(gameService, never()).createGame(any(UserIdHolder.class), any(GameProtos.FruitonTeam.class),
+                    any(UserIdHolder.class), any(GameProtos.FruitonTeam.class));
 
             for (int i = 0; i < 50; i++) {
                 ratingMatchMakingService.match();

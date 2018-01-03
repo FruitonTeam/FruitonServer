@@ -13,10 +13,10 @@
         <div class="col-md-4 col-sm-6 col-xs-12">
             <div class="text-center">
 
-                <img th:src="@{'' + ${user.getAvatarWebImageMapping()}}"
+                <img th:src="@{'' + ${playerInfo.avatar}}"
                      class="avatar img-circle img-thumbnail" alt="avatar"/>
 
-                <h3 th:text="${user.login}"></h3>
+                <h3 th:text="${playerInfo.login}"></h3>
 
             </div>
         </div>
@@ -28,7 +28,7 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Rating</h3>
                 </div>
-                <div class="panel-body" th:text="${user.rating}">
+                <div class="panel-body" th:text="${playerInfo.rating}">
 
                 </div>
             </div>

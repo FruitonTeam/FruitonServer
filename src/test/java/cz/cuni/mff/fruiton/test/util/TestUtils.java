@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.test.util;
 
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dto.CommonProtos;
@@ -9,6 +10,7 @@ import cz.cuni.mff.fruiton.dto.UserProtos.RegistrationData;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import cz.cuni.mff.fruiton.util.StorageUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -119,6 +121,18 @@ public class TestUtils {
         return CommonProtos.WrapperMessage.newBuilder()
                 .setFindGame(buildFindGameMsg())
                 .build();
+    }
+
+    public static UserIdHolder createUser(final UserRepository userRepository, final String login, final int rating) {
+        User user = new User();
+        user.setLogin(login);
+        user.setPassword(RandomStringUtils.randomAlphanumeric(User.PASSWORD_MIN_LENGTH));
+        user.setRating(rating);
+        user.setEmail(RandomStringUtils.randomAlphanumeric(5) + "@" + login + ".com");
+
+        userRepository.save(user);
+
+        return UserIdHolder.of(user);
     }
 
 }

@@ -1,6 +1,6 @@
 package cz.cuni.mff.fruiton.service.authentication.impl;
 
-import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.service.authentication.TokenService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,7 @@ public final class TokenServiceImpl implements TokenService {
     private final Map<String, TokenValue> tokens = new ConcurrentHashMap<>();
 
     @Override
-    public String register(final User user) {
+    public String register(final UserIdHolder user) {
         TokenValue value = new TokenValue(user, Instant.now());
         String token = generateToken();
 
@@ -42,12 +42,12 @@ public final class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public void unregister(final User userToUnregister) {
+    public void unregister(final UserIdHolder userToUnregister) {
         tokens.entrySet().removeIf(entry -> entry.getValue().user.equals(userToUnregister));
     }
 
     @Override
-    public User getUser(final String token) {
+    public UserIdHolder getUser(final String token) {
         TokenValue value = tokens.get(token);
         if (value == null) {
             return null;
@@ -81,10 +81,10 @@ public final class TokenServiceImpl implements TokenService {
 
     private static class TokenValue {
 
-        private User user;
+        private UserIdHolder user;
         private Instant inserted;
 
-        TokenValue(final User user, final Instant inserted) {
+        TokenValue(final UserIdHolder user, final Instant inserted) {
             this.user = user;
             this.inserted = inserted;
         }

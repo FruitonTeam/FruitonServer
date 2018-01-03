@@ -1,19 +1,20 @@
 package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
 
-import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
+import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,42 +33,43 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
     private final GameService gameService;
 
+    private final UserService userService;
+
     private final TreeSet<WaitingUser> waitingUsers = new TreeSet<>((u1, u2) -> {
-        if (u1.user.getRating() != u2.user.getRating()) {
-            return Integer.compare(u1.user.getRating(), u2.user.getRating());
+        if (u1.getRating() != u2.getRating()) {
+            return Integer.compare(u1.getRating(), u2.getRating());
         } else {
-            return u1.user.getLogin().compareTo(u2.user.getLogin());
+            return u1.user.getUsername().compareTo(u2.user.getUsername());
         }
     });
 
-    private final Map<User, GameProtos.FruitonTeam> teams = new Hashtable<>();
+    private final Map<UserIdHolder, GameProtos.FruitonTeam> teams = new ConcurrentHashMap<>();
 
     private boolean iterateAscending = false;
 
     @Autowired
-    public RatingMatchMakingServiceImpl(final GameService gameService) {
+    public RatingMatchMakingServiceImpl(final GameService gameService, final UserService userService) {
         this.gameService = gameService;
+        this.userService = userService;
     }
 
     @Override
-    public synchronized void findGame(final User user, final GameProtos.FindGame findGameMsg) {
+    public synchronized void findGame(final UserIdHolder user, final GameProtos.FindGame findGameMsg) {
         if (!KernelUtils.isTeamValid(findGameMsg.getTeam())) {
             throw new IllegalArgumentException("Invalid team " + findGameMsg.getTeam());
         }
 
-        user.setState(User.State.MATCHMAKING);
-
         logger.log(Level.FINEST, "Adding {0} to waiting list", user);
 
         teams.put(user, findGameMsg.getTeam());
-        waitingUsers.add(new WaitingUser(user));
+        waitingUsers.add(new WaitingUser(user, userService.getRating(user)));
     }
 
     @Override
-    public synchronized void removeFromMatchMaking(final User user) {
+    public synchronized void removeFromMatchMaking(final UserIdHolder user) {
         logger.log(Level.FINE, "Removing {0} from matchmaking", user);
 
-        WaitingUser waitingUser = new WaitingUser(user);
+        WaitingUser waitingUser = new WaitingUser(user, 0);
         if (waitingUsers.contains(waitingUser)) {
             waitingUsers.remove(waitingUser);
         } else {
@@ -91,7 +93,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
         WaitingUser previous = it.next();
         while (it.hasNext()) {
             WaitingUser current = it.next();
-            if (Math.abs(previous.user.getRating() - current.user.getRating()) < current.deltaWindow) { // it's a match
+            if (Math.abs(previous.getRating() - current.getRating()) < current.deltaWindow) { // it's a match
                 gameService.createGame(previous.user, teams.get(previous.user), current.user, teams.get(current.user));
                 previous.markedForDelete = true;
                 current.markedForDelete = true;
@@ -131,12 +133,23 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
     private static final class WaitingUser {
 
-        private final User user;
+        private final UserIdHolder user;
+        private final int rating;
         private int deltaWindow = DEFAULT_DELTA_WINDOW;
         private boolean markedForDelete = false;
 
-        private WaitingUser(final User user) {
+        private WaitingUser(final UserIdHolder user) {
             this.user = user;
+            this.rating = 0;
+        }
+
+        private WaitingUser(final UserIdHolder user, final int rating) {
+            this.user = user;
+            this.rating = rating;
+        }
+
+        private int getRating() {
+            return rating;
         }
 
         @Override

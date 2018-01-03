@@ -1,6 +1,5 @@
 package cz.cuni.mff.fruiton.controller.web;
 
-import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -21,9 +20,7 @@ public class ProfileController {
 
     @RequestMapping(value = "/profile/{login}", method = RequestMethod.GET)
     public final String profileInfo(final Model model, @PathVariable("login") final String login) {
-        User user = userService.findUserByLogin(login);
-
-        model.addAttribute("user", user);
+        model.addAttribute("playerInfo", userService.getPlayerInfo(login));
         return "profile";
     }
 

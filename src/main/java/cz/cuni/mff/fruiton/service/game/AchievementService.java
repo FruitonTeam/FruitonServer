@@ -1,7 +1,7 @@
 package cz.cuni.mff.fruiton.service.game;
 
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.Achievement;
-import cz.cuni.mff.fruiton.dao.domain.User;
 
 import java.util.List;
 
@@ -40,14 +40,14 @@ public interface AchievementService {
         }
     }
 
-    void updateAchievementProgress(User user, Achievement achievement, int incrementValue);
+    void updateAchievementProgress(UserIdHolder user, Achievement achievement, int incrementValue);
 
-    void updateAchievementProgress(User user, String achievementName, int incrementValue);
+    void updateAchievementProgress(UserIdHolder user, String achievementName, int incrementValue);
 
-    void unlockAchievement(User user, Achievement achievement);
+    void unlockAchievement(UserIdHolder user, Achievement achievement);
 
-    void unlockAchievement(User user, String achievementName);
+    void unlockAchievement(UserIdHolder user, String achievementName);
 
-    List<AchievementStatusInfo> getAchievementStatusesForUser(User user);
+    List<AchievementStatusInfo> getAchievementStatusesForUser(UserIdHolder user);
 
 }

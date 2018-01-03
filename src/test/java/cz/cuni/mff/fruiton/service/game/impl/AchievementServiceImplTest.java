@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.service.game.impl;
 
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.Achievement;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.AchievementRepository;
@@ -38,7 +39,7 @@ public class AchievementServiceImplTest {
     @Test
     public void unlockAchievementTest() {
         User user = TestUtils.defaultRegister(registrationService, userRepository);
-        achievementService.unlockAchievement(user, ACHIEVEMENT_NAME);
+        achievementService.unlockAchievement(UserIdHolder.of(user), ACHIEVEMENT_NAME);
 
         user = userRepository.findOne(user.getId());
         assertThat(user.getUnlockedAchievements(), hasItems(achievementRepository.findByName(ACHIEVEMENT_NAME)));
@@ -50,7 +51,7 @@ public class AchievementServiceImplTest {
         Achievement achievement = achievementRepository.findByName(ACHIEVEMENT_NAME);
 
         for (int i = 0; i < achievement.getGoal(); i++) {
-            achievementService.updateAchievementProgress(user, achievement, 1);
+            achievementService.updateAchievementProgress(UserIdHolder.of(user), achievement, 1);
         }
 
         user = userRepository.findOne(user.getId());

@@ -1,28 +1,16 @@
 package cz.cuni.mff.fruiton.service.game;
 
-import cz.cuni.mff.fruiton.dao.domain.FruitonTeam;
-import cz.cuni.mff.fruiton.dao.domain.User;
-import fruiton.kernel.Fruiton;
-
-import java.util.List;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 
 import java.io.IOException;
 import java.util.Optional;
 
 public interface PlayerService {
 
-    boolean isOnline(User user);
+    boolean isOnline(UserIdHolder user);
 
     boolean isOnline(String login);
 
-    List<Integer> getAvailableFruitons(User user);
-
-    void addTeam(User user, FruitonTeam fruitonTeam);
-
-    void removeTeam(User user, String teamName);
-
     Optional<String> getBase64Avatar(String login) throws IOException;
-
-    List<Fruiton> getFruitonsAvailableForSelling(User user);
 
 }

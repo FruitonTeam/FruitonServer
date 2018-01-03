@@ -15,6 +15,6 @@ public interface ImageService {
 
     void removeAvatar(String avatarImageName);
 
-    String getBase64Avatar(User user) throws IOException;
+    String getBase64Avatar(String avatar) throws IOException;
 
 }

@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.service.game.impl;
 
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
@@ -32,7 +33,7 @@ public class QuestServiceImplTest {
     @Test
     public void completeQuestTest() {
         User user = TestUtils.defaultRegister(registrationService, userRepository);
-        questService.completeQuest(user, QUEST_NAME);
+        questService.completeQuest(UserIdHolder.of(user), QUEST_NAME);
 
         user = userRepository.findOne(user.getId());
         assertTrue("User must have received some money for completed quest", user.getMoney() > 0);

@@ -17,7 +17,7 @@
                     <small><b>MANAGEMENT</b></small>
                 </h5>
                 <ul class="nav nav-pills nav-stacked">
-                    <li><a th:href="@{'/profile/' + ${user.login}}">View profile</a></li>
+                    <li><a th:href="@{'/profile/' + ${#authentication.getPrincipal().getName()}}">View profile</a></li>
                 </ul>
             </div>
         </div>

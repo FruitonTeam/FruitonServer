@@ -1,6 +1,6 @@
 package cz.cuni.mff.fruiton.controller.web;
 
-import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.form.RenewPasswordForm;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
 import cz.cuni.mff.fruiton.service.authentication.PasswordService;
@@ -58,7 +58,7 @@ public final class IndexController {
             final HttpServletResponse response,
             @RequestParam final String idToken
     ) throws IOException {
-        User u = authService.authenticate(idToken);
+        UserIdHolder u = authService.authenticate(idToken);
         if (u != null) {
             authService.createAuthenticatedSession(u, request);
             response.sendRedirect(context.getContextPath() + "/home");

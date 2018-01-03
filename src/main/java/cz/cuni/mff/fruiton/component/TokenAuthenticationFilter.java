@@ -1,6 +1,6 @@
 package cz.cuni.mff.fruiton.component;
 
-import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.service.authentication.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -38,7 +38,7 @@ public final class TokenAuthenticationFilter extends GenericFilterBean {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         String token = request.getHeader(TOKEN_HEADER_KEY);
         if (token != null) {
-            final User user = tokenService.getUser(token);
+            final UserIdHolder user = tokenService.getUser(token);
             if (user != null) {
                 Authentication auth = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(auth);

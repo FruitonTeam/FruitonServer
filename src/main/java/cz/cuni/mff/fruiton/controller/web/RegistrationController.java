@@ -1,7 +1,7 @@
 package cz.cuni.mff.fruiton.controller.web;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.form.GoogleRegistrationForm;
 import cz.cuni.mff.fruiton.dto.form.RegistrationForm;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
@@ -54,7 +54,7 @@ public final class RegistrationController {
             final HttpServletResponse response,
             final @Valid RegistrationForm form
     ) throws IOException {
-        User user = registrationService.register(form);
+        UserIdHolder user = registrationService.register(form);
         authService.createAuthenticatedSession(user, request);
 
         response.sendRedirect(context.getContextPath() + "/home");
@@ -78,7 +78,7 @@ public final class RegistrationController {
     ) throws IOException {
         GoogleIdToken.Payload p = authService.verify(form.getIdToken());
 
-        User user = registrationService.register(form.getLogin(), p);
+        UserIdHolder user = registrationService.register(form.getLogin(), p);
 
         authService.createAuthenticatedSession(user, request);
 

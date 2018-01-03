@@ -17,9 +17,9 @@ public class EditProfileForm {
 
     private MultipartFile avatar;
 
-    public static EditProfileForm parseFrom(final User user) {
+    public static EditProfileForm of(final String email) {
         EditProfileForm form = new EditProfileForm();
-        form.email = user.getEmail();
+        form.email = email;
         return form;
     }
 

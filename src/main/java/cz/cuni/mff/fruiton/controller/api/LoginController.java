@@ -2,7 +2,7 @@ package cz.cuni.mff.fruiton.controller.api;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.mongodb.DuplicateKeyException;
-import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
@@ -48,11 +48,11 @@ public class LoginController {
 
     @RequestMapping(value = "/api/login", method = RequestMethod.POST)
     public final String login(@RequestBody final UserProtos.LoginData data) {
-        User user = authService.authenticate(data.getLogin(), data.getPassword());
+        UserIdHolder user = authService.authenticate(data.getLogin(), data.getPassword());
         return generateTokenForUser(user);
     }
 
-    private String generateTokenForUser(final User user) {
+    private String generateTokenForUser(final UserIdHolder user) {
         return tokenService.register(user);
     }
 
@@ -85,14 +85,14 @@ public class LoginController {
 
     @RequestMapping(value = "/api/loginGoogle")
     public final GoogleLoginResult loginGoogle(@RequestParam final String idToken) {
-        User user = authService.authenticate(idToken);
+        UserIdHolder user = authService.authenticate(idToken);
         if (user == null) {
             GoogleIdToken.Payload payload = authService.verify(idToken);
             user = registrationService.register(userService.generateRandomName(payload), payload);
         }
 
         String token = generateTokenForUser(user);
-        return new GoogleLoginResult(user.getLogin(), token);
+        return new GoogleLoginResult(user.getUsername(), token);
     }
 
     private static class GoogleLoginResult {

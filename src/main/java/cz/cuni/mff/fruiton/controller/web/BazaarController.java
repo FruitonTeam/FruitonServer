@@ -1,10 +1,9 @@
 package cz.cuni.mff.fruiton.controller.web;
 
-import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.form.AddBazaarOfferForm;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
 import cz.cuni.mff.fruiton.service.game.BazaarService;
-import cz.cuni.mff.fruiton.service.game.PlayerService;
+import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import fruiton.kernel.Fruiton;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,20 +20,20 @@ import javax.validation.Valid;
 @Controller
 public final class BazaarController {
 
-    private final PlayerService playerService;
-
     private final BazaarService bazaarService;
+
+    private final UserService userService;
 
     private final AuthenticationService authService;
 
     @Autowired
     public BazaarController(
-            final PlayerService playerService,
             final BazaarService bazaarService,
+            final UserService userService,
             final AuthenticationService authService
     ) {
-        this.playerService = playerService;
         this.bazaarService = bazaarService;
+        this.userService = userService;
         this.authService = authService;
     }
 
@@ -57,9 +56,7 @@ public final class BazaarController {
 
     @GetMapping("/bazaar/addOffer")
     public String addBazaarOfferForm(final Model model) {
-        User user = authService.getLoggedInUser();
-
-        model.addAttribute("fruitons", playerService.getFruitonsAvailableForSelling(user));
+        model.addAttribute("fruitons", userService.getFruitonsAvailableForSelling(authService.getLoggedInUser()));
         model.addAttribute("formModel", new AddBazaarOfferForm());
 
         return "bazaar/addOffer";
@@ -74,8 +71,7 @@ public final class BazaarController {
 
     @GetMapping("/bazaar/myOffers")
     public String myOffers(final Model model) {
-        User user = authService.getLoggedInUser();
-        model.addAttribute("offers", bazaarService.getOffersForUser(user));
+        model.addAttribute("offers", bazaarService.getOffersForUser(authService.getLoggedInUser()));
 
         return "bazaar/myOffers";
     }
@@ -85,8 +81,7 @@ public final class BazaarController {
             @RequestParam final String offerId,
             @RequestHeader(value = "referer", required = false) final String referer
     ) {
-        User user = authService.getLoggedInUser();
-        bazaarService.removeOffer(offerId, user);
+        bazaarService.removeOffer(offerId, authService.getLoggedInUser());
 
         if (referer != null) {
             return "redirect:" + referer;
@@ -96,8 +91,7 @@ public final class BazaarController {
 
     @GetMapping("/bazaar/buy")
     public String buy(@RequestParam final String offerId) {
-        User user = authService.getLoggedInUser();
-        bazaarService.buy(offerId, user);
+        bazaarService.buy(offerId, authService.getLoggedInUser());
 
         return "redirect:/home";
     }

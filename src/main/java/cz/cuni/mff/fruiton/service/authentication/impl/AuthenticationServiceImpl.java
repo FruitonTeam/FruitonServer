@@ -2,6 +2,7 @@ package cz.cuni.mff.fruiton.service.authentication.impl;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
@@ -46,7 +47,7 @@ public final class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public User authenticate(final String login, final String password) {
+    public UserIdHolder authenticate(final String login, final String password) {
         User user = userRepository.findByLogin(login);
         if (user == null) {
             throw new UsernameNotFoundException("User " + login + " is not registered.");
@@ -57,14 +58,14 @@ public final class AuthenticationServiceImpl implements AuthenticationService {
             throw new BadCredentialsException("Incorrect password");
         }
 
-        return user;
+        return UserIdHolder.of(user);
     }
 
     @Override
-    public User authenticate(final String idToken) {
+    public UserIdHolder authenticate(final String idToken) {
         GoogleIdToken.Payload payload = verify(idToken);
 
-        return userRepository.findByGoogleSubject(payload.getSubject());
+        return UserIdHolder.of(userRepository.findByGoogleSubject(payload.getSubject()));
     }
 
     @Override
@@ -87,12 +88,12 @@ public final class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public User getLoggedInUser() {
-        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public UserIdHolder getLoggedInUser() {
+        return (UserIdHolder) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
     @Override
-    public void createAuthenticatedSession(final User user, final HttpServletRequest request) {
+    public void createAuthenticatedSession(final UserIdHolder user, final HttpServletRequest request) {
         Authentication auth = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
 

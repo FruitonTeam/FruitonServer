@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.service.game;
 
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.Quest;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dto.GameProtos;
@@ -10,12 +11,12 @@ public interface QuestService {
 
     void assignNewQuests(User user);
 
-    void updateProgress(User user, Quest quest, int incrementValue);
+    void updateProgress(UserIdHolder user, Quest quest, int incrementValue);
 
-    void completeQuest(User user, Quest quest);
+    void completeQuest(UserIdHolder user, Quest quest);
 
-    void completeQuest(User user, String questname);
+    void completeQuest(UserIdHolder user, String questname);
 
-    List<GameProtos.Quest> getAllQuests(User user);
+    List<GameProtos.Quest> getAllQuests(UserIdHolder user);
 
 }
