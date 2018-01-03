@@ -30,7 +30,7 @@
                 <a class="list-group-item" th:each="offer : ${bestOffers}" th:href="@{'/bazaar/' + ${offer.fruitonId}}">
                     <span th:text="${offer.fruitonName}"></span>
                     <div class="pull-right">
-                        <span>Min price: </span><strong><span th:text="${offer.price}"></span></strong>
+                        <span>Starting at: </span><strong><span th:text="${offer.price}"></span></strong>
                     </div>
                 </a>
             </div>
