@@ -60,13 +60,14 @@ public final class QuestServiceImpl implements QuestService {
     }
 
     @Override
-    public void updateProgress(final User user, final Quest quest, final int incrementValue) {
-        if (user == null) {
+    public void updateProgress(final UserIdHolder idHolder, final Quest quest, final int incrementValue) {
+        if (idHolder == null) {
             throw new IllegalArgumentException("Cannot update quest progress for null user");
         }
         if (quest == null) {
             throw new IllegalArgumentException("Cannot update quest progress for null quest");
         }
+        User user = userRepository.findOne(idHolder.getId());
         if (!user.getAssignedQuests().contains(quest)) {
             return;
         }
@@ -88,7 +89,7 @@ public final class QuestServiceImpl implements QuestService {
             if (questProgress.getId() != null) { // progress is stored in db, we need to delete it
                 questProgressRepository.delete(questProgress);
             }
-            completeQuest(user, quest);
+            completeQuest(idHolder, quest);
         } else {
             questProgressRepository.save(questProgress);
         }
@@ -102,10 +103,12 @@ public final class QuestServiceImpl implements QuestService {
     }
 
     @Override
-    public void completeQuest(final User user, final Quest quest) {
-        if (user == null) {
+    public void completeQuest(final UserIdHolder idHolder, final Quest quest) {
+        if (idHolder == null) {
             throw new IllegalArgumentException("Cannot complete quest for null user");
         }
+
+        User user = userRepository.findOne(idHolder.getId());
         if (!user.getAssignedQuests().contains(quest)) {
             return;
         }
@@ -119,15 +122,17 @@ public final class QuestServiceImpl implements QuestService {
     }
 
     @Override
-    public void completeQuest(final User user, final String questName) {
+    public void completeQuest(final UserIdHolder user, final String questName) {
         completeQuest(user, questRepository.findByName(questName));
     }
 
     @Override
-    public List<GameProtos.Quest> getAllQuests(final User user) {
-        if (user == null) {
+    public List<GameProtos.Quest> getAllQuests(final UserIdHolder idHolder) {
+        if (idHolder == null) {
             throw new IllegalArgumentException("Cannot get quests for null user");
         }
+
+        User user = userRepository.findOne(idHolder.getId());
 
         return user.getAssignedQuests().stream().map(q -> {
             QuestProgress progress = questProgressRepository.findByUserAndQuest(user, q);

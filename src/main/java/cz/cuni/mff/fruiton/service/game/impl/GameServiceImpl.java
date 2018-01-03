@@ -12,8 +12,6 @@ import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.PlayerService;
 import cz.cuni.mff.fruiton.service.game.QuestService;
 import cz.cuni.mff.fruiton.service.social.UserService;
-import cz.cuni.mff.fruiton.service.util.ImageService;
-import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import fruiton.kernel.Fruiton;
 import fruiton.kernel.GameState;
@@ -26,7 +24,6 @@ import haxe.root.Array;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
@@ -295,11 +292,11 @@ public final class GameServiceImpl implements GameService {
     @Override
     public void playerSurrendered(final UserIdHolder surrenderedUser) {
         GameData gameData = userToGameData.get(surrenderedUser);
-        User other = gameData.getOpponentUser(surrenderedUser);
+        UserIdHolder other = gameData.getOpponentUser(surrenderedUser);
         sendGameOverMessage(other, GameProtos.GameOver.Reason.SURRENDER, generateWinnerGameResults(other));
     }
 
-    private GameProtos.GameResults generateWinnerGameResults(final User user) {
+    private GameProtos.GameResults generateWinnerGameResults(final UserIdHolder user) {
         List<Integer> unlockedFruitons = fruitonService.getRandomFruitons();
         for (int fruiton : unlockedFruitons) {
             userService.unlockFruiton(user, fruiton);
@@ -316,7 +313,7 @@ public final class GameServiceImpl implements GameService {
                 .build();
     }
 
-    private List<GameProtos.Quest> processWinnerCompletedQuests(final User user) {
+    private List<GameProtos.Quest> processWinnerCompletedQuests(final UserIdHolder user) {
         List<GameProtos.Quest> quests = questService.getAllQuests(user);
         for (GameProtos.Quest q : quests) {
             if (q.getName().equals("Winner")) {
@@ -325,9 +322,6 @@ public final class GameServiceImpl implements GameService {
             }
         }
         return Collections.emptyList();
-        UserIdHolder other = gameData.getOpponentUser(surrenderedUser);
-        // TODO: set correct results
-        sendGameOverMessage(other, GameProtos.GameOver.Reason.SURRENDER, GameProtos.GameResults.getDefaultInstance());
     }
 
     private void sendGameOverMessage(

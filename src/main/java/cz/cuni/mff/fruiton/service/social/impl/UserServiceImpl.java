@@ -194,7 +194,7 @@ public final class UserServiceImpl implements UserService {
                 .setLogin(user.getLogin())
                 .setRating(user.getRating())
                 .setMoney(user.getMoney())
-                .addAllQuests(questService.getAllQuests(user));
+                .addAllQuests(questService.getAllQuests(idHolder));
 
         if (user.isAvatarSet()) {
             try {
