@@ -20,8 +20,8 @@
                   th:onclick="'window.location.href = \'' + @{'/profile/' + ${offer.offeredBy.login}} + '\''">
             </span>
 
-            <div class="pull-right" th:switch="${#authentication.getPrincipal().getMoney() >= offer.price
-                    and !#authentication.getPrincipal().equals(offer.offeredBy)}">
+            <div class="pull-right" th:switch="${#authentication.getPrincipal().getInfo().getMoney() >= offer.price
+                    and !#authentication.getPrincipal().getId().equals(offer.offeredBy.getId())}">
                 <span>Price: </span><strong><span th:text="${offer.price}"></span></strong>
 
                 <span th:case="${true}" class="btn btn-xs btn-success"

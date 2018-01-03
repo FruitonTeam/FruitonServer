@@ -1,5 +1,7 @@
 package cz.cuni.mff.fruiton.dao.domain;
 
+import cz.cuni.mff.fruiton.component.util.UserInfoCache;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.service.game.matchmaking.impl.EloRatingServiceImpl;
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.Length;
@@ -114,6 +116,7 @@ public final class User {
 
     public void setAvatar(final String avatar) {
         this.avatar = avatar;
+        UserInfoCache.invalidate(UserIdHolder.of(this));
     }
 
     public int getRating() {
@@ -128,20 +131,12 @@ public final class User {
         return money;
     }
 
-    public void setMoney(final int money) {
-        this.money = money;
-    }
-
     public List<Integer> getUnlockedFruitons() {
         return new ArrayList<>(unlockedFruitons); // make a copy
     }
 
     public List<FruitonTeam> getTeams() {
         return teams;
-    }
-
-    public void setTeams(final List<FruitonTeam> teams) {
-        this.teams = teams;
     }
 
     public String getGoogleSubject() {
@@ -154,10 +149,6 @@ public final class User {
 
     public List<Achievement> getUnlockedAchievements() {
         return unlockedAchievements;
-    }
-
-    public void setUnlockedAchievements(final List<Achievement> unlockedAchievements) {
-        this.unlockedAchievements = unlockedAchievements;
     }
 
     public List<Quest> getAssignedQuests() {
@@ -174,6 +165,7 @@ public final class User {
 
     public void adjustMoney(final int value) {
         money += value;
+        UserInfoCache.invalidate(UserIdHolder.of(this));
     }
 
     public void unlockFruiton(final int fruitonId) {

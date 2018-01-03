@@ -1,7 +1,6 @@
 package cz.cuni.mff.fruiton.service.social.impl;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import cz.cuni.mff.fruiton.component.util.UserInfoCache;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.Achievement;
 import cz.cuni.mff.fruiton.dao.domain.FruitonTeam;
@@ -116,8 +115,6 @@ public final class UserServiceImpl implements UserService {
             user.setAvatar(null);
             repository.save(user);
         }
-
-        UserInfoCache.invalidate(idHolder);
     }
 
     @Override
@@ -262,8 +259,6 @@ public final class UserServiceImpl implements UserService {
         User user = getUser(idHolder);
         user.adjustMoney(change);
         repository.save(user);
-
-        UserInfoCache.invalidate(idHolder);
     }
 
     @Override
