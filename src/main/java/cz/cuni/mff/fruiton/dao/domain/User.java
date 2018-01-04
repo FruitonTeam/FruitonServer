@@ -191,7 +191,7 @@ public final class User {
         return assignedQuests.isEmpty() && !LocalDate.now().equals(dateOfLastCompletedQuest);
     }
 
-    public void completedQuestToday() {
+    public void setQuestCompletedToday() {
         this.dateOfLastCompletedQuest = LocalDate.now();
     }
 
