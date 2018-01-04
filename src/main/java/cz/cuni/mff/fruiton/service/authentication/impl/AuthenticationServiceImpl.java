@@ -6,6 +6,7 @@ import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
+import cz.cuni.mff.fruiton.service.game.QuestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -35,15 +36,19 @@ public final class AuthenticationServiceImpl implements AuthenticationService {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final QuestService questService;
+
     @Autowired
     public AuthenticationServiceImpl(
             final UserRepository userRepository,
             final GoogleIdTokenVerifier verifier,
-            final PasswordEncoder passwordEncoder
+            final PasswordEncoder passwordEncoder,
+            final QuestService questService
     ) {
         this.userRepository = userRepository;
         this.verifier = verifier;
         this.passwordEncoder = passwordEncoder;
+        this.questService = questService;
     }
 
     @Override
@@ -58,14 +63,25 @@ public final class AuthenticationServiceImpl implements AuthenticationService {
             throw new BadCredentialsException("Incorrect password");
         }
 
+        generateNewQuestsIfPossible(user);
+
         return UserIdHolder.of(user);
+    }
+
+    private void generateNewQuestsIfPossible(final User user) {
+        if (user.canGenerateNewQuest()) {
+            questService.assignNewQuests(user);
+        }
     }
 
     @Override
     public UserIdHolder authenticate(final String idToken) {
         GoogleIdToken.Payload payload = verify(idToken);
 
-        return UserIdHolder.of(userRepository.findByGoogleSubject(payload.getSubject()));
+        User user = userRepository.findByGoogleSubject(payload.getSubject());
+        generateNewQuestsIfPossible(user);
+
+        return UserIdHolder.of(user);
     }
 
     @Override

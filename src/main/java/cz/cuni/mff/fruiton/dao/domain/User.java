@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.Pattern;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -69,6 +70,8 @@ public final class User {
 
     @DBRef
     private List<Quest> assignedQuests = new LinkedList<>();
+
+    private LocalDate dateOfLastCompletedQuest;
 
     public String getId() {
         return id;
@@ -182,6 +185,14 @@ public final class User {
         } else {
             return DEFAULT_AVATAR;
         }
+    }
+
+    public boolean canGenerateNewQuest() {
+        return assignedQuests.isEmpty() && !LocalDate.now().equals(dateOfLastCompletedQuest);
+    }
+
+    public void setQuestCompletedToday() {
+        this.dateOfLastCompletedQuest = LocalDate.now();
     }
 
     public User withLogin(final String login) {

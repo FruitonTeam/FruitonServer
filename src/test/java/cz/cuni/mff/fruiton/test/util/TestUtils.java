@@ -27,9 +27,9 @@ import java.util.UUID;
 public class TestUtils {
 
     public static final String DEFAULT_LOGIN = "login";
+    public static final String DEFAULT_PASSWORD = "password";
 
     private static final String DEFAULT_EMAIL = "test@test.com";
-    private static final String DEFAULT_PASSWORD = "password";
 
     private static final String DEFAULT_AVATAR_IMAGE_PATH = "/static/img/boy.png";
     private static final String PNG_CONTENT_TYPE = "image/png";

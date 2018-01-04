@@ -8,7 +8,6 @@ import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.dto.form.RegistrationForm;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import cz.cuni.mff.fruiton.service.communication.mail.MailService;
-import cz.cuni.mff.fruiton.service.game.QuestService;
 import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,8 +39,6 @@ public final class RegistrationServiceImpl implements RegistrationService {
 
     private final EmailConfirmationService emailConfirmationService;
 
-    private final QuestService questService;
-
     private final UserService userService;
 
     private final MailService mailService;
@@ -57,14 +54,12 @@ public final class RegistrationServiceImpl implements RegistrationService {
             final UserRepository userRepository,
             final EmailConfirmationService emailConfirmationService,
             final PasswordEncoder passwordEncoder,
-            final QuestService questService,
             final UserService userService,
             final MailService mailService
     ) {
         this.userRepository = userRepository;
         this.emailConfirmationService = emailConfirmationService;
         this.passwordEncoder = passwordEncoder;
-        this.questService = questService;
         this.userService = userService;
         this.mailService = mailService;
     }
@@ -125,8 +120,6 @@ public final class RegistrationServiceImpl implements RegistrationService {
 
     private void onRegistered(final User user) {
         logger.log(Level.FINE, "Registered user: {0}", user);
-
-        questService.assignNewQuests(user);
     }
 
     private Optional<String> getGooglePictureUrl(final GoogleIdToken.Payload payload) {
