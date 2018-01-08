@@ -1,13 +1,15 @@
 package cz.cuni.mff.fruiton.dto.form;
 
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 public final class AddBazaarOfferForm {
 
     private int fruitonId;
 
     @Min(1)
-    private int price = 1;
+    @NotNull
+    private Integer price;
 
     public int getFruitonId() {
         return fruitonId;
@@ -17,11 +19,11 @@ public final class AddBazaarOfferForm {
         this.fruitonId = fruitonId;
     }
 
-    public int getPrice() {
+    public Integer getPrice() {
         return price;
     }
 
-    public void setPrice(final int price) {
+    public void setPrice(final Integer price) {
         this.price = price;
     }
 

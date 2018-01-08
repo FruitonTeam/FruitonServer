@@ -140,7 +140,7 @@ public final class BazaarServiceImpl implements BazaarService {
         userService.unlockFruiton(idHolder, offer.getFruitonId());
         userService.adjustMoney(idHolder, -offer.getPrice());
 
-        userService.adjustMoney(UserIdHolder.of(offer.getOfferedBy()), offer.getPrice());
+        userService.adjustMoney(UserIdHolder.of(offer.getOfferedBy()), computeProfit(offer.getPrice()));
 
         bazaarOfferRepository.delete(offer);
     }
@@ -150,6 +150,11 @@ public final class BazaarServiceImpl implements BazaarService {
         // TODO: check if fruiton with given id exists
 
         return bazaarOfferRepository.findByFruitonIdOrderByPriceAsc(fruitonId);
+    }
+
+    @Override
+    public int computeProfit(final int price) {
+        return (int) (price * PROFIT);
     }
 
     private static class BestOfferAggrResult {

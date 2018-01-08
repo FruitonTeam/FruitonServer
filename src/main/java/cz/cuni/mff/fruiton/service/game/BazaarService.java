@@ -7,6 +7,10 @@ import java.util.List;
 
 public interface BazaarService {
 
+    float FEE = 0.05f;
+
+    float PROFIT = 1 - FEE;
+
     class BazaarOfferListItem {
 
         private String fruitonName;
@@ -82,5 +86,7 @@ public interface BazaarService {
     void buy(String offerId, UserIdHolder idHolder);
 
     List<BazaarOffer> getOrderedOffersForFruiton(int fruitonId);
+
+    int computeProfit(int price);
 
 }

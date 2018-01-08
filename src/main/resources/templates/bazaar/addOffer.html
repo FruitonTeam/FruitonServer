@@ -18,7 +18,10 @@
         </div>
 
         <div th:case="${false}">
-            <form th:object="${formModel}" method="post" data-toggle="validator">
+            <div class="row">
+            <form th:object="${formModel}" method="post" data-toggle="validator"
+                  th:attr="oninput='profit.value = Math.trunc(price.valueAsNumber * '
+                      + ${T(cz.cuni.mff.fruiton.service.game.BazaarService).PROFIT} + ')'">
 
                 <div class="form-group">
                     <select class="form-control" th:field="*{fruitonId}" id="fruiton">
@@ -28,12 +31,16 @@
                 </div>
 
                 <div class="form-group">
-                    <input id="price" type="number" class="form-control" th:field="*{price}" min="1"
+                    <input id="price" type="number" class="form-control" th:field="*{price}" min="1" value="1"
                            placeholder="Price" required="required" />
                 </div>
+                <div style="margin-bottom: 15px;">
+                    <span>Profit: </span><output style="display: inline; color: #017c01;" name="profit" for="price"></output>
+                </div>
 
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <div class="form-group"><button type="submit" class="btn btn-primary">Submit</button></div>
             </form>
+            </div>
 
         </div>
     </div>
