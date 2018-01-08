@@ -65,11 +65,11 @@ public class TestWebSocketClient extends WebSocketClient {
         logger.log(Level.WARNING, "WebSocket error", e);
     }
 
-    public CommonProtos.WrapperMessage blockingPoll() throws InterruptedException, InvalidProtocolBufferException {
+    public CommonProtos.WrapperMessage blockingPoll() throws InterruptedException {
         return messageQueue.poll(5, TimeUnit.SECONDS);
     }
 
-    public CommonProtos.WrapperMessage peek() throws InvalidProtocolBufferException, InterruptedException {
+    public CommonProtos.WrapperMessage peek() {
         return messageQueue.peek();
     }
 

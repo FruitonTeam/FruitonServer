@@ -1,6 +1,5 @@
 package cz.cuni.mff.fruiton.component;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import cz.cuni.mff.fruiton.test.util.TestUtils;
@@ -17,7 +16,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.net.URISyntaxException;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = cz.cuni.mff.fruiton.Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -29,6 +28,8 @@ public class GameTest {
     private static final String LOGIN2 = "test2";
 
     private static final String PASSWORD = "password";
+
+    private static final int MESSAGE_POLL_TRIES = 10;
 
     @Autowired
     private RegistrationService registrationService;
@@ -56,17 +57,27 @@ public class GameTest {
     }
 
     @Test
-    public void matchMakingTest() throws InvalidProtocolBufferException, InterruptedException {
-
+    public void matchMakingTest() throws InterruptedException {
         client1.send(TestUtils.buildFindGameMsgWrapped().toByteArray());
         client2.send(TestUtils.buildFindGameMsgWrapped().toByteArray());
 
-        Thread.sleep(5000);
+        waitForGameReadyMsg(client1);
+        waitForGameReadyMsg(client2);
+    }
 
-        assertTrue("After successful matchmaking GameReady message is expected from server",
-                client1.hasInQueue(CommonProtos.WrapperMessage.MessageCase.GAMEREADY));
-        assertTrue("After successful matchmaking GameReady message is expected from server",
-                client2.hasInQueue(CommonProtos.WrapperMessage.MessageCase.GAMEREADY));
+    private void waitForGameReadyMsg(final TestWebSocketClient client) throws InterruptedException {
+        int tries = 0;
+        while (true) {
+            if (tries > MESSAGE_POLL_TRIES) {
+                fail("Exceeded maximum tries for GameReady message");
+            }
+            CommonProtos.WrapperMessage msg = client.blockingPoll();
+            if (msg.getMessageCase() == CommonProtos.WrapperMessage.MessageCase.GAMEREADY) {
+                break;
+            }
+
+            tries++;
+        }
     }
 
 }
