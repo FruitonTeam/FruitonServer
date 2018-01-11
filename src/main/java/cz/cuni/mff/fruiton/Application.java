@@ -14,7 +14,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         "cz.cuni.mff.fruiton.service",
         "cz.cuni.mff.fruiton.component"
 })
-@EntityScan(basePackages = "cz.cuni.mff.arrows.dao")
+@EntityScan(basePackages = "cz.cuni.mff.fruiton.dao")
 @EnableScheduling
 @EnableAsync
 public class Application extends SpringBootServletInitializer {

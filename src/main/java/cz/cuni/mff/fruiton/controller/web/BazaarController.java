@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.controller.web;
 
+import cz.cuni.mff.fruiton.component.TokenAuthenticationFilter;
 import cz.cuni.mff.fruiton.dto.form.AddBazaarOfferForm;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
 import cz.cuni.mff.fruiton.service.game.BazaarService;
@@ -38,7 +39,13 @@ public final class BazaarController {
     }
 
     @GetMapping("/bazaar")
-    public String bazaar(final Model model) {
+    public String bazaar(
+            final Model model,
+            final @RequestParam(value = TokenAuthenticationFilter.AUTH_TOKEN_KEY, required = false) String token
+    ) {
+        if (token != null) { // if user clicked on Market button in client app then strip the token header
+            return "redirect:/bazaar";
+        }
         model.addAttribute("bestOffers", bazaarService.getBestOffers());
 
         return "bazaar/index";
