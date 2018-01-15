@@ -54,6 +54,9 @@ public final class FruitonServiceImpl implements FruitonService {
 
         List<FruitonInfo> fruitonInfos = new ArrayList<>(fruitonIds.size());
         for (int fruitonId : fruitonIds) {
+            if (!fruitonInfoMap.containsKey(fruitonId)) {
+                continue;
+            }
             fruitonInfos.add(fruitonInfoMap.get(fruitonId));
         }
         return fruitonInfos;

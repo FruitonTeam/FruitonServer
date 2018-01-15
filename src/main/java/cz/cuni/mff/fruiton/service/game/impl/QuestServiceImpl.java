@@ -52,7 +52,7 @@ public final class QuestServiceImpl implements QuestService {
 
     @Override
     public void assignNewQuests(final User user) {
-        if (user.getAssignedQuests() == null || user.getAssignedQuests().size() < MAX_QUEST_NUMBER) {
+        if (user.canGenerateNewQuest()) {
             // TODO: change when we will have more quests available
             user.setAssignedQuests(List.of(questRepository.findByName("Winner")));
             userRepository.save(user);
