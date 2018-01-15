@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -85,10 +86,14 @@ public class LoginController {
 
     @RequestMapping(value = "/api/loginGoogle")
     public final GoogleLoginResult loginGoogle(@RequestParam final String idToken) {
-        UserIdHolder user = authService.authenticate(idToken);
-        if (user == null) {
+        UserIdHolder user;
+
+        Optional<UserIdHolder> optionalUser = authService.authenticate(idToken);
+        if (!optionalUser.isPresent()) {
             GoogleIdToken.Payload payload = authService.verify(idToken);
             user = registrationService.register(userService.generateRandomName(payload), payload);
+        } else {
+            user = optionalUser.get();
         }
 
         String token = generateTokenForUser(user);

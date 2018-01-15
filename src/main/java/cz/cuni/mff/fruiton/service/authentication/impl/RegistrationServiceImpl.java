@@ -8,6 +8,7 @@ import cz.cuni.mff.fruiton.dto.UserProtos;
 import cz.cuni.mff.fruiton.dto.form.RegistrationForm;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import cz.cuni.mff.fruiton.service.communication.mail.MailService;
+import cz.cuni.mff.fruiton.service.game.QuestService;
 import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,8 @@ public final class RegistrationServiceImpl implements RegistrationService {
 
     private final MailService mailService;
 
+    private final QuestService questService;
+
     @Value("${mail.google.welcome.subject}")
     private String googleWelcomeMailSubject;
 
@@ -55,13 +58,15 @@ public final class RegistrationServiceImpl implements RegistrationService {
             final EmailConfirmationService emailConfirmationService,
             final PasswordEncoder passwordEncoder,
             final UserService userService,
-            final MailService mailService
-    ) {
+            final MailService mailService,
+            final QuestService questService
+            ) {
         this.userRepository = userRepository;
         this.emailConfirmationService = emailConfirmationService;
         this.passwordEncoder = passwordEncoder;
         this.userService = userService;
         this.mailService = mailService;
+        this.questService = questService;
     }
 
     @Override
@@ -100,6 +105,7 @@ public final class RegistrationServiceImpl implements RegistrationService {
                 .withEmail(payload.getEmail());
 
         user.setGoogleSubject(payload.getSubject());
+        questService.assignNewQuests(user);
 
         saveUser(user);
 

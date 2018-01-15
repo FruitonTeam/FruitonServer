@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.Optional;
 
 @Controller
 public final class IndexController {
@@ -58,9 +59,9 @@ public final class IndexController {
             final HttpServletResponse response,
             @RequestParam final String idToken
     ) throws IOException {
-        UserIdHolder u = authService.authenticate(idToken);
-        if (u != null) {
-            authService.createAuthenticatedSession(u, request);
+        Optional<UserIdHolder> u = authService.authenticate(idToken);
+        if (u.isPresent()) {
+            authService.createAuthenticatedSession(u.get(), request);
             response.sendRedirect(context.getContextPath() + "/home");
         } else {
             response.sendRedirect(context.getContextPath() + "/registerGoogle?token=" + idToken);

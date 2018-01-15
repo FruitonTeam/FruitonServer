@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -63,25 +64,22 @@ public final class AuthenticationServiceImpl implements AuthenticationService {
             throw new BadCredentialsException("Incorrect password");
         }
 
-        generateNewQuestsIfPossible(user);
+        questService.assignNewQuests(user);
 
         return UserIdHolder.of(user);
-    }
-
-    private void generateNewQuestsIfPossible(final User user) {
-        if (user.canGenerateNewQuest()) {
-            questService.assignNewQuests(user);
-        }
     }
 
     @Override
-    public UserIdHolder authenticate(final String idToken) {
+    public Optional<UserIdHolder> authenticate(final String idToken) {
         GoogleIdToken.Payload payload = verify(idToken);
 
         User user = userRepository.findByGoogleSubject(payload.getSubject());
-        generateNewQuestsIfPossible(user);
+        if (user == null) { // this might be the first login
+            return Optional.empty();
+        }
 
-        return UserIdHolder.of(user);
+        questService.assignNewQuests(user);
+        return Optional.of(UserIdHolder.of(user));
     }
 
     @Override
