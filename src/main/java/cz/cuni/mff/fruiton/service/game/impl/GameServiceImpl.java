@@ -106,11 +106,13 @@ public final class GameServiceImpl implements GameService {
 
         Array<Fruiton> fruitons = getFruitonsArray(player1, player2, finalTeam1, finalTeam2);
 
+        int mapId = KernelUtils.getRandomMapId();
+
         Kernel kernel;
         if (firstUserStartsFirst) {
-            kernel = new Kernel(player1, player2, fruitons);
+            kernel = new Kernel(player1, player2, fruitons, KernelUtils.makeGameSettings(mapId));
         } else {
-            kernel = new Kernel(player2, player1, fruitons);
+            kernel = new Kernel(player2, player1, fruitons, KernelUtils.makeGameSettings(mapId));
         }
 
         GameData gameData = new GameData(user1, user2, kernel);
@@ -118,7 +120,7 @@ public final class GameServiceImpl implements GameService {
         userToGameData.put(user1, gameData);
         userToGameData.put(user2, gameData);
 
-        sendGameReadyMessages(user1, user2, finalTeam1, finalTeam2, firstUserStartsFirst);
+        sendGameReadyMessages(user1, user2, finalTeam1, finalTeam2, firstUserStartsFirst, mapId);
     }
 
     private GameProtos.FruitonTeam convertFruitonPositions(final GameProtos.FruitonTeam team) {
@@ -169,24 +171,27 @@ public final class GameServiceImpl implements GameService {
             final UserIdHolder user2,
             final GameProtos.FruitonTeam team1,
             final GameProtos.FruitonTeam team2,
-            final boolean firstUserStartsFirst
+            final boolean firstUserStartsFirst,
+            final int mapId
     ) {
         logger.log(Level.FINEST, "Sending game ready messages to {0} and {1}", new Object[] {user1, user2});
 
-        sendGameReadyMessage(user1, user2, team2, firstUserStartsFirst);
-        sendGameReadyMessage(user2, user1, team1, !firstUserStartsFirst);
+        sendGameReadyMessage(user1, user2, team2, firstUserStartsFirst, mapId);
+        sendGameReadyMessage(user2, user1, team1, !firstUserStartsFirst, mapId);
     }
 
     private void sendGameReadyMessage(
             final UserIdHolder recipient,
             final UserIdHolder opponent,
             final GameProtos.FruitonTeam opponentTeam,
-            final boolean startsFirst
+            final boolean startsFirst,
+            final int mapId
     ) {
         GameProtos.GameReady gameReadyMessage = GameProtos.GameReady.newBuilder()
                 .setOpponent(getPlayerInfo(opponent))
                 .setOpponentTeam(opponentTeam)
                 .setStartsFirst(startsFirst)
+                .setMapId(mapId)
                 .build();
 
         communicationService.send(recipient, CommonProtos.WrapperMessage.newBuilder()

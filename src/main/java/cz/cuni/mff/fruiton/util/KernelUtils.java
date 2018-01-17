@@ -5,7 +5,9 @@ import cz.cuni.mff.fruiton.dto.GameProtos;
 import fruiton.dataStructures.Point;
 import fruiton.fruitDb.FruitonDatabase;
 import fruiton.fruitDb.factories.FruitonFactory;
+import fruiton.fruitDb.factories.MapFactory;
 import fruiton.kernel.Fruiton;
+import fruiton.kernel.GameSettings;
 import fruiton.kernel.Kernel;
 import fruiton.kernel.actions.Action;
 import fruiton.kernel.actions.AttackAction;
@@ -24,9 +26,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 public final class KernelUtils {
+
+    private static final Random RANDOM = new Random();
 
     private static FruitonDatabase fruitonDatabase;
 
@@ -99,6 +104,15 @@ public final class KernelUtils {
 
         ValidationResult validationResult = FruitonTeamValidator.validateFruitonTeam(fruitons, getFruitonDb());
         return validationResult.complete && validationResult.valid;
+    }
+
+    public static int getRandomMapId() {
+        Array<Object> mapIds = getFruitonDb().getMapsIds();
+        return (Integer) mapIds.__get(RANDOM.nextInt(mapIds.length));
+    }
+
+    public static GameSettings makeGameSettings(final int mapId) {
+        return new GameSettings(MapFactory.makeMap(mapId, getFruitonDb()));
     }
 
 }
