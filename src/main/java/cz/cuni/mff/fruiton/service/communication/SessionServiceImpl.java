@@ -62,4 +62,9 @@ public final class SessionServiceImpl implements SessionService {
         return otherSameNetworkSessions;
     }
 
+    @Override
+    public boolean isOnline(final Principal principal) {
+        return sessions.containsKey(principal);
+    }
+
 }

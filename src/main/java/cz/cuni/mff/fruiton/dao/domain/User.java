@@ -14,8 +14,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 @Document
 public final class User {
@@ -70,6 +72,9 @@ public final class User {
 
     @DBRef
     private List<Quest> assignedQuests = new LinkedList<>();
+
+    @DBRef(lazy = true) // lazy fetching so we won't get stack overflow exception
+    private Set<User> friends = new HashSet<>();
 
     private LocalDate dateOfLastCompletedQuest;
 
@@ -185,6 +190,18 @@ public final class User {
         } else {
             return DEFAULT_AVATAR;
         }
+    }
+
+    public void addFriend(final User user) {
+        friends.add(user);
+    }
+
+    public void removeFriend(final User user) {
+        friends.remove(user);
+    }
+
+    public Set<User> getFriends() {
+        return new HashSet<>(friends); // return a copy
     }
 
     public boolean canGenerateNewQuest() {

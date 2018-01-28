@@ -89,4 +89,6 @@ public interface UserService {
 
     EditProfileForm getEditProfileForm(UserIdHolder idHolder);
 
+    List<UserIdHolder> getFriends(UserIdHolder idHolder);
+
 }

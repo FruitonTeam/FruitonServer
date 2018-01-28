@@ -2,17 +2,20 @@ package cz.cuni.mff.fruiton.controller.api;
 
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
+import cz.cuni.mff.fruiton.service.communication.SessionService;
+import cz.cuni.mff.fruiton.service.communication.chat.FriendshipService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import java.io.IOException;
 import java.util.Optional;
 
 @RestController
@@ -24,15 +27,23 @@ public final class PlayerController {
 
     private final AuthenticationService authService;
 
+    private final FriendshipService friendshipService;
+
+    private final SessionService sessionService;
+
     @Autowired
     public PlayerController(
             final UserRepository repository,
             final UserService userService,
-            final AuthenticationService authService
+            final AuthenticationService authService,
+            final FriendshipService friendshipService,
+            final SessionService sessionService
     ) {
         this.repository = repository;
         this.userService = userService;
         this.authService = authService;
+        this.friendshipService = friendshipService;
+        this.sessionService = sessionService;
     }
 
     @RequestMapping("/api/player/exists")
@@ -66,12 +77,23 @@ public final class PlayerController {
     }
 
     @RequestMapping("/api/player/avatar")
-    public ResponseEntity<String> getAvatar(@RequestParam final String login) throws IOException {
+    public ResponseEntity<String> getAvatar(@RequestParam final String login) {
         Optional<String> encodedAvatar = userService.getBase64Avatar(login);
         if (encodedAvatar.isPresent()) {
             return new ResponseEntity<>(encodedAvatar.get(), HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @RequestMapping("/api/secured/player/friendRequests")
+    public List<String> getAllFriendRequests() {
+        return friendshipService.getAllFriendRequests(authService.getLoggedInUser());
+    }
+
+    @ResponseBody
+    @GetMapping("/api/player/isOnline")
+    public boolean isOnline(@RequestParam final String login) {
+        return sessionService.isOnline(userService.findUserByLogin(login));
     }
 
 }

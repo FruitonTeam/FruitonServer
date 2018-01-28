@@ -60,6 +60,8 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
         if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
             sendPlayersOnTheSameNetworkInfo(session);
         }
+
+        sendStatusChangedToOnlineMessage(session);
     }
 
     private void sendLoggedPlayerInfo(final WebSocketSession session) throws IOException {
@@ -92,6 +94,16 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
                 .build();
     }
 
+    private void sendStatusChangedToOnlineMessage(final WebSocketSession session) throws IOException {
+        for (UserIdHolder friend : userService.getFriends((UserIdHolder) session.getPrincipal())) {
+            if (sessionService.isOnline(friend)) {
+                sessionService.getSession(friend).sendMessage(new BinaryMessage(
+                        getOnlineStatusChangedMessage(((UserIdHolder) session.getPrincipal()).getUsername(),
+                                GameProtos.Status.ONLINE).toByteArray()));
+            }
+        }
+    }
+
     @Override
     public final void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) throws IOException {
         logger.log(Level.FINEST, "Closed connection for {0} with status: {1}", new Object[] {session.getPrincipal(), status});
@@ -99,7 +111,28 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
             sendPlayerOnTheSameNetworkDisconnected(session);
         }
 
+        sendStatusChangedToOfflineMessage(session);
+
         sessionService.unregister(session);
+    }
+
+    private void sendStatusChangedToOfflineMessage(final WebSocketSession session) throws IOException {
+        for (UserIdHolder friend : userService.getFriends((UserIdHolder) session.getPrincipal())) {
+            if (sessionService.isOnline(friend)) {
+                sessionService.getSession(friend).sendMessage(new BinaryMessage(
+                        getOnlineStatusChangedMessage(((UserIdHolder) session.getPrincipal()).getUsername(),
+                                GameProtos.Status.OFFLINE).toByteArray()));
+            }
+        }
+    }
+
+    private CommonProtos.WrapperMessage getOnlineStatusChangedMessage(final String login, final GameProtos.Status status) {
+        return CommonProtos.WrapperMessage.newBuilder()
+                .setOnlineStatusChange(GameProtos.OnlineStatusChange.newBuilder()
+                        .setLogin(login)
+                        .setStatus(status)
+                        .build())
+                .build();
     }
 
     private void sendPlayerOnTheSameNetworkDisconnected(final WebSocketSession session) throws IOException {
