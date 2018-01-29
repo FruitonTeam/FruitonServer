@@ -19,6 +19,8 @@ import fruiton.kernel.actions.MoveAction;
 import fruiton.kernel.actions.MoveActionContext;
 import fruiton.kernel.fruitonTeam.FruitonTeamValidator;
 import fruiton.kernel.fruitonTeam.ValidationResult;
+import fruiton.kernel.gameModes.GameMode;
+import fruiton.kernel.gameModes.LastManStandingGameMode;
 import fruiton.kernel.gameModes.StandardGameMode;
 import haxe.root.Array;
 import org.apache.commons.io.IOUtils;
@@ -112,8 +114,21 @@ public final class KernelUtils {
         return (Integer) mapIds.__get(RANDOM.nextInt(mapIds.length));
     }
 
-    public static GameSettings makeGameSettings(final int mapId) {
-        return new GameSettings(MapFactory.makeMap(mapId, getFruitonDb()), new StandardGameMode());
+    public static GameSettings makeGameSettings(final int mapId, final GameProtos.FindGame.GameMode gameModeType) {
+        GameMode gameMode;
+        switch (gameModeType) {
+            case STANDARD:
+                gameMode = new StandardGameMode();
+                break;
+            case LAST_MAN_STANDING:
+                gameMode = new LastManStandingGameMode();
+                break;
+            default:
+                throw new IllegalArgumentException("Game mode not supported");
+
+        }
+
+        return new GameSettings(MapFactory.makeMap(mapId, getFruitonDb()), gameMode);
     }
 
 }

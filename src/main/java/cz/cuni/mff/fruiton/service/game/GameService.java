@@ -13,7 +13,13 @@ public interface GameService extends OnDisconnectedListener {
         }
     }
 
-    void createGame(UserIdHolder user1, GameProtos.FruitonTeam team1, UserIdHolder user2, GameProtos.FruitonTeam team2);
+    void createGame(
+            UserIdHolder user1,
+            GameProtos.FruitonTeam team1,
+            UserIdHolder user2,
+            GameProtos.FruitonTeam team2,
+            GameProtos.FindGame.GameMode gameMode
+    );
 
     void setPlayerReady(UserIdHolder user);
 

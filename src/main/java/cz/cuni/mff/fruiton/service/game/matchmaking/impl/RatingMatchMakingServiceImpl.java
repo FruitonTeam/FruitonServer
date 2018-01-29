@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeSet;
@@ -35,13 +36,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
     private final UserService userService;
 
-    private final TreeSet<WaitingUser> waitingUsers = new TreeSet<>((u1, u2) -> {
-        if (u1.getRating() != u2.getRating()) {
-            return Integer.compare(u1.getRating(), u2.getRating());
-        } else {
-            return u1.user.getUsername().compareTo(u2.user.getUsername());
-        }
-    });
+    private final Map<GameProtos.FindGame.GameMode, TreeSet<WaitingUser>> waitingUsers = new HashMap<>();
 
     private final Map<UserIdHolder, GameProtos.FruitonTeam> teams = new ConcurrentHashMap<>();
 
@@ -51,6 +46,19 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
     public RatingMatchMakingServiceImpl(final GameService gameService, final UserService userService) {
         this.gameService = gameService;
         this.userService = userService;
+
+        for (GameProtos.FindGame.GameMode gameMode : GameProtos.FindGame.GameMode.values()) {
+            waitingUsers.put(
+                    gameMode,
+                    new TreeSet<>((u1, u2) -> {
+                        if (u1.getRating() != u2.getRating()) {
+                            return Integer.compare(u1.getRating(), u2.getRating());
+                        } else {
+                            return u1.user.getUsername().compareTo(u2.user.getUsername());
+                        }
+                    })
+            );
+        }
     }
 
     @Override
@@ -62,36 +70,48 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
         logger.log(Level.FINEST, "Adding {0} to waiting list", user);
 
         teams.put(user, findGameMsg.getTeam());
-        waitingUsers.add(new WaitingUser(user, userService.getRating(user)));
+        waitingUsers.get(findGameMsg.getGameMode()).add(new WaitingUser(user, userService.getRating(user)));
     }
 
     @Override
     public synchronized void removeFromMatchMaking(final UserIdHolder user) {
         WaitingUser waitingUser = new WaitingUser(user, 0);
-        if (waitingUsers.contains(waitingUser)) {
-            logger.log(Level.FINE, "Removing {0} from matchmaking", user);
-            waitingUsers.remove(waitingUser);
+        for(TreeSet<WaitingUser> set : waitingUsers.values()) {
+            if (set.contains(waitingUser)) {
+                logger.log(Level.FINE, "Removing {0} from matchmaking", user);
+                set.remove(waitingUser);
+                break;
+            }
         }
     }
 
     @Scheduled(fixedDelay = MATCH_REFRESH_TIME)
     public synchronized void match() {
-        if (waitingUsers.isEmpty()) {
-            return;
-        }
-
         iterateAscending = !iterateAscending;
-        matchWaitingUsers();
-        deleteMatchedUsers();
+
+        for (Map.Entry<GameProtos.FindGame.GameMode, TreeSet<WaitingUser>> waitingUserEntry : waitingUsers.entrySet()) {
+            if (waitingUserEntry.getValue().isEmpty()) {
+                continue;
+            }
+
+            matchWaitingUsers(waitingUserEntry);
+            deleteMatchedUsers(waitingUserEntry.getValue());
+        }
     }
 
-    private void matchWaitingUsers() {
-        Iterator<WaitingUser> it = getWaitingUsersIterator();
+    private void matchWaitingUsers(Map.Entry<GameProtos.FindGame.GameMode, TreeSet<WaitingUser>> waitingUserEntry) {
+        Iterator<WaitingUser> it = getWaitingUsersIterator(waitingUserEntry.getValue());
         WaitingUser previous = it.next();
         while (it.hasNext()) {
             WaitingUser current = it.next();
             if (Math.abs(previous.getRating() - current.getRating()) < current.deltaWindow) { // it's a match
-                gameService.createGame(previous.user, teams.get(previous.user), current.user, teams.get(current.user));
+                gameService.createGame(
+                        previous.user,
+                        teams.get(previous.user),
+                        current.user,
+                        teams.get(current.user),
+                        waitingUserEntry.getKey()
+                );
                 previous.markedForDelete = true;
                 current.markedForDelete = true;
 
@@ -100,32 +120,32 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
                 }
                 previous = it.next();
             } else {
-                previous.deltaWindow += getRatingDeltaWindow();
+                previous.deltaWindow += getRatingDeltaWindow(waitingUserEntry.getValue());
                 previous = current;
             }
         }
     }
 
-    private int getRatingDeltaWindow() {
-        if (waitingUsers.size() < LOW_PLAYERS_MODE_THRESHOLD) {
+    private int getRatingDeltaWindow(TreeSet<WaitingUser> userSet) {
+        if (userSet.size() < LOW_PLAYERS_MODE_THRESHOLD) {
             return LOW_PLAYERS_MODE_DELTA_WINDOW;
         } else {
             return DEFAULT_DELTA_WINDOW;
         }
     }
 
-    private Iterator<WaitingUser> getWaitingUsersIterator() {
+    private Iterator<WaitingUser> getWaitingUsersIterator(TreeSet<WaitingUser> userSet) {
         Iterator<WaitingUser> it;
         if (iterateAscending) {
-            it = waitingUsers.iterator();
+            it = userSet.iterator();
         } else {
-            it = waitingUsers.descendingIterator();
+            it = userSet.descendingIterator();
         }
         return it;
     }
 
-    private void deleteMatchedUsers() {
-        waitingUsers.removeIf(user -> user.markedForDelete);
+    private void deleteMatchedUsers(TreeSet<WaitingUser> userSet) {
+        userSet.removeIf(user -> user.markedForDelete);
     }
 
     @Override

@@ -10,7 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
@@ -24,7 +26,7 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
 
     private static final Logger logger = Logger.getLogger(SimpleMatchMakingServiceImpl.class.getName());
 
-    private final Deque<UserIdHolder> waitingForOpponent = new LinkedList<>();
+    private final Map<FindGame.GameMode, Deque<UserIdHolder>> waitingForOpponent = new HashMap<>();
 
     private final Map<UserIdHolder, FruitonTeam> teams = new ConcurrentHashMap<>();
 
@@ -33,6 +35,9 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
     @Autowired
     public SimpleMatchMakingServiceImpl(final GameService gameService) {
         this.gameService = gameService;
+        for (FindGame.GameMode gameMode : FindGame.GameMode.values()) {
+            waitingForOpponent.put(gameMode, new LinkedList<>());
+        }
     }
 
     @Override
@@ -41,27 +46,31 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
             throw new IllegalArgumentException("Invalid team " + findGameMsg.getTeam());
         }
 
-        Optional<UserIdHolder> opponent = getOpponent();
+        FindGame.GameMode gameMode = findGameMsg.getGameMode();
+
+        Optional<UserIdHolder> opponent = getOpponent(gameMode);
         if (opponent.isPresent()) {
-            gameService.createGame(user, findGameMsg.getTeam(), opponent.get(), teams.remove(opponent.get()));
+            gameService.createGame(user, findGameMsg.getTeam(), opponent.get(), teams.remove(opponent.get()), gameMode);
         } else {
             logger.log(Level.FINEST, "Adding {0} to waiting list", user);
 
-            waitingForOpponent.add(user);
+            waitingForOpponent.get(gameMode).add(user);
 
             teams.put(user, findGameMsg.getTeam());
         }
     }
 
-    private Optional<UserIdHolder> getOpponent() {
-        return Optional.ofNullable(waitingForOpponent.poll());
+    private Optional<UserIdHolder> getOpponent(FindGame.GameMode gameMode) {
+        return Optional.ofNullable(waitingForOpponent.get(gameMode).poll());
     }
 
     @Override
     public synchronized void removeFromMatchMaking(final UserIdHolder user) {
-        if (waitingForOpponent.contains(user)) {
-            logger.log(Level.FINE, "Removing {0} from matchmaking", user);
-            waitingForOpponent.remove(user);
+        for (Deque<UserIdHolder> queue : waitingForOpponent.values()) {
+            if (queue.contains(user)) {
+                logger.log(Level.FINE, "Removing {0} from matchmaking", user);
+                queue.remove(user);
+            }
         }
     }
 
