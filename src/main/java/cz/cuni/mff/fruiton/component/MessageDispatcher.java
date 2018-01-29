@@ -90,11 +90,11 @@ public class MessageDispatcher {
 
         try {
             methods.get(msgNum).invoke(session.getPrincipal(), o);
-        } catch (InvocationTargetException | IllegalAccessException e) {
+        } catch (IllegalAccessException e) {
             logger.log(Level.SEVERE, "Could not dispatch message", e);
-        } catch (Exception e) {
+        } catch (InvocationTargetException e) {
             logger.log(Level.SEVERE, "Exception while processing WebSocket message", e);
-            communicationService.send(session.getPrincipal(), createErrorMessage(e.getMessage()));
+            communicationService.send(session.getPrincipal(), createErrorMessage(e.getCause().getMessage()));
         }
     }
 

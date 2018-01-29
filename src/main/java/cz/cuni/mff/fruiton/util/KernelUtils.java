@@ -19,6 +19,7 @@ import fruiton.kernel.actions.MoveAction;
 import fruiton.kernel.actions.MoveActionContext;
 import fruiton.kernel.fruitonTeam.FruitonTeamValidator;
 import fruiton.kernel.fruitonTeam.ValidationResult;
+import fruiton.kernel.gameModes.StandardGameMode;
 import haxe.root.Array;
 import org.apache.commons.io.IOUtils;
 
@@ -112,7 +113,7 @@ public final class KernelUtils {
     }
 
     public static GameSettings makeGameSettings(final int mapId) {
-        return new GameSettings(MapFactory.makeMap(mapId, getFruitonDb()));
+        return new GameSettings(MapFactory.makeMap(mapId, getFruitonDb()), new StandardGameMode());
     }
 
 }
