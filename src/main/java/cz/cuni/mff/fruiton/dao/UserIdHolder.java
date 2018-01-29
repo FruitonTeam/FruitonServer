@@ -108,4 +108,12 @@ public final class UserIdHolder implements Principal, UserDetails {
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
     }
+
+    @Override
+    public String toString() {
+        return "UserIdHolder{"
+                + "id='" + id + '\''
+                + ", username='" + username + '\''
+                + '}';
+    }
 }

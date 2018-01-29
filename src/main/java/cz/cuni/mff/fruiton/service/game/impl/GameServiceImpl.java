@@ -9,7 +9,6 @@ import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.AchievementService;
 import cz.cuni.mff.fruiton.service.game.FruitonService;
 import cz.cuni.mff.fruiton.service.game.GameService;
-import cz.cuni.mff.fruiton.service.game.PlayerService;
 import cz.cuni.mff.fruiton.service.game.QuestService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
@@ -18,18 +17,22 @@ import fruiton.kernel.GameState;
 import fruiton.kernel.Kernel;
 import fruiton.kernel.Player;
 import fruiton.kernel.actions.Action;
+import fruiton.kernel.actions.EndTurnAction;
 import fruiton.kernel.actions.MoveAction;
 import fruiton.kernel.events.Event;
 import haxe.root.Array;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,18 +41,19 @@ public final class GameServiceImpl implements GameService {
 
     private static final int STANDARD_MONEY_REWARD = 50;
 
+    private static final int TURN_TIME_CHECK_REFRESH_TIME = 1000;
+
     private static final Logger logger = Logger.getLogger(GameServiceImpl.class.getName());
 
     private static final AtomicInteger ATOMIC_INT = new AtomicInteger();
 
     private final Random random = new Random();
 
-    private final Map<UserIdHolder, GameData> userToGameData = new Hashtable<>();
+    private final Map<UserIdHolder, GameData> userToGameData = new HashMap<>();
+
+    private final ReadWriteLock gamesLock = new ReentrantReadWriteLock();
 
     private final CommunicationService communicationService;
-
-    private final PlayerService playerService;
-
 
     private final AchievementService achievementService;
 
@@ -64,7 +68,6 @@ public final class GameServiceImpl implements GameService {
     @Autowired
     public GameServiceImpl(
             final CommunicationService communicationService,
-            final PlayerService playerService,
             final AchievementService achievementService,
             final AchievementHelper achievementHelper,
             final UserService userService,
@@ -72,7 +75,6 @@ public final class GameServiceImpl implements GameService {
             final QuestService questService
     ) {
         this.communicationService = communicationService;
-        this.playerService = playerService;
         this.achievementService = achievementService;
         this.achievementHelper = achievementHelper;
         this.userService = userService;
@@ -115,10 +117,15 @@ public final class GameServiceImpl implements GameService {
             kernel = new Kernel(player2, player1, fruitons, KernelUtils.makeGameSettings(mapId));
         }
 
-        GameData gameData = new GameData(user1, user2, kernel);
+        GameData gameData = new GameData(user1, user2, player1, player2, kernel);
 
-        userToGameData.put(user1, gameData);
-        userToGameData.put(user2, gameData);
+        try {
+            gamesLock.writeLock().lock();
+            userToGameData.put(user1, gameData);
+            userToGameData.put(user2, gameData);
+        } finally {
+            gamesLock.writeLock().unlock();
+        }
 
         sendGameReadyMessages(user1, user2, finalTeam1, finalTeam2, firstUserStartsFirst, mapId);
     }
@@ -207,13 +214,13 @@ public final class GameServiceImpl implements GameService {
     public void setPlayerReady(final UserIdHolder user) {
         logger.log(Level.FINEST, "Setting user {0} ready", user);
 
-        GameData gameData = userToGameData.get(user);
+        GameData gameData = getGameData(user);
 
         if (gameData == null) {
             throw new IllegalStateException("User " + user + " has no game associated");
         }
 
-        synchronized (this) {
+        synchronized (gameData.lock) {
             gameData.setPlayerReady(user);
 
             if (gameData.arePlayersReady()) {
@@ -222,9 +229,18 @@ public final class GameServiceImpl implements GameService {
         }
     }
 
+    private GameData getGameData(final UserIdHolder user) {
+        try {
+            gamesLock.readLock().lock();
+            return userToGameData.get(user);
+        } finally {
+            gamesLock.readLock().unlock();
+        }
+    }
+
     private void startGame(final GameData gameData) {
-        sendGameStartsMessage(gameData.user1);
-        sendGameStartsMessage(gameData.user2);
+        sendGameStartsMessage(gameData.player1.user);
+        sendGameStartsMessage(gameData.player2.user);
 
         gameData.kernel.startGame();
     }
@@ -237,22 +253,30 @@ public final class GameServiceImpl implements GameService {
 
     @Override
     public void performAction(final UserIdHolder user, final GameProtos.Action protobufAction) {
-        GameData gameData = userToGameData.get(user);
+        GameData gameData = getGameData(user);
         if (gameData == null) {
             throw new IllegalStateException("User " + user + " has no game associated");
         }
 
-        logger.log(Level.FINEST, "User {0} is performing action {1} in game {2}",
-                new Object[] {user, protobufAction, gameData});
+        synchronized (gameData.lock) {
+            logger.log(Level.FINEST, "User {0} is performing action {1} in game {2}",
+                    new Object[] {user, protobufAction, gameData});
 
-        Kernel kernel = gameData.kernel;
 
-        Action kernelAction = KernelUtils.getActionFromProtobuf(protobufAction, kernel);
+            if (!gameData.getActivePlayer().user.equals(user)) {
+                throw new GameException("User " + user + " cannot perform action " + protobufAction
+                        + " because he is no longer active");
+            }
 
-        Array<Event> events = kernel.performAction(kernelAction);
-        processEvents(events);
+            Kernel kernel = gameData.kernel;
 
-        onAfterAction(user, protobufAction);
+            Action kernelAction = KernelUtils.getActionFromProtobuf(protobufAction, kernel);
+
+            Array<Event> events = kernel.performAction(kernelAction);
+            processEvents(events);
+
+            onAfterAction(gameData, user, protobufAction);
+        }
     }
 
     private void processEvents(final Array<Event> events) {
@@ -266,11 +290,8 @@ public final class GameServiceImpl implements GameService {
         // TODO: specific handling
     }
 
-    private void onAfterAction(final UserIdHolder user, final GameProtos.Action protobufAction) {
-        GameData gameData = userToGameData.get(user);
-
-        communicationService.send(gameData.getOpponentUser(user),
-                CommonProtos.WrapperMessage.newBuilder().setAction(protobufAction).build());
+    private void onAfterAction(final GameData gameData, final UserIdHolder user, final GameProtos.Action protobufAction) {
+        communicationService.send(gameData.getOpponentUser(user), wrapProtobufAction(protobufAction));
 
         incrementAchievementProgressAfterAction(user, protobufAction);
     }
@@ -285,9 +306,23 @@ public final class GameServiceImpl implements GameService {
 
     @Override
     public void playerSurrendered(final UserIdHolder surrenderedUser) {
-        GameData gameData = userToGameData.get(surrenderedUser);
-        UserIdHolder other = gameData.getOpponentUser(surrenderedUser);
-        sendGameOverMessage(other, GameProtos.GameOver.Reason.SURRENDER, generateWinnerGameResults(other));
+        UserIdHolder opponent = removeGameAndReturnOpponent(surrenderedUser);
+        sendGameOverMessage(opponent, GameProtos.GameOver.Reason.SURRENDER, generateWinnerGameResults(opponent));
+    }
+
+    private UserIdHolder removeGameAndReturnOpponent(final UserIdHolder user) {
+        UserIdHolder opponent;
+        try {
+            gamesLock.writeLock().lock();
+            GameData gameData = userToGameData.get(user);
+            userToGameData.remove(user);
+
+            opponent = gameData.getOpponentUser(user);
+            userToGameData.remove(opponent);
+        } finally {
+            gamesLock.writeLock().unlock();
+        }
+        return opponent;
     }
 
     private GameProtos.GameResults generateWinnerGameResults(final UserIdHolder user) {
@@ -331,61 +366,123 @@ public final class GameServiceImpl implements GameService {
                 .build());
     }
 
+    @Scheduled(fixedDelay = TURN_TIME_CHECK_REFRESH_TIME)
+    private void checkTurnTimeLimit() {
+        try {
+            gamesLock.readLock().lock();
+            for (GameData game : userToGameData.values()) {
+                synchronized (game.lock) {
+                    if (game.kernel.currentState.turnState.isTimeout()) {
+                        logger.log(Level.FINEST, "User {0} timed out, performing end turn", game.getActivePlayer().user);
+
+                        sendTimeOutMessage(game.getActivePlayer().user);
+
+                        GameProtos.Action endTurnAction = GameProtos.Action.newBuilder().setId(EndTurnAction.ID).build();
+
+                        performAction(game.getActivePlayer().user, endTurnAction);
+
+                        communicationService.send(game.getInactivePlayer().user, wrapProtobufAction(endTurnAction));
+                    }
+                }
+            }
+        } finally {
+            gamesLock.readLock().unlock();
+        }
+    }
+
+    private void sendTimeOutMessage(final UserIdHolder user) {
+        communicationService.send(user, CommonProtos.WrapperMessage.newBuilder()
+                .setTimeout(GameProtos.Timeout.newBuilder()).build());
+    }
+
+    private CommonProtos.WrapperMessage wrapProtobufAction(final GameProtos.Action protobufAction) {
+        return CommonProtos.WrapperMessage.newBuilder().setAction(protobufAction).build();
+    }
+
     @Override
     public void onDisconnected(final UserIdHolder user) {
-        GameData gameData = userToGameData.get(user);
+        UserIdHolder opponent = removeGameAndReturnOpponent(user);
+        sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT, generateWinnerGameResults(opponent));
 
-        UserIdHolder opponent = gameData.getOpponentUser(user);
-
-        if (playerService.isOnline(opponent)) {
-            sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT, generateWinnerGameResults(opponent));
-        }
     }
 
     private static final class GameData {
 
-        private final UserIdHolder user1;
-        private boolean player1Ready;
-
-        private final UserIdHolder user2;
-        private boolean player2Ready;
+        private PlayerRecord player1;
+        private PlayerRecord player2;
 
         private final Kernel kernel;
+
+        private final Object lock = new Object();
 
         private GameData(
                 final UserIdHolder user1,
                 final UserIdHolder user2,
+                final Player player1,
+                final Player player2,
                 final Kernel kernel
         ) {
-            this.user1 = user1;
-            this.user2 = user2;
+            this.player1 = new PlayerRecord(user1, player1);
+            this.player2 = new PlayerRecord(user2, player2);
             this.kernel = kernel;
         }
 
         private UserIdHolder getOpponentUser(final UserIdHolder user) {
-            if (user.equals(user1)) {
-                return user2;
-            } else if (user.equals(user2)) {
-                return user1;
+            if (user.equals(player1.user)) {
+                return player2.user;
+            } else if (user.equals(player2.user)) {
+                return player1.user;
             } else {
                 throw new IllegalStateException("This game is not for user " + user);
             }
         }
 
         private void setPlayerReady(final UserIdHolder user) {
-            if (user.equals(user1)) {
-                player1Ready = true;
-            } else if (user.equals(user2)) {
-                player2Ready = true;
+            if (user.equals(player1.user)) {
+                player1.playerReady = true;
+            } else if (user.equals(player2.user)) {
+                player2.playerReady = true;
             } else {
                 throw new IllegalStateException("This game is not for user " + user);
             }
         }
 
         private boolean arePlayersReady() {
-            return player1Ready && player2Ready;
+            return player1.playerReady && player2.playerReady;
         }
 
+        private PlayerRecord getActivePlayer() {
+            int activePlayerId = kernel.currentState.players.__get(kernel.currentState.activePlayerIdx).id;
+            return getPlayer(activePlayerId);
+        }
+
+        private PlayerRecord getInactivePlayer() {
+            int inactivePlayerId = kernel.currentState.players.__get(1 - kernel.currentState.activePlayerIdx).id;
+            return getPlayer(inactivePlayerId);
+        }
+
+        private PlayerRecord getPlayer(final int id) {
+            if (id == player1.player.id) {
+                return player1;
+            } else if (id == player2.player.id) {
+                return player2;
+            } else {
+                throw new IllegalStateException("Unknown active player");
+            }
+        }
+
+    }
+
+    private static class PlayerRecord {
+
+        private UserIdHolder user;
+        private boolean playerReady;
+        private Player player;
+
+        PlayerRecord(final UserIdHolder user, final Player player) {
+            this.user = user;
+            this.player = player;
+        }
     }
 
 }
