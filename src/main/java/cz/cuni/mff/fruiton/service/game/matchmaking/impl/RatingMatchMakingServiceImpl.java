@@ -67,13 +67,10 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
     @Override
     public synchronized void removeFromMatchMaking(final UserIdHolder user) {
-        logger.log(Level.FINE, "Removing {0} from matchmaking", user);
-
         WaitingUser waitingUser = new WaitingUser(user, 0);
         if (waitingUsers.contains(waitingUser)) {
+            logger.log(Level.FINE, "Removing {0} from matchmaking", user);
             waitingUsers.remove(waitingUser);
-        } else {
-            logger.log(Level.WARNING, "Could not remove user {0} from match making", user);
         }
     }
 
@@ -129,6 +126,11 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
     private void deleteMatchedUsers() {
         waitingUsers.removeIf(user -> user.markedForDelete);
+    }
+
+    @Override
+    public void onDisconnected(final UserIdHolder user) {
+        removeFromMatchMaking(user);
     }
 
     private static final class WaitingUser {

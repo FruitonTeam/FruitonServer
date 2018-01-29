@@ -284,17 +284,6 @@ public final class GameServiceImpl implements GameService {
     }
 
     @Override
-    public void userDisconnected(final UserIdHolder user) {
-        GameData gameData = userToGameData.get(user);
-
-        UserIdHolder opponent = gameData.getOpponentUser(user);
-
-        if (playerService.isOnline(opponent)) {
-            sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT, generateWinnerGameResults(opponent));
-        }
-    }
-
-    @Override
     public void playerSurrendered(final UserIdHolder surrenderedUser) {
         GameData gameData = userToGameData.get(surrenderedUser);
         UserIdHolder other = gameData.getOpponentUser(surrenderedUser);
@@ -340,6 +329,17 @@ public final class GameServiceImpl implements GameService {
                         .setResults(results)
                         .build())
                 .build());
+    }
+
+    @Override
+    public void onDisconnected(final UserIdHolder user) {
+        GameData gameData = userToGameData.get(user);
+
+        UserIdHolder opponent = gameData.getOpponentUser(user);
+
+        if (playerService.isOnline(opponent)) {
+            sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT, generateWinnerGameResults(opponent));
+        }
     }
 
     private static final class GameData {
