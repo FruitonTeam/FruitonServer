@@ -9,6 +9,7 @@ import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.dto.form.EditProfileForm;
+import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.game.QuestService;
 import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
 import cz.cuni.mff.fruiton.service.social.UserService;
@@ -64,19 +65,23 @@ public final class UserServiceImpl implements UserService {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final SessionService sessionService;
+
     @Autowired
     public UserServiceImpl(
             final UserRepository repository,
             final ImageService imageService,
             final EmailConfirmationService emailConfirmationService,
             final QuestService questService,
-            final PasswordEncoder passwordEncoder
+            final PasswordEncoder passwordEncoder,
+            final SessionService sessionService
     ) {
         this.repository = repository;
         this.imageService = imageService;
         this.emailConfirmationService = emailConfirmationService;
         this.questService = questService;
         this.passwordEncoder = passwordEncoder;
+        this.sessionService = sessionService;
     }
 
     private User getUser(final UserIdHolder idHolder) {
@@ -194,7 +199,8 @@ public final class UserServiceImpl implements UserService {
                 .setLogin(user.getLogin())
                 .setRating(user.getRating())
                 .setMoney(user.getMoney())
-                .addAllQuests(questService.getAllQuests(idHolder));
+                .addAllQuests(questService.getAllQuests(idHolder))
+                .addAllFriendList(getFriends(user));
 
         if (user.isAvatarSet()) {
             try {
@@ -205,6 +211,15 @@ public final class UserServiceImpl implements UserService {
         }
 
         return builder.build();
+    }
+
+    private List<GameProtos.Friend> getFriends(final User user) {
+        return user.getFriends().stream().map(u -> GameProtos.Friend.newBuilder()
+                .setLogin(u.getLogin())
+                .setStatus(sessionService.isOnline(UserIdHolder.of(u))
+                        ? GameProtos.Status.ONLINE : GameProtos.Status.OFFLINE)
+                .build())
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -367,6 +382,11 @@ public final class UserServiceImpl implements UserService {
     @Override
     public EditProfileForm getEditProfileForm(final UserIdHolder idHolder) {
         return EditProfileForm.of(getUser(idHolder).getEmail());
+    }
+
+    @Override
+    public List<UserIdHolder> getFriends(final UserIdHolder idHolder) {
+        return getUser(idHolder).getFriends().stream().map(UserIdHolder::of).collect(Collectors.toList());
     }
 
 }

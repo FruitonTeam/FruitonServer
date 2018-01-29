@@ -17,4 +17,6 @@ public interface SessionService {
 
     Set<WebSocketSession> getOtherSessionsOnTheSameNetwork(WebSocketSession session);
 
+    boolean isOnline(Principal principal);
+
 }
