@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.component;
 
+import cz.cuni.mff.fruiton.component.util.OnDisconnectedListener;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos;
@@ -14,6 +15,7 @@ import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,15 +31,19 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
     private final UserService userService;
 
+    private final List<OnDisconnectedListener> onDisconnectedListeners;
+
     @Autowired
     public ProtobufWebSocketHandler(
             final MessageDispatcher dispatcher,
             final SessionService sessionService,
-            final UserService userService
+            final UserService userService,
+            final List<OnDisconnectedListener> onDisconnectedListeners
     ) {
         this.dispatcher = dispatcher;
         this.sessionService = sessionService;
         this.userService = userService;
+        this.onDisconnectedListeners = onDisconnectedListeners;
     }
 
     @Override
@@ -114,6 +120,10 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
         sendStatusChangedToOfflineMessage(session);
 
         sessionService.unregister(session);
+
+        for (OnDisconnectedListener listener : onDisconnectedListeners) {
+            listener.onDisconnected((UserIdHolder) session.getPrincipal());
+        }
     }
 
     private void sendStatusChangedToOfflineMessage(final WebSocketSession session) throws IOException {

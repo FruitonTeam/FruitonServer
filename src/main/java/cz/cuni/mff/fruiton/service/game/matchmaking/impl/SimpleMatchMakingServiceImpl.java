@@ -59,13 +59,15 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
 
     @Override
     public synchronized void removeFromMatchMaking(final UserIdHolder user) {
-        logger.log(Level.FINE, "Removing {0} from matchmaking", user);
-
         if (waitingForOpponent.contains(user)) {
+            logger.log(Level.FINE, "Removing {0} from matchmaking", user);
             waitingForOpponent.remove(user);
-        } else {
-            logger.log(Level.WARNING, "Could not remove user {0} from match making", user);
         }
+    }
+
+    @Override
+    public void onDisconnected(final UserIdHolder user) {
+        removeFromMatchMaking(user);
     }
 
 }
