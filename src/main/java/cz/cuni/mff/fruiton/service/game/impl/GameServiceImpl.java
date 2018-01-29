@@ -373,10 +373,10 @@ public final class GameServiceImpl implements GameService {
             for (GameData game : userToGameData.values()) {
                 synchronized (game.lock) {
                     if (game.kernel.currentState.turnState.isTimeout()) {
-                        logger.log(Level.FINEST, "User {0} timed out, performing end turn", game.getActivePlayer().user);
-
                         PlayerRecord activePlayer = game.getActivePlayer();
                         PlayerRecord otherPlayer = game.getInactivePlayer();
+
+                        logger.log(Level.FINEST, "User {0} timed out, performing end turn", activePlayer.user);
 
                         sendTimeOutMessage(activePlayer.user);
 
