@@ -375,13 +375,16 @@ public final class GameServiceImpl implements GameService {
                     if (game.kernel.currentState.turnState.isTimeout()) {
                         logger.log(Level.FINEST, "User {0} timed out, performing end turn", game.getActivePlayer().user);
 
-                        sendTimeOutMessage(game.getActivePlayer().user);
+                        PlayerRecord activePlayer = game.getActivePlayer();
+                        PlayerRecord otherPlayer = game.getInactivePlayer();
+
+                        sendTimeOutMessage(activePlayer.user);
 
                         GameProtos.Action endTurnAction = GameProtos.Action.newBuilder().setId(EndTurnAction.ID).build();
 
-                        performAction(game.getActivePlayer().user, endTurnAction);
+                        performAction(activePlayer.user, endTurnAction);
 
-                        communicationService.send(game.getInactivePlayer().user, wrapProtobufAction(endTurnAction));
+                        communicationService.send(otherPlayer.user, wrapProtobufAction(endTurnAction));
                     }
                 }
             }
@@ -452,12 +455,12 @@ public final class GameServiceImpl implements GameService {
         }
 
         private PlayerRecord getActivePlayer() {
-            int activePlayerId = kernel.currentState.players.__get(kernel.currentState.activePlayerIdx).id;
+            int activePlayerId = kernel.currentState.get_activePlayer().id;
             return getPlayer(activePlayerId);
         }
 
         private PlayerRecord getInactivePlayer() {
-            int inactivePlayerId = kernel.currentState.players.__get(1 - kernel.currentState.activePlayerIdx).id;
+            int inactivePlayerId = kernel.currentState.get_otherPlayer().id;
             return getPlayer(inactivePlayerId);
         }
 
