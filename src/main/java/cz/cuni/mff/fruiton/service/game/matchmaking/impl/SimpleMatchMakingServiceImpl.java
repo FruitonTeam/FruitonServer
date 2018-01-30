@@ -60,7 +60,7 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
         }
     }
 
-    private Optional<UserIdHolder> getOpponent(FindGame.GameMode gameMode) {
+    private Optional<UserIdHolder> getOpponent(final FindGame.GameMode gameMode) {
         return Optional.ofNullable(waitingForOpponent.get(gameMode).poll());
     }
 

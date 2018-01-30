@@ -76,7 +76,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
     @Override
     public synchronized void removeFromMatchMaking(final UserIdHolder user) {
         WaitingUser waitingUser = new WaitingUser(user, 0);
-        for(TreeSet<WaitingUser> set : waitingUsers.values()) {
+        for (TreeSet<WaitingUser> set : waitingUsers.values()) {
             if (set.contains(waitingUser)) {
                 logger.log(Level.FINE, "Removing {0} from matchmaking", user);
                 set.remove(waitingUser);
@@ -99,7 +99,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
         }
     }
 
-    private void matchWaitingUsers(Map.Entry<GameProtos.FindGame.GameMode, TreeSet<WaitingUser>> waitingUserEntry) {
+    private void matchWaitingUsers(final Map.Entry<GameProtos.FindGame.GameMode, TreeSet<WaitingUser>> waitingUserEntry) {
         Iterator<WaitingUser> it = getWaitingUsersIterator(waitingUserEntry.getValue());
         WaitingUser previous = it.next();
         while (it.hasNext()) {
@@ -126,7 +126,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
         }
     }
 
-    private int getRatingDeltaWindow(TreeSet<WaitingUser> userSet) {
+    private int getRatingDeltaWindow(final TreeSet<WaitingUser> userSet) {
         if (userSet.size() < LOW_PLAYERS_MODE_THRESHOLD) {
             return LOW_PLAYERS_MODE_DELTA_WINDOW;
         } else {
@@ -134,7 +134,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
         }
     }
 
-    private Iterator<WaitingUser> getWaitingUsersIterator(TreeSet<WaitingUser> userSet) {
+    private Iterator<WaitingUser> getWaitingUsersIterator(final TreeSet<WaitingUser> userSet) {
         Iterator<WaitingUser> it;
         if (iterateAscending) {
             it = userSet.iterator();
@@ -144,7 +144,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
         return it;
     }
 
-    private void deleteMatchedUsers(TreeSet<WaitingUser> userSet) {
+    private void deleteMatchedUsers(final TreeSet<WaitingUser> userSet) {
         userSet.removeIf(user -> user.markedForDelete);
     }
 
