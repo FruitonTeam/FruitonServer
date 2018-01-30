@@ -73,8 +73,13 @@ public class RatingMatchMakingServiceImplTest {
         }
 
         verify(gameService, times(2))
-                .createGame(userCaptor1.capture(), any(GameProtos.FruitonTeam.class), userCaptor2.capture(),
-                        any(GameProtos.FruitonTeam.class));
+                .createGame(
+                        userCaptor1.capture(),
+                        any(GameProtos.FruitonTeam.class),
+                        userCaptor2.capture(),
+                        any(GameProtos.FruitonTeam.class),
+                        any(GameProtos.FindGame.GameMode.class)
+                );
 
         assertMatchedAgainstEachOther(user1, user2, userCaptor1.getAllValues(), userCaptor2.getAllValues());
     }
@@ -109,8 +114,14 @@ public class RatingMatchMakingServiceImplTest {
 
             ratingMatchMakingService.match();
 
-            verify(gameService, never()).createGame(any(UserIdHolder.class), any(GameProtos.FruitonTeam.class),
-                    any(UserIdHolder.class), any(GameProtos.FruitonTeam.class));
+            verify(gameService, never())
+                    .createGame(
+                            any(UserIdHolder.class),
+                            any(GameProtos.FruitonTeam.class),
+                            any(UserIdHolder.class),
+                            any(GameProtos.FruitonTeam.class),
+                            any(GameProtos.FindGame.GameMode.class)
+                    );
 
             for (int i = 0; i < 50; i++) {
                 ratingMatchMakingService.match();
@@ -118,8 +129,13 @@ public class RatingMatchMakingServiceImplTest {
         }
 
         verify(gameService, times(1))
-                .createGame(userCaptor1.capture(), any(GameProtos.FruitonTeam.class), userCaptor2.capture(),
-                        any(GameProtos.FruitonTeam.class));
+                .createGame(
+                        userCaptor1.capture(),
+                        any(GameProtos.FruitonTeam.class),
+                        userCaptor2.capture(),
+                        any(GameProtos.FruitonTeam.class),
+                        any(GameProtos.FindGame.GameMode.class)
+                );
 
         assertMatchedAgainstEachOther(user2, user3, userCaptor1.getAllValues(), userCaptor2.getAllValues());
     }
