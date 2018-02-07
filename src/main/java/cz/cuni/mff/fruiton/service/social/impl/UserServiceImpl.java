@@ -200,7 +200,8 @@ public final class UserServiceImpl implements UserService {
                 .setRating(user.getRating())
                 .setMoney(user.getMoney())
                 .addAllQuests(questService.getAllQuests(idHolder))
-                .addAllFriendList(getFriends(user));
+                .addAllFriendList(getFriends(user))
+                .setFraction(user.getFraction());
 
         if (user.isAvatarSet()) {
             try {
@@ -387,6 +388,13 @@ public final class UserServiceImpl implements UserService {
     @Override
     public List<UserIdHolder> getFriends(final UserIdHolder idHolder) {
         return getUser(idHolder).getFriends().stream().map(UserIdHolder::of).collect(Collectors.toList());
+    }
+
+    @Override
+    public void setFraction(final UserIdHolder user, final GameProtos.Fraction fraction) {
+        User u = getUser(user);
+        u.setFraction(fraction);
+        repository.save(u);
     }
 
 }
