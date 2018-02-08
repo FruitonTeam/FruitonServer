@@ -104,6 +104,10 @@ public final class UserIdHolder implements Principal, UserDetails {
         return id != null ? id.equals(that.id) : that.id == null;
     }
 
+    public boolean represents(final User user) {
+        return id.equals(user.getId());
+    }
+
     @Override
     public int hashCode() {
         return id != null ? id.hashCode() : 0;

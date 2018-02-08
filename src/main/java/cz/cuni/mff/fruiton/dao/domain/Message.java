@@ -1,15 +1,17 @@
 package cz.cuni.mff.fruiton.dao.domain;
 
-import cz.cuni.mff.fruiton.chat.MessageStatus;
+import cz.cuni.mff.fruiton.dto.ChatProtos;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 @Document
-public class Message {
+public final class Message {
 
     @Id
     private String id;
@@ -25,54 +27,58 @@ public class Message {
     @CreatedDate
     private LocalDateTime created;
 
-    private MessageStatus status = MessageStatus.NOT_DELIVERED;
-
-    public final String getId() {
+    public String getId() {
         return id;
     }
 
-    public final void setId(final String id) {
+    public void setId(final String id) {
         this.id = id;
     }
 
-    public final User getSender() {
+    public User getSender() {
         return sender;
     }
 
-    public final void setSender(final User sender) {
+    public void setSender(final User sender) {
         this.sender = sender;
     }
 
-    public final User getRecipient() {
+    public User getRecipient() {
         return recipient;
     }
 
-    public final void setRecipient(final User recipient) {
+    public void setRecipient(final User recipient) {
         this.recipient = recipient;
     }
 
-    public final String getContent() {
+    public String getContent() {
         return content;
     }
 
-    public final void setContent(final String content) {
+    public void setContent(final String content) {
         this.content = content;
     }
 
-    public final LocalDateTime getCreated() {
+    public LocalDateTime getCreated() {
         return created;
     }
 
-    public final void setCreated(final LocalDateTime created) {
+    public void setCreated(final LocalDateTime created) {
         this.created = created;
     }
 
-    public final MessageStatus getStatus() {
-        return status;
+    public String getTimestamp() {
+        return created.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE);
     }
 
-    public final void setStatus(final MessageStatus status) {
-        this.status = status;
+    public ChatProtos.ChatMessage toProtobuf() {
+        return ChatProtos.ChatMessage.newBuilder()
+                .setId(id)
+                .setRecipient(recipient.getLogin())
+                .setSender(sender.getLogin())
+                .setMessage(content)
+                .setTimestamp(getTimestamp())
+                .build();
     }
 
 }

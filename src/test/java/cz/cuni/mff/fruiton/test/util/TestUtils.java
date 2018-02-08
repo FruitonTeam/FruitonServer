@@ -136,4 +136,15 @@ public class TestUtils {
         return UserIdHolder.of(user);
     }
 
+    public static UserIdHolder createUser(final UserRepository userRepository, final String login) {
+        User user = new User();
+        user.setLogin(login);
+        user.setPassword(RandomStringUtils.randomAlphanumeric(User.PASSWORD_MIN_LENGTH));
+        user.setEmail(RandomStringUtils.randomAlphanumeric(5) + "@" + login + ".com");
+
+        userRepository.save(user);
+
+        return UserIdHolder.of(user);
+    }
+
 }
