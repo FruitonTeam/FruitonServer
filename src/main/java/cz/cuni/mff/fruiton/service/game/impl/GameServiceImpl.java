@@ -20,6 +20,7 @@ import fruiton.kernel.actions.Action;
 import fruiton.kernel.actions.EndTurnAction;
 import fruiton.kernel.actions.MoveAction;
 import fruiton.kernel.events.Event;
+import fruiton.kernel.events.GameOverEvent;
 import haxe.root.Array;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -274,21 +275,56 @@ public final class GameServiceImpl implements GameService {
             Action kernelAction = KernelUtils.getActionFromProtobuf(protobufAction, kernel);
 
             Array<Event> events = kernel.performAction(kernelAction);
-            processEvents(events);
+            processEvents(events, gameData);
 
             onAfterAction(gameData, user, protobufAction);
         }
     }
 
-    private void processEvents(final Array<Event> events) {
+    private void processEvents(final Array<Event> events, final GameData gameData) {
         for (int i = 0; i < events.length; i++) {
             Event e = events.__get(i);
-            processEvent(e);
+            processEvent(e, gameData);
         }
     }
 
-    private void processEvent(final Event e) {
-        // TODO: specific handling
+    private void processEvent(final Event e, final GameData gameData) {
+        if (e instanceof GameOverEvent) {
+            GameOverEvent gameOverEvent = (GameOverEvent) e;
+            switch (gameOverEvent.losers.length) {
+                case 1:
+                    standardGameOverWithOneLoser(gameOverEvent, gameData);
+                    break;
+                case 2:
+                    standardGameOverWithMultipleLosers(gameOverEvent, gameData);
+                    break;
+                default:
+                    throw new IllegalStateException("GameOverEvent with undefined number of losers " + gameOverEvent);
+            }
+        }
+    }
+
+    private void standardGameOverWithOneLoser(final GameOverEvent event, final GameData gameData) {
+        int loserId = (Integer) event.losers.__get(0);
+        PlayerRecord loser = gameData.getPlayer(loserId);
+        sendGameOverMessage(loser.user, GameProtos.GameOver.Reason.STANDARD, generateLoserGameResults());
+        PlayerRecord winner = gameData.getOpponentPlayer(loser.player);
+        sendGameOverMessage(winner.user, GameProtos.GameOver.Reason.STANDARD,
+                generateWinnerGameResults(winner.user));
+        removeGame(loser.user);
+    }
+
+    private void standardGameOverWithMultipleLosers(final GameOverEvent event, final GameData gameData) {
+        boolean gameRemoved = false;
+        for (int i = 0; i < event.losers.length; i++) {
+            int loserId = (Integer) event.losers.__get(i);
+            PlayerRecord loser = gameData.getPlayer(loserId);
+            sendGameOverMessage(loser.user, GameProtos.GameOver.Reason.STANDARD, generateLoserGameResults());
+            if (!gameRemoved) {
+                removeGame(loser.user);
+                gameRemoved = true;
+            }
+        }
     }
 
     private void onAfterAction(final GameData gameData, final UserIdHolder user, final GameProtos.Action protobufAction) {
@@ -324,6 +360,23 @@ public final class GameServiceImpl implements GameService {
             gamesLock.writeLock().unlock();
         }
         return opponent;
+    }
+
+    private void removeGame(final UserIdHolder user) {
+        try {
+            gamesLock.writeLock().lock();
+            GameData gameData = userToGameData.get(user);
+            userToGameData.remove(user);
+
+            UserIdHolder opponent = gameData.getOpponentUser(user);
+            userToGameData.remove(opponent);
+        } finally {
+            gamesLock.writeLock().unlock();
+        }
+    }
+
+    private GameProtos.GameResults generateLoserGameResults() {
+        return GameProtos.GameResults.newBuilder().build();
     }
 
     private GameProtos.GameResults generateWinnerGameResults(final UserIdHolder user) {
@@ -407,7 +460,6 @@ public final class GameServiceImpl implements GameService {
     public void onDisconnected(final UserIdHolder user) {
         UserIdHolder opponent = removeGameAndReturnOpponent(user);
         sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT, generateWinnerGameResults(opponent));
-
     }
 
     private static final class GameData {
@@ -471,7 +523,17 @@ public final class GameServiceImpl implements GameService {
             } else if (id == player2.player.id) {
                 return player2;
             } else {
-                throw new IllegalStateException("Unknown active player");
+                throw new IllegalStateException("No player in game with id " + id);
+            }
+        }
+
+        private PlayerRecord getOpponentPlayer(final Player player) {
+            if (player1.player.equals(player)) {
+                return player2;
+            } else if (player2.player.equals(player)) {
+                return player1;
+            } else {
+                throw new IllegalStateException(player + " is not a player of this game");
             }
         }
 
