@@ -2,6 +2,7 @@ package cz.cuni.mff.fruiton.dao.domain;
 
 import cz.cuni.mff.fruiton.component.util.UserInfoCache;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
+import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.game.matchmaking.impl.EloRatingServiceImpl;
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.Length;
@@ -77,6 +78,8 @@ public final class User {
     private Set<User> friends = new HashSet<>();
 
     private LocalDate dateOfLastCompletedQuest;
+
+    private GameProtos.Fraction fraction = GameProtos.Fraction.NONE;
 
     public String getId() {
         return id;
@@ -210,6 +213,20 @@ public final class User {
 
     public void setQuestCompletedToday() {
         this.dateOfLastCompletedQuest = LocalDate.now();
+    }
+
+    public GameProtos.Fraction getFraction() {
+        return fraction;
+    }
+
+    public void setFraction(final GameProtos.Fraction f) {
+        if (f == GameProtos.Fraction.NONE) {
+            throw new IllegalArgumentException("Cannot set fraction to NONE");
+        } else if (this.fraction == GameProtos.Fraction.NONE) {
+            this.fraction = f;
+        } else {
+            throw new IllegalStateException("Fraction has already been chosen");
+        }
     }
 
     public User withLogin(final String login) {

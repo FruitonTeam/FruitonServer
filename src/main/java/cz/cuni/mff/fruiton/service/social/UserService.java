@@ -91,4 +91,6 @@ public interface UserService {
 
     List<UserIdHolder> getFriends(UserIdHolder idHolder);
 
+    void setFraction(UserIdHolder user, GameProtos.Fraction fraction);
+
 }
