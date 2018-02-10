@@ -94,7 +94,7 @@ public class TestUtils {
 
         return GameProtos.FruitonTeam.newBuilder()
                 .setName("test_team_name")
-                .addAllFruitonIDs(List.of(1, 4, 4, 4, 4, 10, 10, 10, 10, 10))
+                .addAllFruitonIDs(List.of(1, 4, 4, 4, 4, 20, 20, 20, 20, 20))
                 .addAllPositions(List.of(
                         KernelUtils.positionOf(0, 0),
                         KernelUtils.positionOf(1, 0),

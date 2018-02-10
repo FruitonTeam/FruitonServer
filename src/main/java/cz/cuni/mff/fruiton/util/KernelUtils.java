@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
 
 public final class KernelUtils {
 
+    private static final int TUTORIAL_FRUITONS_ID_START = 1001;
+
     private static final Random RANDOM = new Random();
 
     private static FruitonDatabase fruitonDatabase;
@@ -64,7 +66,10 @@ public final class KernelUtils {
     }
 
     public static List<Integer> getAllFruitonIds() {
-        return Arrays.stream(getFruitonDb().fruitonDb._keys).filter(key -> key != 0).boxed().collect(Collectors.toList());
+        return Arrays.stream(getFruitonDb().fruitonDb._keys)
+                .filter(key -> key != 0) // haxe awkwardness -> _keys contain 0 which is not really there
+                .filter(key -> key < TUTORIAL_FRUITONS_ID_START) // filter out fruitons which are used for tutorial (1001, ...)
+                .boxed().collect(Collectors.toList());
     }
 
     public static Action getActionFromProtobuf(final GameProtos.Action protobufAction, final Kernel kernel) {
