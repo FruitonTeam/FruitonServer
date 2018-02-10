@@ -114,7 +114,7 @@ public class TestUtils {
     public static GameProtos.FindGame buildFindGameMsg() {
         return GameProtos.FindGame.newBuilder()
                 .setTeam(TestUtils.getDefaultFruitonTeam())
-                .setGameMode(GameProtos.FindGame.GameMode.STANDARD)
+                .setGameMode(GameProtos.GameMode.STANDARD)
                 .build();
     }
 

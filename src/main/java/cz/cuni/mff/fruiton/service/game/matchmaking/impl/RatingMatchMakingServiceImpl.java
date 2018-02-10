@@ -2,9 +2,11 @@ package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
 
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.GameProtos;
+import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
 import cz.cuni.mff.fruiton.service.social.UserService;
+import cz.cuni.mff.fruiton.service.util.UserStateService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -36,18 +38,25 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
     private final UserService userService;
 
-    private final Map<GameProtos.FindGame.GameMode, TreeSet<WaitingUser>> waitingUsers = new HashMap<>();
+    private final UserStateService userStateService;
+
+    private final Map<GameMode, TreeSet<WaitingUser>> waitingUsers = new HashMap<>();
 
     private final Map<UserIdHolder, GameProtos.FruitonTeam> teams = new ConcurrentHashMap<>();
 
     private boolean iterateAscending = false;
 
     @Autowired
-    public RatingMatchMakingServiceImpl(final GameService gameService, final UserService userService) {
+    public RatingMatchMakingServiceImpl(
+            final GameService gameService,
+            final UserService userService,
+            final UserStateService userStateService
+    ) {
         this.gameService = gameService;
         this.userService = userService;
+        this.userStateService = userStateService;
 
-        for (GameProtos.FindGame.GameMode gameMode : GameProtos.FindGame.GameMode.values()) {
+        for (GameMode gameMode : GameMode.values()) {
             waitingUsers.put(
                     gameMode,
                     new TreeSet<>((u1, u2) -> {
@@ -69,12 +78,19 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
         logger.log(Level.FINEST, "Adding {0} to waiting list", user);
 
+        userStateService.setNewState(UserStateService.UserState.IN_MATCHMAKING, user);
+
         teams.put(user, findGameMsg.getTeam());
         waitingUsers.get(findGameMsg.getGameMode()).add(new WaitingUser(user, userService.getRating(user)));
     }
 
     @Override
     public synchronized void removeFromMatchMaking(final UserIdHolder user) {
+        remove(user);
+        userStateService.setNewState(UserStateService.UserState.MAIN_MENU, user);
+    }
+
+    private void remove(final UserIdHolder user) {
         WaitingUser waitingUser = new WaitingUser(user, 0);
         for (TreeSet<WaitingUser> set : waitingUsers.values()) {
             if (set.contains(waitingUser)) {
@@ -89,7 +105,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
     public synchronized void match() {
         iterateAscending = !iterateAscending;
 
-        for (Map.Entry<GameProtos.FindGame.GameMode, TreeSet<WaitingUser>> waitingUserEntry : waitingUsers.entrySet()) {
+        for (Map.Entry<GameMode, TreeSet<WaitingUser>> waitingUserEntry : waitingUsers.entrySet()) {
             if (waitingUserEntry.getValue().isEmpty()) {
                 continue;
             }
@@ -99,7 +115,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
         }
     }
 
-    private void matchWaitingUsers(final Map.Entry<GameProtos.FindGame.GameMode, TreeSet<WaitingUser>> waitingUserEntry) {
+    private void matchWaitingUsers(final Map.Entry<GameMode, TreeSet<WaitingUser>> waitingUserEntry) {
         Iterator<WaitingUser> it = getWaitingUsersIterator(waitingUserEntry.getValue());
         WaitingUser previous = it.next();
         while (it.hasNext()) {
@@ -150,7 +166,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
     @Override
     public void onDisconnected(final UserIdHolder user) {
-        removeFromMatchMaking(user);
+        remove(user);
     }
 
     private static final class WaitingUser {

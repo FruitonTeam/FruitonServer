@@ -11,6 +11,7 @@ import cz.cuni.mff.fruiton.service.game.FruitonService;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.QuestService;
 import cz.cuni.mff.fruiton.service.social.UserService;
+import cz.cuni.mff.fruiton.service.util.UserStateService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import fruiton.kernel.Fruiton;
 import fruiton.kernel.GameState;
@@ -66,6 +67,8 @@ public final class GameServiceImpl implements GameService {
 
     private final QuestService questService;
 
+    private final UserStateService userStateService;
+
     @Autowired
     public GameServiceImpl(
             final CommunicationService communicationService,
@@ -73,7 +76,8 @@ public final class GameServiceImpl implements GameService {
             final AchievementHelper achievementHelper,
             final UserService userService,
             final FruitonService fruitonService,
-            final QuestService questService
+            final QuestService questService,
+            final UserStateService userStateService
     ) {
         this.communicationService = communicationService;
         this.achievementService = achievementService;
@@ -81,6 +85,7 @@ public final class GameServiceImpl implements GameService {
         this.userService = userService;
         this.fruitonService = fruitonService;
         this.questService = questService;
+        this.userStateService = userStateService;
     }
 
     @Override
@@ -89,7 +94,7 @@ public final class GameServiceImpl implements GameService {
             final GameProtos.FruitonTeam team1,
             final UserIdHolder user2,
             final GameProtos.FruitonTeam team2,
-            final GameProtos.FindGame.GameMode gameMode
+            final GameProtos.GameMode gameMode
         ) {
         logger.log(Level.FINE, "Creating game between {0} and {1} with teams {2} and {3}",
                 new Object[] {user1, user2, team1, team2});
@@ -130,6 +135,7 @@ public final class GameServiceImpl implements GameService {
         }
 
         sendGameReadyMessages(user1, user2, finalTeam1, finalTeam2, firstUserStartsFirst, mapId);
+        userStateService.setNewState(UserStateService.UserState.IN_BATTLE, user1, user2);
     }
 
     private GameProtos.FruitonTeam convertFruitonPositions(final GameProtos.FruitonTeam team) {
@@ -301,6 +307,7 @@ public final class GameServiceImpl implements GameService {
                 default:
                     throw new IllegalStateException("GameOverEvent with undefined number of losers " + gameOverEvent);
             }
+            userStateService.setNewState(UserStateService.UserState.MAIN_MENU, gameData.player1.user, gameData.player2.user);
         }
     }
 
@@ -345,6 +352,7 @@ public final class GameServiceImpl implements GameService {
     public void playerSurrendered(final UserIdHolder surrenderedUser) {
         UserIdHolder opponent = removeGameAndReturnOpponent(surrenderedUser);
         sendGameOverMessage(opponent, GameProtos.GameOver.Reason.SURRENDER, generateWinnerGameResults(opponent));
+        userStateService.setNewState(UserStateService.UserState.MAIN_MENU, opponent);
     }
 
     private UserIdHolder removeGameAndReturnOpponent(final UserIdHolder user) {
@@ -460,6 +468,7 @@ public final class GameServiceImpl implements GameService {
     public void onDisconnected(final UserIdHolder user) {
         UserIdHolder opponent = removeGameAndReturnOpponent(user);
         sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT, generateWinnerGameResults(opponent));
+        userStateService.setNewState(UserStateService.UserState.MAIN_MENU, opponent);
     }
 
     private static final class GameData {

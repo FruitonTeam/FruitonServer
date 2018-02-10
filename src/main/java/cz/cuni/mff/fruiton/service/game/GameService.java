@@ -18,7 +18,7 @@ public interface GameService extends OnDisconnectedListener {
             GameProtos.FruitonTeam team1,
             UserIdHolder user2,
             GameProtos.FruitonTeam team2,
-            GameProtos.FindGame.GameMode gameMode
+            GameProtos.GameMode gameMode
     );
 
     void setPlayerReady(UserIdHolder user);

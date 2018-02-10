@@ -5,6 +5,7 @@ import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.game.GameService;
+import cz.cuni.mff.fruiton.service.game.matchmaking.ChallengeService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +19,19 @@ public final class Game {
     private final MatchMakingService matchMakingService;
     private final GameService gameService;
     private final UserService userService;
+    private final ChallengeService challengeService;
 
     @Autowired
-    public Game(final MatchMakingService matchMakingService, final GameService gameService, final UserService userService) {
+    public Game(
+            final MatchMakingService matchMakingService,
+            final GameService gameService,
+            final UserService userService,
+            final ChallengeService challengeService
+    ) {
         this.matchMakingService = matchMakingService;
         this.gameService = gameService;
         this.userService = userService;
+        this.challengeService = challengeService;
     }
 
     @HandleProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.FINDGAME)
@@ -56,6 +64,21 @@ public final class Game {
     @HandleProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.SETFRACTION)
     public void handleSetFractionMessage(final UserIdHolder from, final GameProtos.SetFraction setFractionMsg) {
         userService.setFraction(from, setFractionMsg.getFraction());
+    }
+
+    @HandleProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.CHALLENGE)
+    public void handleChallengeMessage(final UserIdHolder from, final GameProtos.Challenge challengeMsg) {
+        challengeService.challenge(from, challengeMsg);
+    }
+
+    @HandleProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.CHALLENGERESULT)
+    public void handleChallengeResult(final UserIdHolder from, final GameProtos.ChallengeResult result) {
+        challengeService.handleChallengeResult(from, result);
+    }
+
+    @HandleProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.REVOKECHALLENGE)
+    public void handleRevokeChallenge(final UserIdHolder from, final GameProtos.RevokeChallenge revokeChallengeMsg) {
+        challengeService.revokeChallenge(from);
     }
 
 }
