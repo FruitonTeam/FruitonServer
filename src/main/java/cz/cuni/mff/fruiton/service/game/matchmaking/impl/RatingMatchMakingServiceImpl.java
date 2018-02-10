@@ -6,6 +6,7 @@ import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
 import cz.cuni.mff.fruiton.service.social.UserService;
+import cz.cuni.mff.fruiton.service.util.UserStateService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -37,6 +38,8 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
     private final UserService userService;
 
+    private final UserStateService userStateService;
+
     private final Map<GameMode, TreeSet<WaitingUser>> waitingUsers = new HashMap<>();
 
     private final Map<UserIdHolder, GameProtos.FruitonTeam> teams = new ConcurrentHashMap<>();
@@ -44,9 +47,14 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
     private boolean iterateAscending = false;
 
     @Autowired
-    public RatingMatchMakingServiceImpl(final GameService gameService, final UserService userService) {
+    public RatingMatchMakingServiceImpl(
+            final GameService gameService,
+            final UserService userService,
+            final UserStateService userStateService
+    ) {
         this.gameService = gameService;
         this.userService = userService;
+        this.userStateService = userStateService;
 
         for (GameMode gameMode : GameMode.values()) {
             waitingUsers.put(
@@ -70,12 +78,19 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
         logger.log(Level.FINEST, "Adding {0} to waiting list", user);
 
+        userStateService.setNewState(UserStateService.UserState.IN_MATCHMAKING, user);
+
         teams.put(user, findGameMsg.getTeam());
         waitingUsers.get(findGameMsg.getGameMode()).add(new WaitingUser(user, userService.getRating(user)));
     }
 
     @Override
     public synchronized void removeFromMatchMaking(final UserIdHolder user) {
+        remove(user);
+        userStateService.setNewState(UserStateService.UserState.MAIN_MENU, user);
+    }
+
+    private void remove(final UserIdHolder user) {
         WaitingUser waitingUser = new WaitingUser(user, 0);
         for (TreeSet<WaitingUser> set : waitingUsers.values()) {
             if (set.contains(waitingUser)) {
@@ -151,7 +166,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
     @Override
     public void onDisconnected(final UserIdHolder user) {
-        removeFromMatchMaking(user);
+        remove(user);
     }
 
     private static final class WaitingUser {

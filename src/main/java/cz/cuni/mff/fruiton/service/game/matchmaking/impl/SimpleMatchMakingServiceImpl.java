@@ -6,6 +6,7 @@ import cz.cuni.mff.fruiton.dto.GameProtos.FruitonTeam;
 import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
+import cz.cuni.mff.fruiton.service.util.UserStateService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -32,9 +33,12 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
 
     private final GameService gameService;
 
+    private final UserStateService userStateService;
+
     @Autowired
-    public SimpleMatchMakingServiceImpl(final GameService gameService) {
+    public SimpleMatchMakingServiceImpl(final GameService gameService, final UserStateService userStateService) {
         this.gameService = gameService;
+        this.userStateService = userStateService;
         for (GameMode gameMode : GameMode.values()) {
             waitingForOpponent.put(gameMode, new LinkedList<>());
         }
@@ -45,6 +49,8 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
         if (!KernelUtils.isTeamValid(findGameMsg.getTeam())) {
             throw new IllegalArgumentException("Invalid team " + findGameMsg.getTeam());
         }
+
+        userStateService.setNewState(UserStateService.UserState.IN_MATCHMAKING, user);
 
         GameMode gameMode = findGameMsg.getGameMode();
 
@@ -66,6 +72,11 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
 
     @Override
     public synchronized void removeFromMatchMaking(final UserIdHolder user) {
+        removeFromQueue(user);
+        userStateService.setNewState(UserStateService.UserState.MAIN_MENU, user);
+    }
+
+    private void removeFromQueue(final UserIdHolder user) {
         for (Deque<UserIdHolder> queue : waitingForOpponent.values()) {
             if (queue.contains(user)) {
                 logger.log(Level.FINE, "Removing {0} from matchmaking", user);
@@ -76,7 +87,7 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
 
     @Override
     public void onDisconnected(final UserIdHolder user) {
-        removeFromMatchMaking(user);
+        removeFromQueue(user);
     }
 
 }
