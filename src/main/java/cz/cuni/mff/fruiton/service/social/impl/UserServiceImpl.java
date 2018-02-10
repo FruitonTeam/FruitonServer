@@ -348,7 +348,7 @@ public final class UserServiceImpl implements UserService {
             throw new UsernameNotFoundException("No user with login " + login);
         }
 
-        return new PlayerInfo(user.getLogin(), user.getRating(), user.getAvatarWebImageMapping());
+        return new PlayerInfo(user.getLogin(), user.getRating(), user.getAvatarWebImageMapping(), user.getFraction());
     }
 
     @Override
