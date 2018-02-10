@@ -14,8 +14,19 @@
         <div th:classappend="${idx.count % 6 == 0 ? 'row' : ''}">
 
             <div class="col-sm-2">
-                <a th:href="@{/collection/fruiton(id=${fruiton.id})}" class="thumbnail">
-                    <img th:src="@{/img/fruiton_thumb.png}" alt="Fruiton image" style="width:100%"/>
+                <a th:href="@{/collection/fruiton(id=${fruiton.id})}" class="thumbnail" th:switch="${fruiton.type}">
+
+                    <img th:case="${T(cz.cuni.mff.fruiton.service.game.FruitonService.FruitonType).KING}"
+                         class="fruiton-type" th:src="@{/img/fruiton/type/king_64.png}" />
+
+                    <img th:case="${T(cz.cuni.mff.fruiton.service.game.FruitonService.FruitonType).MAJOR}"
+                         class="fruiton-type" th:src="@{/img/fruiton/type/major_64.png}" />
+
+                    <img th:case="${T(cz.cuni.mff.fruiton.service.game.FruitonService.FruitonType).MINOR}"
+                         class="fruiton-type" th:src="@{/img/fruiton/type/minor_64.png}" />
+
+                    <img th:src="@{'/img/fruiton/' + ${fruiton.model} + '.png'}" th:alt="${fruiton.model}"
+                         style="width:100%"/>
                     <div class="caption">
                         <div class="text-center">
                             <strong><span th:text="${fruiton.name}"></span></strong><br/>

@@ -21,6 +21,13 @@ body {
     filter: grayscale(100%);
 }
 
+.fruiton-type {
+    max-width: 32px!important;
+    position: absolute;
+    margin-left: 0!important;
+    margin-right: 0!important;
+}
+
 /*
  * Login styles
  */
