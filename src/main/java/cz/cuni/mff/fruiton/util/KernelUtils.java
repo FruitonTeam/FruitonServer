@@ -114,7 +114,7 @@ public final class KernelUtils {
         return (Integer) mapIds.__get(RANDOM.nextInt(mapIds.length));
     }
 
-    public static GameSettings makeGameSettings(final int mapId, final GameProtos.FindGame.GameMode gameModeType) {
+    public static GameSettings makeGameSettings(final int mapId, final GameProtos.GameMode gameModeType) {
         GameMode gameMode;
         switch (gameModeType) {
             case STANDARD:
@@ -125,7 +125,6 @@ public final class KernelUtils {
                 break;
             default:
                 throw new IllegalArgumentException("Game mode not supported");
-
         }
 
         return new GameSettings(MapFactory.makeMap(mapId, getFruitonDb()), gameMode);

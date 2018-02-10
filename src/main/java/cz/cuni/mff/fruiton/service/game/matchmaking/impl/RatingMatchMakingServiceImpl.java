@@ -2,6 +2,7 @@ package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
 
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.GameProtos;
+import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
 import cz.cuni.mff.fruiton.service.social.UserService;
@@ -36,7 +37,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
     private final UserService userService;
 
-    private final Map<GameProtos.FindGame.GameMode, TreeSet<WaitingUser>> waitingUsers = new HashMap<>();
+    private final Map<GameMode, TreeSet<WaitingUser>> waitingUsers = new HashMap<>();
 
     private final Map<UserIdHolder, GameProtos.FruitonTeam> teams = new ConcurrentHashMap<>();
 
@@ -47,7 +48,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
         this.gameService = gameService;
         this.userService = userService;
 
-        for (GameProtos.FindGame.GameMode gameMode : GameProtos.FindGame.GameMode.values()) {
+        for (GameMode gameMode : GameMode.values()) {
             waitingUsers.put(
                     gameMode,
                     new TreeSet<>((u1, u2) -> {
@@ -89,7 +90,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
     public synchronized void match() {
         iterateAscending = !iterateAscending;
 
-        for (Map.Entry<GameProtos.FindGame.GameMode, TreeSet<WaitingUser>> waitingUserEntry : waitingUsers.entrySet()) {
+        for (Map.Entry<GameMode, TreeSet<WaitingUser>> waitingUserEntry : waitingUsers.entrySet()) {
             if (waitingUserEntry.getValue().isEmpty()) {
                 continue;
             }
@@ -99,7 +100,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
         }
     }
 
-    private void matchWaitingUsers(final Map.Entry<GameProtos.FindGame.GameMode, TreeSet<WaitingUser>> waitingUserEntry) {
+    private void matchWaitingUsers(final Map.Entry<GameMode, TreeSet<WaitingUser>> waitingUserEntry) {
         Iterator<WaitingUser> it = getWaitingUsersIterator(waitingUserEntry.getValue());
         WaitingUser previous = it.next();
         while (it.hasNext()) {

@@ -89,7 +89,7 @@ public final class GameServiceImpl implements GameService {
             final GameProtos.FruitonTeam team1,
             final UserIdHolder user2,
             final GameProtos.FruitonTeam team2,
-            final GameProtos.FindGame.GameMode gameMode
+            final GameProtos.GameMode gameMode
         ) {
         logger.log(Level.FINE, "Creating game between {0} and {1} with teams {2} and {3}",
                 new Object[] {user1, user2, team1, team2});
