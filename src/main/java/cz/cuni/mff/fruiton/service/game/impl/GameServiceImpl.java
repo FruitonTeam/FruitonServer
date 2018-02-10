@@ -114,9 +114,9 @@ public final class GameServiceImpl implements GameService {
 
         Kernel kernel;
         if (firstUserStartsFirst) {
-            kernel = new Kernel(player1, player2, fruitons, KernelUtils.makeGameSettings(mapId, gameMode));
+            kernel = new Kernel(player1, player2, fruitons, KernelUtils.makeGameSettings(mapId, gameMode), false, false);
         } else {
-            kernel = new Kernel(player2, player1, fruitons, KernelUtils.makeGameSettings(mapId, gameMode));
+            kernel = new Kernel(player2, player1, fruitons, KernelUtils.makeGameSettings(mapId, gameMode), false, false);
         }
 
         GameData gameData = new GameData(user1, user2, player1, player2, kernel);
