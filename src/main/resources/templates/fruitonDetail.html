@@ -13,13 +13,34 @@
 
         <h2 th:text="${fruiton.name}"></h2>
 
-        <img th:src="@{/img/fruiton_thumb.png}" style="max-width: 256px;" class="thumbnail" alt="Fruiton image" />
+        <img th:src="@{'/img/fruiton/' + ${fruiton.model} + '.png'}" style="max-width: 256px;" class="thumbnail"
+             th:alt="${fruiton.model}" />
 
         <h3>Attributes</h3>
-        <p>
-            <strong>Attack: </strong><span th:text="${fruiton.damage}"></span><br/>
-            <strong>Health: </strong><span th:text="${fruiton.hp}"></span><br/>
-        </p>
+
+        <h4>Type</h4>
+        <p th:text="${fruiton.type}"></p>
+
+        <h4>Attack</h4>
+        <p th:text="${fruiton.damage}"></p>
+
+        <h4>Health</h4>
+        <p th:text="${fruiton.hp}"></p>
+
+        <h4>Attack</h4>
+        <p th:text="${fruiton.attack}"></p>
+
+        <h4>Movement</h4>
+        <p th:text="${fruiton.movement}"></p>
+
+        <h4>Abilities</h4>
+        <p th:text="${fruiton.abilities}"></p>
+
+        <h4>Effects</h4>
+        <p th:text="${fruiton.effects}"></p>
+
+        <h4>Immunities</h4>
+        <p th:text="${fruiton.immunities}"></p>
 
     </div>
 
