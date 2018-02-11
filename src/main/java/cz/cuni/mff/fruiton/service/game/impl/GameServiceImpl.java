@@ -29,6 +29,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -102,7 +104,7 @@ public final class GameServiceImpl implements GameService {
         Player player1 = new Player(ATOMIC_INT.getAndIncrement());
         Player player2 = new Player(ATOMIC_INT.getAndIncrement());
 
-        boolean firstUserStartsFirst = true; // TODO: after testing change to random.nextBoolean();
+        boolean firstUserStartsFirst = random.nextBoolean();
 
         GameProtos.FruitonTeam finalTeam1 = team1;
         GameProtos.FruitonTeam finalTeam2 = team2;
@@ -267,6 +269,10 @@ public final class GameServiceImpl implements GameService {
         }
 
         synchronized (gameData.lock) {
+            if (gameData.isGameOver()) {
+                return;
+            }
+
             logger.log(Level.FINEST, "User {0} is performing action {1} in game {2}",
                     new Object[] {user, protobufAction, gameData});
 
@@ -318,19 +324,15 @@ public final class GameServiceImpl implements GameService {
         PlayerRecord winner = gameData.getOpponentPlayer(loser.player);
         sendGameOverMessage(winner.user, GameProtos.GameOver.Reason.STANDARD,
                 generateWinnerGameResults(winner.user));
-        removeGame(loser.user);
+        gameData.setGameOver();
     }
 
     private void standardGameOverWithMultipleLosers(final GameOverEvent event, final GameData gameData) {
-        boolean gameRemoved = false;
         for (int i = 0; i < event.losers.length; i++) {
             int loserId = (Integer) event.losers.__get(i);
             PlayerRecord loser = gameData.getPlayer(loserId);
             sendGameOverMessage(loser.user, GameProtos.GameOver.Reason.STANDARD, generateLoserGameResults());
-            if (!gameRemoved) {
-                removeGame(loser.user);
-                gameRemoved = true;
-            }
+            gameData.setGameOver();
         }
     }
 
@@ -350,36 +352,17 @@ public final class GameServiceImpl implements GameService {
 
     @Override
     public void playerSurrendered(final UserIdHolder surrenderedUser) {
-        UserIdHolder opponent = removeGameAndReturnOpponent(surrenderedUser);
-        sendGameOverMessage(opponent, GameProtos.GameOver.Reason.SURRENDER, generateWinnerGameResults(opponent));
-        userStateService.setNewState(UserStateService.UserState.MAIN_MENU, opponent);
-    }
-
-    private UserIdHolder removeGameAndReturnOpponent(final UserIdHolder user) {
-        UserIdHolder opponent;
-        try {
-            gamesLock.writeLock().lock();
-            GameData gameData = userToGameData.get(user);
-            userToGameData.remove(user);
-
-            opponent = gameData.getOpponentUser(user);
-            userToGameData.remove(opponent);
-        } finally {
-            gamesLock.writeLock().unlock();
-        }
-        return opponent;
-    }
-
-    private void removeGame(final UserIdHolder user) {
-        try {
-            gamesLock.writeLock().lock();
-            GameData gameData = userToGameData.get(user);
-            userToGameData.remove(user);
-
-            UserIdHolder opponent = gameData.getOpponentUser(user);
-            userToGameData.remove(opponent);
-        } finally {
-            gamesLock.writeLock().unlock();
+        GameData gameData = getGameData(surrenderedUser);
+        if (gameData != null) {
+            synchronized (gameData.lock) {
+                if (gameData.isGameOver()) {
+                    return;
+                }
+                UserIdHolder opponent = gameData.getOpponentUser(surrenderedUser);
+                gameData.setGameOver();
+                sendGameOverMessage(opponent, GameProtos.GameOver.Reason.SURRENDER, generateWinnerGameResults(opponent));
+                userStateService.setNewState(UserStateService.UserState.MAIN_MENU, opponent);
+            }
         }
     }
 
@@ -429,11 +412,24 @@ public final class GameServiceImpl implements GameService {
     }
 
     @Scheduled(fixedDelay = TURN_TIME_CHECK_REFRESH_TIME)
-    private void checkTurnTimeLimit() {
+    private void checkTurnTimeLimitAndRemoveFinishedGames() {
         try {
-            gamesLock.readLock().lock();
-            for (GameData game : userToGameData.values()) {
+            gamesLock.writeLock().lock();
+            HashSet<GameData> processed = new HashSet<>();
+            for (Iterator<Map.Entry<UserIdHolder, GameData>> it = userToGameData.entrySet().iterator(); it.hasNext();) {
+                Map.Entry<UserIdHolder, GameData> entry = it.next();
+
+                GameData game = entry.getValue();
                 synchronized (game.lock) {
+                    if (game.isGameOver()) {
+                        it.remove();
+                        continue;
+                    }
+
+                    if (processed.contains(game)) { // map contains 2 same games (1 for each user)
+                        continue;
+                    }
+
                     if (game.kernel.currentState.turnState.isTimeout()) {
                         PlayerRecord activePlayer = game.getActivePlayer();
                         PlayerRecord otherPlayer = game.getInactivePlayer();
@@ -448,10 +444,12 @@ public final class GameServiceImpl implements GameService {
 
                         communicationService.send(otherPlayer.user, wrapProtobufAction(endTurnAction));
                     }
+
+                    processed.add(game);
                 }
             }
         } finally {
-            gamesLock.readLock().unlock();
+            gamesLock.writeLock().unlock();
         }
     }
 
@@ -466,9 +464,18 @@ public final class GameServiceImpl implements GameService {
 
     @Override
     public void onDisconnected(final UserIdHolder user) {
-        UserIdHolder opponent = removeGameAndReturnOpponent(user);
-        sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT, generateWinnerGameResults(opponent));
-        userStateService.setNewState(UserStateService.UserState.MAIN_MENU, opponent);
+        GameData gameData = getGameData(user);
+        if (gameData != null) {
+            synchronized (gameData.lock) {
+                if (gameData.isGameOver()) {
+                    return;
+                }
+                UserIdHolder opponent = gameData.getOpponentUser(user);
+                gameData.setGameOver();
+                sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT, generateWinnerGameResults(opponent));
+                userStateService.setNewState(UserStateService.UserState.MAIN_MENU, opponent);
+            }
+        }
     }
 
     private static final class GameData {
@@ -480,6 +487,8 @@ public final class GameServiceImpl implements GameService {
 
         private final Object lock = new Object();
 
+        private boolean gameOver = false;
+
         private GameData(
                 final UserIdHolder user1,
                 final UserIdHolder user2,
@@ -490,6 +499,14 @@ public final class GameServiceImpl implements GameService {
             this.player1 = new PlayerRecord(user1, player1);
             this.player2 = new PlayerRecord(user2, player2);
             this.kernel = kernel;
+        }
+
+        private boolean isGameOver() {
+            return gameOver;
+        }
+
+        private void setGameOver() {
+            this.gameOver = true;
         }
 
         private UserIdHolder getOpponentUser(final UserIdHolder user) {
