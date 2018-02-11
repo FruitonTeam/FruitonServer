@@ -16,14 +16,16 @@ public interface UserService {
 
     class PlayerInfo {
 
-        private String login;
-        private int rating;
-        private String avatar;
+        private final String login;
+        private final int rating;
+        private final String avatar;
+        private final GameProtos.Fraction fraction;
 
-        public PlayerInfo(final String login, final int rating, final String avatar) {
+        public PlayerInfo(final String login, final int rating, final String avatar, final GameProtos.Fraction fraction) {
             this.login = login;
             this.rating = rating;
             this.avatar = avatar;
+            this.fraction = fraction;
         }
 
         public String getLogin() {
@@ -36,6 +38,10 @@ public interface UserService {
 
         public String getAvatar() {
             return avatar;
+        }
+
+        public GameProtos.Fraction getFraction() {
+            return fraction;
         }
     }
 

@@ -28,8 +28,16 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Rating</h3>
                 </div>
-                <div class="panel-body" th:text="${playerInfo.rating}">
+                <div class="panel-body-default-padding-top panel-body" th:text="${playerInfo.rating}">
+                </div>
+            </div>
 
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Fraction</h3>
+                </div>
+                <div class="panel-body-default-padding-top panel-body"
+                     th:text="${T(cz.cuni.mff.fruiton.util.FractionHelper).getName(playerInfo.fraction)}">
                 </div>
             </div>
 

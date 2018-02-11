@@ -21,6 +21,10 @@ body {
     filter: grayscale(100%);
 }
 
+.panel-body-default-padding-top {
+    padding-top: 15px !important;
+}
+
 .fruiton-type {
     max-width: 32px!important;
     position: absolute;
