@@ -1,10 +1,14 @@
 package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
 
+import cz.cuni.mff.fruiton.annotation.ProtobufMessage;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
+import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
+import cz.cuni.mff.fruiton.dto.GameProtos.PickMode;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
+import cz.cuni.mff.fruiton.service.game.matchmaking.TeamDraftService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
@@ -13,6 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -34,13 +39,23 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
     private static final Logger logger = Logger.getLogger(RatingMatchMakingServiceImpl.class.getName());
 
+    private static final Comparator<WaitingUser> USER_COMPARATOR = (u1, u2) -> {
+        if (u1.getRating() != u2.getRating()) {
+            return Integer.compare(u1.getRating(), u2.getRating());
+        } else {
+            return u1.user.getUsername().compareTo(u2.user.getUsername());
+        }
+    };
+
     private final GameService gameService;
 
     private final UserService userService;
 
     private final UserStateService userStateService;
 
-    private final Map<GameMode, TreeSet<WaitingUser>> waitingUsers = new HashMap<>();
+    private final TeamDraftService draftService;
+
+    private final Map<PickMode, Map<GameMode, TreeSet<WaitingUser>>> waitingUsers = new HashMap<>();
 
     private final Map<UserIdHolder, GameProtos.FruitonTeam> teams = new ConcurrentHashMap<>();
 
@@ -50,27 +65,23 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
     public RatingMatchMakingServiceImpl(
             final GameService gameService,
             final UserService userService,
-            final UserStateService userStateService
+            final UserStateService userStateService,
+            final TeamDraftService draftService
     ) {
         this.gameService = gameService;
         this.userService = userService;
         this.userStateService = userStateService;
+        this.draftService = draftService;
 
-        for (GameMode gameMode : GameMode.values()) {
-            waitingUsers.put(
-                    gameMode,
-                    new TreeSet<>((u1, u2) -> {
-                        if (u1.getRating() != u2.getRating()) {
-                            return Integer.compare(u1.getRating(), u2.getRating());
-                        } else {
-                            return u1.user.getUsername().compareTo(u2.user.getUsername());
-                        }
-                    })
-            );
+        for (PickMode pickMode : PickMode.values()) {
+            for (GameMode gameMode : GameMode.values()) {
+                waitingUsers.computeIfAbsent(pickMode, key -> new HashMap<>()).put(gameMode, new TreeSet<>(USER_COMPARATOR));
+            }
         }
     }
 
     @Override
+    @ProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.FINDGAME)
     public synchronized void findGame(final UserIdHolder user, final GameProtos.FindGame findGameMsg) {
         if (!KernelUtils.isTeamValid(findGameMsg.getTeam())) {
             throw new IllegalArgumentException("Invalid team " + findGameMsg.getTeam());
@@ -80,23 +91,29 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
         userStateService.setNewState(UserStateService.UserState.IN_MATCHMAKING, user);
 
-        teams.put(user, findGameMsg.getTeam());
-        waitingUsers.get(findGameMsg.getGameMode()).add(new WaitingUser(user, userService.getRating(user)));
+        PickMode pickMode = findGameMsg.getPickMode();
+        if (pickMode == PickMode.STANDARD_PICK) {
+            teams.put(user, findGameMsg.getTeam());
+        }
+        waitingUsers.get(pickMode).get(findGameMsg.getGameMode()).add(new WaitingUser(user, userService.getRating(user)));
     }
 
     @Override
+    @ProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.CANCELFINDINGGAME)
     public synchronized void removeFromMatchMaking(final UserIdHolder user) {
         remove(user);
         userStateService.setNewState(UserStateService.UserState.MAIN_MENU, user);
     }
 
     private void remove(final UserIdHolder user) {
-        WaitingUser waitingUser = new WaitingUser(user, 0);
-        for (TreeSet<WaitingUser> set : waitingUsers.values()) {
-            if (set.contains(waitingUser)) {
-                logger.log(Level.FINE, "Removing {0} from matchmaking", user);
-                set.remove(waitingUser);
-                break;
+        WaitingUser waitingUser = new WaitingUser(user);
+        for (PickMode pickMode : PickMode.values()) {
+            for (TreeSet<WaitingUser> set : waitingUsers.get(pickMode).values()) {
+                if (set.contains(waitingUser)) {
+                    logger.log(Level.FINE, "Removing {0} from matchmaking", user);
+                    set.remove(waitingUser);
+                    break;
+                }
             }
         }
     }
@@ -105,29 +122,35 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
     public synchronized void match() {
         iterateAscending = !iterateAscending;
 
-        for (Map.Entry<GameMode, TreeSet<WaitingUser>> waitingUserEntry : waitingUsers.entrySet()) {
-            if (waitingUserEntry.getValue().isEmpty()) {
-                continue;
-            }
+        for (PickMode pickMode : PickMode.values()) {
+            for (Map.Entry<GameMode, TreeSet<WaitingUser>> waitingUserEntry : waitingUsers.get(pickMode).entrySet()) {
+                if (waitingUserEntry.getValue().isEmpty()) {
+                    continue;
+                }
 
-            matchWaitingUsers(waitingUserEntry);
-            deleteMatchedUsers(waitingUserEntry.getValue());
+                matchWaitingUsers(waitingUserEntry, pickMode);
+                deleteMatchedUsers(waitingUserEntry.getValue());
+            }
         }
     }
 
-    private void matchWaitingUsers(final Map.Entry<GameMode, TreeSet<WaitingUser>> waitingUserEntry) {
+    private void matchWaitingUsers(final Map.Entry<GameMode, TreeSet<WaitingUser>> waitingUserEntry, final PickMode pickMode) {
         Iterator<WaitingUser> it = getWaitingUsersIterator(waitingUserEntry.getValue());
         WaitingUser previous = it.next();
         while (it.hasNext()) {
             WaitingUser current = it.next();
             if (Math.abs(previous.getRating() - current.getRating()) < current.deltaWindow) { // it's a match
-                gameService.createGame(
-                        previous.user,
-                        teams.get(previous.user),
-                        current.user,
-                        teams.get(current.user),
-                        waitingUserEntry.getKey()
-                );
+                if (pickMode == PickMode.STANDARD_PICK) {
+                    gameService.createGame(
+                            previous.user,
+                            teams.get(previous.user),
+                            current.user,
+                            teams.get(current.user),
+                            waitingUserEntry.getKey()
+                    );
+                } else {
+                    draftService.startDraft(previous.user, current.user, waitingUserEntry.getKey());
+                }
                 previous.markedForDelete = true;
                 current.markedForDelete = true;
 

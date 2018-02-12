@@ -1,12 +1,15 @@
 package cz.cuni.mff.fruiton.service.communication.chat;
 
+import cz.cuni.mff.fruiton.annotation.ProtobufMessage;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.Message;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.MessageRepository;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
-import cz.cuni.mff.fruiton.dto.ChatProtos;
+import cz.cuni.mff.fruiton.dto.ChatProtos.ChatMessage;
+import cz.cuni.mff.fruiton.dto.ChatProtos.ChatMessages;
 import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
+import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage.MessageCase;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
@@ -19,6 +22,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +34,8 @@ public final class ChatServiceImpl implements ChatService {
     private static final String SENDER_FIELD = "sender";
     private static final String RECIPIENT_FIELD = "recipient";
     private static final String CREATED_FIELD = "created";
+
+    private static final Logger logger = Logger.getLogger(ChatServiceImpl.class.getName());
 
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
@@ -58,7 +65,10 @@ public final class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public void accept(final UserIdHolder sender, final ChatProtos.ChatMessage message) {
+    @ProtobufMessage(messageCase = MessageCase.CHATMESSAGE)
+    public void accept(final UserIdHolder sender, final ChatMessage message) {
+        logger.log(Level.FINE, "Chat message received from {0} with content: {1}", new Object[] {sender, message});
+
         Message msgToPersist = new Message();
         msgToPersist.setSender(userRepository.findOne(sender.getId()));
 
@@ -79,7 +89,7 @@ public final class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public ChatProtos.ChatMessages getMessagesBetweenUsers(
+    public ChatMessages getMessagesBetweenUsers(
             final UserIdHolder user1,
             final UserIdHolder user2,
             final int page
@@ -90,15 +100,15 @@ public final class ChatServiceImpl implements ChatService {
                 .with(new PageRequest(page, MESSAGES_PAGE_SIZE))
                 .with(new Sort(Sort.Direction.DESC, CREATED_FIELD));
 
-        List<ChatProtos.ChatMessage> messages = mongoTemplate.find(query, Message.class).stream()
+        List<ChatMessage> messages = mongoTemplate.find(query, Message.class).stream()
                 .map(Message::toProtobuf)
                 .collect(Collectors.toList());
 
-        return ChatProtos.ChatMessages.newBuilder().addAllMessages(messages).build();
+        return ChatMessages.newBuilder().addAllMessages(messages).build();
     }
 
     @Override
-    public ChatProtos.ChatMessages getMessagesBefore(final String messageId, final int page) {
+    public ChatMessages getMessagesBefore(final String messageId, final int page) {
         Message m = messageRepository.findOne(messageId);
         if (m == null) {
             throw new IllegalArgumentException("Cannot find message with id " + messageId);
@@ -116,11 +126,11 @@ public final class ChatServiceImpl implements ChatService {
                 .with(new PageRequest(page, MESSAGES_PAGE_SIZE))
                 .with(new Sort(Sort.Direction.DESC, CREATED_FIELD));
 
-        List<ChatProtos.ChatMessage> messages = mongoTemplate.find(query, Message.class).stream()
+        List<ChatMessage> messages = mongoTemplate.find(query, Message.class).stream()
                 .map(Message::toProtobuf)
                 .collect(Collectors.toList());
 
-        return ChatProtos.ChatMessages.newBuilder().addAllMessages(messages).build();
+        return ChatMessages.newBuilder().addAllMessages(messages).build();
     }
 
 }

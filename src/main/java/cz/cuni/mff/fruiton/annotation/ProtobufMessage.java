@@ -1,6 +1,6 @@
 package cz.cuni.mff.fruiton.annotation;
 
-import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
+import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage.MessageCase;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -9,8 +9,8 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface HandleProtobufMessage {
+public @interface ProtobufMessage {
 
-    WrapperMessage.MessageCase messageCase();
+    MessageCase messageCase();
 
 }

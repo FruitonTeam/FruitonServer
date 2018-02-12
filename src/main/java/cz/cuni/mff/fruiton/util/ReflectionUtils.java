@@ -2,6 +2,7 @@ package cz.cuni.mff.fruiton.util;
 
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.env.Environment;
 import org.springframework.core.type.filter.RegexPatternTypeFilter;
 
 import java.lang.annotation.Annotation;
@@ -27,7 +28,7 @@ public final class ReflectionUtils {
         Set<Method> methods = new HashSet<>();
 
         for (Class<?> cl : classes) {
-            for (Method m : cl.getMethods()) {
+            for (Method m : cl.getDeclaredMethods()) {
                 if (m.isAnnotationPresent(annotation)) {
                     methods.add(m);
                 }
@@ -37,24 +38,24 @@ public final class ReflectionUtils {
         return methods;
     }
 
-    public static Set<Class<?>> getClassesInPackages(final Iterable<String> basePackages) {
+    public static Set<Class<?>> getClassesInPackages(final Iterable<String> basePackages, final Environment env) {
         Set<Class<?>> classes = new HashSet<>();
         for (String basePackage : basePackages) {
-            classes.addAll(getClassesInPackage(basePackage));
+            classes.addAll(getClassesInPackage(basePackage, env));
         }
 
         return classes;
     }
 
-    public static Set<Class<?>> getClassesInPackage(final String basePackage) {
+    private static Set<Class<?>> getClassesInPackage(final String basePackage, final Environment env) {
         Set<Class<?>> classes = new HashSet<>();
 
-        final ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(false);
+        final ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(false, env);
         provider.addIncludeFilter(new RegexPatternTypeFilter(Pattern.compile(".*")));
 
         final Set<BeanDefinition> beanDefinitions = provider.findCandidateComponents(basePackage);
 
-        for (BeanDefinition bean: beanDefinitions) {
+        for (BeanDefinition bean : beanDefinitions) {
             Class<?> clazz;
             try {
                 clazz = Class.forName(bean.getBeanClassName());

@@ -2,7 +2,7 @@ package cz.cuni.mff.fruiton.component;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Descriptors;
-import cz.cuni.mff.fruiton.annotation.HandleProtobufMessage;
+import cz.cuni.mff.fruiton.annotation.ProtobufMessage;
 import cz.cuni.mff.fruiton.dto.CommonProtos.ErrorMessage;
 import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
@@ -17,7 +17,7 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +28,10 @@ import java.util.logging.Logger;
 @Component
 public class MessageDispatcher {
 
-    private static final String[] SCAN_BASE_PACKAGES = {"cz.cuni.mff.fruiton.component"};
+    private static final List<String> SCAN_BASE_PACKAGES = List.of(
+            "cz.cuni.mff.fruiton.component",
+            "cz.cuni.mff.fruiton.service"
+    );
 
     private static final Logger logger = Logger.getLogger(MessageDispatcher.class.getName());
 
@@ -56,19 +59,18 @@ public class MessageDispatcher {
             fields.put(fd.getNumber(), fd);
         }
 
-        Set<Class<?>> scannedClasses = ReflectionUtils.getClassesInPackages(Arrays.asList(SCAN_BASE_PACKAGES));
+        Set<Class<?>> scannedClasses = ReflectionUtils.getClassesInPackages(SCAN_BASE_PACKAGES, context.getEnvironment());
         Set<Method> handleProtobufMessageMethods = ReflectionUtils.getMethodsWithAnnotation(
-                scannedClasses, HandleProtobufMessage.class);
+                scannedClasses, ProtobufMessage.class);
 
         for (Method m : handleProtobufMessageMethods) {
 
-            HandleProtobufMessage handleProtobufMessage = m.getAnnotation(HandleProtobufMessage.class);
-            WrapperMessage.MessageCase msgCase = handleProtobufMessage.messageCase();
+            ProtobufMessage protobufMessage = m.getAnnotation(ProtobufMessage.class);
+            WrapperMessage.MessageCase msgCase = protobufMessage.messageCase();
 
             int msgNumber = msgCase.getNumber();
 
             methods.put(msgNumber, new DispatchMethod(m, context.getBean(m.getDeclaringClass())));
-
         }
     }
 
@@ -106,18 +108,33 @@ public class MessageDispatcher {
 
     private static class DispatchMethod {
 
-        private Method m;
-        private Object invocationObject;
+        private final Method m;
+        private final Object invocationObject;
+
+        private boolean passMessage = false;
 
         DispatchMethod(final Method m, final Object invocationObject) {
             this.m = m;
             this.invocationObject = invocationObject;
+
+            if (!m.canAccess(invocationObject)) {
+                if (!m.trySetAccessible()) {
+                    throw new InternalError("Cannot access given method " + m);
+                }
+            }
+
+            if (m.getParameterCount() > 1) {
+                passMessage = true;
+            }
         }
 
-        void invoke(final Object... args) throws InvocationTargetException, IllegalAccessException {
-            m.invoke(invocationObject, args);
+        void invoke(final Principal principal, final Object msg) throws InvocationTargetException, IllegalAccessException {
+            if (passMessage) {
+                m.invoke(invocationObject, principal, msg);
+            } else {
+                m.invoke(invocationObject, principal);
+            }
         }
     }
-
 
 }

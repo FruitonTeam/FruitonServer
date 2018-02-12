@@ -21,10 +21,4 @@ public interface GameService extends OnDisconnectedListener {
             GameProtos.GameMode gameMode
     );
 
-    void setPlayerReady(UserIdHolder user);
-
-    void performAction(UserIdHolder user, GameProtos.Action action);
-
-    void playerSurrendered(UserIdHolder surrenderedUser);
-
 }

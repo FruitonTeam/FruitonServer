@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.service.game;
 
+import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.util.HaxeUtils;
 import fruiton.kernel.AttackGenerator;
 import fruiton.kernel.Fruiton;
@@ -31,6 +32,19 @@ public interface FruitonService {
                 }
             }
             throw new IllegalArgumentException("Unknown fruiton type " + typeId);
+        }
+
+        public static FruitonType fromProtobuf(final GameProtos.FruitonType type) {
+            switch (type) {
+                case KING:
+                    return FruitonType.KING;
+                case MAJOR:
+                    return FruitonType.MAJOR;
+                case MINOR:
+                    return FruitonType.MINOR;
+                default:
+                    throw new IllegalArgumentException("Unknown type " + type);
+            }
         }
 
         @Override
@@ -153,5 +167,7 @@ public interface FruitonService {
     FruitonInfo getFruitonInfo(int fruitonId);
 
     List<Integer> getRandomFruitons();
+
+    List<Integer> filter(List<Integer> fruitonIds, FruitonType type);
 
 }

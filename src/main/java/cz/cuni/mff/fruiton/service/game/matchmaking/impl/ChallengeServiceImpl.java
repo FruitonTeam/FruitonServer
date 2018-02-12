@@ -1,9 +1,13 @@
 package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
 
+import cz.cuni.mff.fruiton.annotation.ProtobufMessage;
 import cz.cuni.mff.fruiton.component.util.OnDisconnectedListener;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.CommonProtos;
+import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage.MessageCase;
 import cz.cuni.mff.fruiton.dto.GameProtos;
+import cz.cuni.mff.fruiton.dto.GameProtos.Challenge;
+import cz.cuni.mff.fruiton.dto.GameProtos.ChallengeResult;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.game.GameService;
@@ -60,7 +64,8 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
     }
 
     @Override
-    public void challenge(final UserIdHolder from, final GameProtos.Challenge challengeMsg) {
+    @ProtobufMessage(messageCase = MessageCase.CHALLENGE)
+    public void challenge(final UserIdHolder from, final Challenge challengeMsg) {
         UserIdHolder challenged = userService.findUserByLogin(challengeMsg.getChallengeFor());
         if (challenged == null) {
             logger.log(Level.WARNING, "Could not find challenged user " + challengeMsg.getChallengeFor());
@@ -88,14 +93,14 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
 
     private CommonProtos.WrapperMessage getChallengeNotAcceptedMsg(final String challengeFrom) {
         return CommonProtos.WrapperMessage.newBuilder()
-                .setChallengeResult(GameProtos.ChallengeResult.newBuilder()
+                .setChallengeResult(ChallengeResult.newBuilder()
                         .setChallengeAccepted(false)
                         .setChallengeFrom(challengeFrom))
                 .build();
     }
 
-    @Override
-    public void handleChallengeResult(final UserIdHolder from, final GameProtos.ChallengeResult challengeResultMsg) {
+    @ProtobufMessage(messageCase = MessageCase.CHALLENGERESULT)
+    private void handleChallengeResult(final UserIdHolder from, final ChallengeResult challengeResultMsg) {
         ChallengeData dataForGameCreation = null;
         synchronized (challenges) {
             for (Iterator<ChallengeData> it = challenges.iterator(); it.hasNext();) {
@@ -126,8 +131,8 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
         }
     }
 
-    @Override
-    public void revokeChallenge(final UserIdHolder user) {
+    @ProtobufMessage(messageCase = MessageCase.REVOKECHALLENGE)
+    private void revokeChallenge(final UserIdHolder user) {
         synchronized (challenges) {
             for (Iterator<ChallengeData> it = challenges.iterator(); it.hasNext();) {
                 ChallengeData data = it.next();
