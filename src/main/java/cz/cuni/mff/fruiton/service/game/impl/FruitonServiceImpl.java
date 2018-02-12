@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @PropertySource("classpath:game.properties")
@@ -77,6 +78,11 @@ public final class FruitonServiceImpl implements FruitonService {
         }
 
         return result;
+    }
+
+    @Override
+    public List<Integer> filter(final List<Integer> fruitonIds, final FruitonType type) {
+        return fruitonIds.stream().filter(id -> fruitonInfoMap.get(id).getType() == type).collect(Collectors.toList());
     }
 
 }

@@ -1,10 +1,16 @@
 package cz.cuni.mff.fruiton.service.game.impl;
 
+import cz.cuni.mff.fruiton.annotation.ProtobufMessage;
 import cz.cuni.mff.fruiton.component.AchievementHelper;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.Achievement;
 import cz.cuni.mff.fruiton.dto.CommonProtos;
+import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage.MessageCase;
 import cz.cuni.mff.fruiton.dto.GameProtos;
+import cz.cuni.mff.fruiton.dto.GameProtos.FruitonTeam;
+import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
+import cz.cuni.mff.fruiton.dto.GameProtos.GameResults;
+import cz.cuni.mff.fruiton.dto.GameProtos.Quest;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.AchievementService;
 import cz.cuni.mff.fruiton.service.game.FruitonService;
@@ -93,10 +99,10 @@ public final class GameServiceImpl implements GameService {
     @Override
     public void createGame(
             final UserIdHolder user1,
-            final GameProtos.FruitonTeam team1,
+            final FruitonTeam team1,
             final UserIdHolder user2,
-            final GameProtos.FruitonTeam team2,
-            final GameProtos.GameMode gameMode
+            final FruitonTeam team2,
+            final GameMode gameMode
         ) {
         logger.log(Level.FINE, "Creating game between {0} and {1} with teams {2} and {3}",
                 new Object[] {user1, user2, team1, team2});
@@ -106,8 +112,8 @@ public final class GameServiceImpl implements GameService {
 
         boolean firstUserStartsFirst = random.nextBoolean();
 
-        GameProtos.FruitonTeam finalTeam1 = team1;
-        GameProtos.FruitonTeam finalTeam2 = team2;
+        FruitonTeam finalTeam1 = team1;
+        FruitonTeam finalTeam2 = team2;
 
         if (firstUserStartsFirst) {
             finalTeam2 = convertFruitonPositions(team2);
@@ -140,8 +146,8 @@ public final class GameServiceImpl implements GameService {
         userStateService.setNewState(UserStateService.UserState.IN_BATTLE, user1, user2);
     }
 
-    private GameProtos.FruitonTeam convertFruitonPositions(final GameProtos.FruitonTeam team) {
-        GameProtos.FruitonTeam.Builder teamBuilder = GameProtos.FruitonTeam.newBuilder();
+    private FruitonTeam convertFruitonPositions(final FruitonTeam team) {
+        FruitonTeam.Builder teamBuilder = FruitonTeam.newBuilder();
         teamBuilder.setName(team.getName());
         teamBuilder.addAllFruitonIDs(team.getFruitonIDsList());
         for (GameProtos.Position position : team.getPositionsList()) {
@@ -157,8 +163,8 @@ public final class GameServiceImpl implements GameService {
     private Array<Fruiton> getFruitonsArray(
             final Player player1,
             final Player player2,
-            final GameProtos.FruitonTeam team1,
-            final GameProtos.FruitonTeam team2
+            final FruitonTeam team1,
+            final FruitonTeam team2
     ) {
         Array<Fruiton> fruitons = new Array<>();
         putFruitonTeamToFruitonsArray(fruitons, player1, team1);
@@ -169,7 +175,7 @@ public final class GameServiceImpl implements GameService {
     private void putFruitonTeamToFruitonsArray(
             final Array<Fruiton> fruitonArray,
             final Player owner,
-            final GameProtos.FruitonTeam team
+            final FruitonTeam team
     ) {
         if (team.getFruitonIDsCount() != team.getPositionsCount()) {
             throw new IllegalArgumentException("Every fruiton needs to have position");
@@ -186,8 +192,8 @@ public final class GameServiceImpl implements GameService {
     private void sendGameReadyMessages(
             final UserIdHolder user1,
             final UserIdHolder user2,
-            final GameProtos.FruitonTeam team1,
-            final GameProtos.FruitonTeam team2,
+            final FruitonTeam team1,
+            final FruitonTeam team2,
             final boolean firstUserStartsFirst,
             final int mapId
     ) {
@@ -200,7 +206,7 @@ public final class GameServiceImpl implements GameService {
     private void sendGameReadyMessage(
             final UserIdHolder recipient,
             final UserIdHolder opponent,
-            final GameProtos.FruitonTeam opponentTeam,
+            final FruitonTeam opponentTeam,
             final boolean startsFirst,
             final int mapId
     ) {
@@ -220,8 +226,8 @@ public final class GameServiceImpl implements GameService {
         return userService.getProtobufPlayerInfo(player);
     }
 
-    @Override
-    public void setPlayerReady(final UserIdHolder user) {
+    @ProtobufMessage(messageCase = MessageCase.PLAYERREADY)
+    private void setPlayerReady(final UserIdHolder user) {
         logger.log(Level.FINEST, "Setting user {0} ready", user);
 
         GameData gameData = getGameData(user);
@@ -261,8 +267,8 @@ public final class GameServiceImpl implements GameService {
                 .build());
     }
 
-    @Override
-    public void performAction(final UserIdHolder user, final GameProtos.Action protobufAction) {
+    @ProtobufMessage(messageCase = MessageCase.ACTION)
+    private void performAction(final UserIdHolder user, final GameProtos.Action protobufAction) {
         GameData gameData = getGameData(user);
         if (gameData == null) {
             throw new IllegalStateException("User " + user + " has no game associated");
@@ -350,8 +356,8 @@ public final class GameServiceImpl implements GameService {
         }
     }
 
-    @Override
-    public void playerSurrendered(final UserIdHolder surrenderedUser) {
+    @ProtobufMessage(messageCase = MessageCase.SURRENDER)
+    private void playerSurrendered(final UserIdHolder surrenderedUser) {
         GameData gameData = getGameData(surrenderedUser);
         if (gameData != null) {
             synchronized (gameData.lock) {
@@ -366,30 +372,30 @@ public final class GameServiceImpl implements GameService {
         }
     }
 
-    private GameProtos.GameResults generateLoserGameResults() {
-        return GameProtos.GameResults.newBuilder().build();
+    private GameResults generateLoserGameResults() {
+        return GameResults.newBuilder().build();
     }
 
-    private GameProtos.GameResults generateWinnerGameResults(final UserIdHolder user) {
+    private GameResults generateWinnerGameResults(final UserIdHolder user) {
         List<Integer> unlockedFruitons = fruitonService.getRandomFruitons();
         for (int fruiton : unlockedFruitons) {
             userService.unlockFruiton(user, fruiton);
         }
 
-        List<GameProtos.Quest> completedQuests = processWinnerCompletedQuests(user);
+        List<Quest> completedQuests = processWinnerCompletedQuests(user);
 
         userService.adjustMoney(user, STANDARD_MONEY_REWARD);
 
-        return GameProtos.GameResults.newBuilder()
+        return GameResults.newBuilder()
                 .setMoney(STANDARD_MONEY_REWARD)
                 .addAllUnlockedFruitons(unlockedFruitons)
                 .addAllQuests(completedQuests)
                 .build();
     }
 
-    private List<GameProtos.Quest> processWinnerCompletedQuests(final UserIdHolder user) {
-        List<GameProtos.Quest> quests = questService.getAllQuests(user);
-        for (GameProtos.Quest q : quests) {
+    private List<Quest> processWinnerCompletedQuests(final UserIdHolder user) {
+        List<Quest> quests = questService.getAllQuests(user);
+        for (Quest q : quests) {
             if (q.getName().equals("Winner")) {
                 questService.completeQuest(user, "Winner");
                 return Collections.singletonList(q);
@@ -401,7 +407,7 @@ public final class GameServiceImpl implements GameService {
     private void sendGameOverMessage(
             final UserIdHolder to,
             final GameProtos.GameOver.Reason reason,
-            final GameProtos.GameResults results
+            final GameResults results
     ) {
         communicationService.send(to, CommonProtos.WrapperMessage.newBuilder()
                 .setGameOver(GameProtos.GameOver.newBuilder()

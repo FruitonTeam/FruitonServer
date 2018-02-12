@@ -7,8 +7,4 @@ public interface ChallengeService {
 
     void challenge(UserIdHolder from, GameProtos.Challenge challengeMsg);
 
-    void handleChallengeResult(UserIdHolder from, GameProtos.ChallengeResult challengeResultMsg);
-
-    void revokeChallenge(UserIdHolder user);
-
 }

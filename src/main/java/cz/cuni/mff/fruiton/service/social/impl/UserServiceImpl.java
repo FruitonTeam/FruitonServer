@@ -1,12 +1,14 @@
 package cz.cuni.mff.fruiton.service.social.impl;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import cz.cuni.mff.fruiton.annotation.ProtobufMessage;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.Achievement;
 import cz.cuni.mff.fruiton.dao.domain.FruitonTeam;
 import cz.cuni.mff.fruiton.dao.domain.FruitonTeamMember;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
+import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage.MessageCase;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.dto.form.EditProfileForm;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
@@ -86,6 +88,11 @@ public final class UserServiceImpl implements UserService {
 
     private User getUser(final UserIdHolder idHolder) {
         return repository.findOne(idHolder.getId());
+    }
+
+    @ProtobufMessage(messageCase = MessageCase.SETFRACTION)
+    private void handleSetFractionMessage(final UserIdHolder from, final GameProtos.SetFraction setFractionMsg) {
+        this.setFraction(from, setFractionMsg.getFraction());
     }
 
     @Override

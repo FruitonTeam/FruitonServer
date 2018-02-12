@@ -4,6 +4,7 @@ import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.game.GameService;
+import cz.cuni.mff.fruiton.service.game.matchmaking.TeamDraftService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
 import cz.cuni.mff.fruiton.test.util.TestUtils;
@@ -45,6 +46,9 @@ public class RatingMatchMakingServiceImplTest {
     @Autowired
     private UserStateService userStateService;
 
+    @Autowired
+    private TeamDraftService draftService;
+
     private RatingMatchMakingServiceImpl ratingMatchMakingService;
 
     @Captor
@@ -55,7 +59,7 @@ public class RatingMatchMakingServiceImplTest {
 
     @Before
     public void setup() {
-        ratingMatchMakingService = new RatingMatchMakingServiceImpl(gameService, userService, userStateService);
+        ratingMatchMakingService = new RatingMatchMakingServiceImpl(gameService, userService, userStateService, draftService);
     }
 
     @Test
