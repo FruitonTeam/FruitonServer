@@ -2,15 +2,19 @@ package cz.cuni.mff.fruiton.service.authentication.impl;
 
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.service.authentication.TokenService;
+import cz.cuni.mff.fruiton.service.communication.SessionService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Logger;
 
 @Service
@@ -18,22 +22,38 @@ public final class TokenServiceImpl implements TokenService {
 
     private static final Logger logger = Logger.getLogger(TokenServiceImpl.class.getName());
 
-    private static final int INVALIDATION_TIME = 3_600_000; // 1 hour
+    private static final int INVALIDATION_TIME = 120_000; // 2 min
 
-    private final Map<String, TokenValue> tokens = new ConcurrentHashMap<>();
+    private static final int TOKEN_VALID_PERIOD = 300_000; // 5 min
+
+    private final Map<String, TokenValue> tokens = new HashMap<>();
+
+    private final ReadWriteLock tokensLock = new ReentrantReadWriteLock();
+
+    private final SessionService sessionService;
+
+    @Autowired
+    public TokenServiceImpl(final SessionService sessionService) {
+        this.sessionService = sessionService;
+    }
 
     @Override
     public String register(final UserIdHolder user) {
         TokenValue value = new TokenValue(user, Instant.now());
-        String token = generateToken();
 
-        tokens.put(token, value);
+        String token;
+        try {
+            tokensLock.writeLock().lock();
+            token = generateToken();
+            tokens.put(token, value);
+        } finally {
+            tokensLock.writeLock().unlock();
+        }
+
         return token;
     }
 
     private String generateToken() {
-        // theoretically we can generate the same token for 2 users but the probability is so small in comparison
-        // with the synchronization overhead
         String token = UUID.randomUUID().toString();
         while (tokens.containsKey(token)) {
             token = UUID.randomUUID().toString();
@@ -42,13 +62,14 @@ public final class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public void unregister(final UserIdHolder userToUnregister) {
-        tokens.entrySet().removeIf(entry -> entry.getValue().user.equals(userToUnregister));
-    }
-
-    @Override
     public UserIdHolder getUser(final String token) {
-        TokenValue value = tokens.get(token);
+        TokenValue value;
+        try {
+            tokensLock.readLock().lock();
+            value = tokens.get(token);
+        } finally {
+            tokensLock.readLock().unlock();
+        }
         if (value == null) {
             return null;
         }
@@ -57,16 +78,11 @@ public final class TokenServiceImpl implements TokenService {
 
     @Override
     public boolean isValid(final String token) {
-        return tokens.containsKey(token);
-    }
-
-    @Override
-    public void prolongLease(final String token) {
-        TokenValue tokenValue = tokens.get(token);
-        if (tokenValue != null) {
-            tokenValue.inserted = Instant.now();
-        } else {
-            logger.log(Level.WARNING, "Trying to prolong lease on non existing token: {0}", token);
+        try {
+            tokensLock.readLock().lock();
+            return tokens.containsKey(token);
+        } finally {
+            tokensLock.readLock().unlock();
         }
     }
 
@@ -74,19 +90,35 @@ public final class TokenServiceImpl implements TokenService {
     public void invalidateTokens() {
         logger.finest("Invalidating token data");
 
-        Instant now = Instant.now();
+        Instant lastValid = Instant.now().minus(Duration.ofMillis(TOKEN_VALID_PERIOD));
 
-        tokens.entrySet().removeIf(entry -> now.minus(Duration.ofMillis(INVALIDATION_TIME)).isAfter(entry.getValue().inserted));
+        try {
+            tokensLock.writeLock().lock();
+            for (Iterator<Map.Entry<String, TokenValue>> it = tokens.entrySet().iterator(); it.hasNext();) {
+                Map.Entry<String, TokenValue> entry = it.next();
+
+                TokenValue tokenValue = entry.getValue();
+                if (lastValid.isAfter(tokenValue.validFrom)) {
+                    if (sessionService.isOnline(tokenValue.user)) { // prolong lease
+                        tokenValue.validFrom = Instant.now();
+                    } else {
+                        it.remove();
+                    }
+                }
+            }
+        } finally {
+            tokensLock.writeLock().unlock();
+        }
     }
 
     private static class TokenValue {
 
-        private UserIdHolder user;
-        private Instant inserted;
+        private final UserIdHolder user;
+        private Instant validFrom;
 
-        TokenValue(final UserIdHolder user, final Instant inserted) {
+        TokenValue(final UserIdHolder user, final Instant validFrom) {
             this.user = user;
-            this.inserted = inserted;
+            this.validFrom = validFrom;
         }
     }
 
