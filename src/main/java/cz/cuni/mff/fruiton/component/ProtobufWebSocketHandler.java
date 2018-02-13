@@ -13,6 +13,7 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +34,8 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
     private final List<OnDisconnectedListener> onDisconnectedListeners;
 
+    private boolean applicationClosing = false;
+
     @Autowired
     public ProtobufWebSocketHandler(
             final MessageDispatcher dispatcher,
@@ -44,6 +47,11 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
         this.sessionService = sessionService;
         this.userService = userService;
         this.onDisconnectedListeners = onDisconnectedListeners;
+    }
+
+    @PreDestroy
+    private void onApplicationExit() {
+        applicationClosing = true;
     }
 
     @Override
@@ -113,16 +121,18 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
     @Override
     public final void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) throws IOException {
         logger.log(Level.FINEST, "Closed connection for {0} with status: {1}", new Object[] {session.getPrincipal(), status});
-        if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
-            sendPlayerOnTheSameNetworkDisconnected(session);
-        }
+        if (!applicationClosing) {
+            if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
+                sendPlayerOnTheSameNetworkDisconnected(session);
+            }
 
-        sendStatusChangedToOfflineMessage(session);
+            sendStatusChangedToOfflineMessage(session);
 
-        sessionService.unregister(session);
+            sessionService.unregister(session);
 
-        for (OnDisconnectedListener listener : onDisconnectedListeners) {
-            listener.onDisconnected((UserIdHolder) session.getPrincipal());
+            for (OnDisconnectedListener listener : onDisconnectedListeners) {
+                listener.onDisconnected((UserIdHolder) session.getPrincipal());
+            }
         }
     }
 
