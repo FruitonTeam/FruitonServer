@@ -10,6 +10,7 @@ import cz.cuni.mff.fruiton.dto.GameProtos.Challenge;
 import cz.cuni.mff.fruiton.dto.GameProtos.ChallengeResult;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
+import cz.cuni.mff.fruiton.service.game.AchievementService;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.ChallengeService;
 import cz.cuni.mff.fruiton.service.social.UserService;
@@ -28,6 +29,8 @@ import java.util.logging.Logger;
 public final class ChallengeServiceImpl implements ChallengeService, OnDisconnectedListener,
         UserStateService.OnUserStateChangedListener {
 
+    private static final String CHALLENGE_ACHV_NAME = "Challenge";
+
     private static final Logger logger = Logger.getLogger(ChallengeServiceImpl.class.getName());
 
     private final List<ChallengeData> challenges = new LinkedList<>();
@@ -42,19 +45,23 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
 
     private final UserStateService userStateService;
 
+    private final AchievementService achievementService;
+
     @Autowired
     public ChallengeServiceImpl(
             final GameService gameService,
             final SessionService sessionService,
             final UserService userService,
             final CommunicationService communicationService,
-            final UserStateService userStateService
+            final UserStateService userStateService,
+            final AchievementService achievementService
     ) {
         this.gameService = gameService;
         this.sessionService = sessionService;
         this.userService = userService;
         this.communicationService = communicationService;
         this.userStateService = userStateService;
+        this.achievementService = achievementService;
     }
 
     @PostConstruct
@@ -127,8 +134,14 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
             if (dataForGameCreation != null) {
                 gameService.createGame(dataForGameCreation.challenger, dataForGameCreation.challengerTeam,
                         dataForGameCreation.challenged, challengeResultMsg.getTeam(), dataForGameCreation.gameMode);
+                unlockChallengeAchievement(dataForGameCreation.challenger);
+                unlockChallengeAchievement(dataForGameCreation.challenged);
             }
         }
+    }
+
+    private void unlockChallengeAchievement(final UserIdHolder user) {
+        achievementService.unlockAchievement(user, CHALLENGE_ACHV_NAME);
     }
 
     @ProtobufMessage(messageCase = MessageCase.REVOKECHALLENGE)

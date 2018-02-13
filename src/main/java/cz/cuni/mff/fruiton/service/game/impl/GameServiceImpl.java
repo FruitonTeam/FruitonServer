@@ -26,6 +26,7 @@ import fruiton.kernel.Player;
 import fruiton.kernel.actions.Action;
 import fruiton.kernel.actions.EndTurnAction;
 import fruiton.kernel.actions.MoveAction;
+import fruiton.kernel.events.DeathEvent;
 import fruiton.kernel.events.Event;
 import fruiton.kernel.events.GameOverEvent;
 import haxe.root.Array;
@@ -320,6 +321,13 @@ public final class GameServiceImpl implements GameService {
                     throw new IllegalStateException("GameOverEvent with undefined number of losers " + gameOverEvent);
             }
             userStateService.setNewState(UserStateService.UserState.MAIN_MENU, gameData.player1.user, gameData.player2.user);
+        } else if (e instanceof DeathEvent) {
+            DeathEvent deathEvent = (DeathEvent) e;
+
+            PlayerRecord playerKillingFruiton = gameData.getOpponentPlayer(deathEvent.fruiton.owner);
+            for (Achievement achievement : achievementHelper.getKillFruitonAchievements()) {
+                achievementService.updateAchievementProgress(playerKillingFruiton.user, achievement, 1);
+            }
         }
     }
 
@@ -385,6 +393,10 @@ public final class GameServiceImpl implements GameService {
         List<Quest> completedQuests = processWinnerCompletedQuests(user);
 
         userService.adjustMoney(user, STANDARD_MONEY_REWARD);
+
+        for (Achievement achievement: achievementHelper.getWinGameAchievements()) {
+            achievementService.updateAchievementProgress(user, achievement, 1);
+        }
 
         return GameResults.newBuilder()
                 .setMoney(STANDARD_MONEY_REWARD)

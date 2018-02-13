@@ -1,0 +1,20 @@
+<mongoChangeLog>
+    <changeSet changeId="Achievements-Init2" author="ahornace">
+        <script>
+            db.achievement.insert({
+                "name" : "Novice", "description" : "Win 1 game", "image" : "novice.png", "goal" : 1});
+            db.achievement.insert({
+                "name" : "Apprentice", "description" : "Win 10 games", "image" : "apprentice.png", "goal" : 10});
+            db.achievement.insert({
+                "name" : "Master", "description" : "Win 100 games", "image" : "master.png", "goal" : 100});
+            db.achievement.insert({
+                "name" : "Challenge", "description" : "Play with friend", "image" : "challenge.png"});
+            db.achievement.insert({
+                "name" : "Killer", "description" : "Kill 1 fruiton", "image" : "killer.png", "goal" : 1});
+            db.achievement.insert({
+                "name" : "Serial killer", "description" : "Kill 10 fruitons", "image" : "serial_killer.png", "goal" : 10});
+            db.achievement.insert({
+                "name" : "Destroyer", "description" : "Kill 100 fruitons", "image" : "destroyer.png", "goal" : 100});
+        </script>
+    </changeSet>
+</mongoChangeLog>
