@@ -1,4 +1,5 @@
 <changeFiles>
     <file path="achievements.xml"/>
+    <file path="achievements2.xml"/>
     <file path="quests.xml"/>
 </changeFiles>

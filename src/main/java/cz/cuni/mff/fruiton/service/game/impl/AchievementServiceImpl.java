@@ -83,7 +83,7 @@ public final class AchievementServiceImpl implements AchievementService {
             if (achievementProgress.getId() != null) { // progress is stored in db, we need to delete it
                 achievementProgressRepository.delete(achievementProgress);
             }
-            userService.unlockAchievement(idHolder, achievement);
+            unlockAchievement(idHolder, achievement);
         } else {
             achievementProgressRepository.save(achievementProgress);
         }
