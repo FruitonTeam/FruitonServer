@@ -85,11 +85,15 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnDisconnec
             draftPickersLock.writeLock().lock();
             draftPickers.put(user1, picker);
             draftPickers.put(user2, picker);
+
+            synchronized (picker.lock) {
+                sendDraftReadyMessages(picker);
+                picker.sendRequest(communicationService);
+            }
+
         } finally {
             draftPickersLock.writeLock().unlock();
         }
-
-        sendDraftReadyMessages(picker);
     }
 
     private void sendDraftReadyMessages(final TeamDraftPicker picker) {
@@ -175,6 +179,8 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnDisconnec
         try {
             draftPickersLock.writeLock().lock();
 
+            Instant now = Instant.now();
+
             Set<TeamDraftPicker> processed = new HashSet<>();
             for (Iterator<Entry<UserIdHolder, TeamDraftPicker>> it = draftPickers.entrySet().iterator(); it.hasNext();) {
                 Entry<UserIdHolder, TeamDraftPicker> entry = it.next();
@@ -189,7 +195,7 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnDisconnec
                         continue;
                     }
 
-                    if (picker.requestTime.plusSeconds(PICK_TIME).isAfter(Instant.now())) {
+                    if (picker.requestTime.plusSeconds(picker.getActiveOption().pickTime).isBefore(now)) {
                         // pick random
                         List<Integer> availableFruitons = userService.getAvailableFruitons(picker.getPickingUser());
                         List<Integer> fruitonsWithCorrectType = fruitonService.filter(availableFruitons,
@@ -214,10 +220,17 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnDisconnec
 
             private final Position position;
             private final FruitonType type;
+            private int pickTime = PICK_TIME;
 
             FruitonPickOption(final Position position, final FruitonType type) {
                 this.position = position;
                 this.type = type;
+            }
+
+            FruitonPickOption(final Position position, final FruitonType type, final int pickTime) {
+                this.position = position;
+                this.type = type;
+                this.pickTime = pickTime;
             }
         }
 
@@ -312,6 +325,7 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnDisconnec
             DraftRequest request = DraftRequest.newBuilder()
                     .setFruitonType(option.type)
                     .setPosition(option.position)
+                    .setSecondsToPick(option.pickTime)
                     .build();
 
             communicationService.send(getPickingUser(), WrapperMessage.newBuilder().setDraftRequest(request).build());

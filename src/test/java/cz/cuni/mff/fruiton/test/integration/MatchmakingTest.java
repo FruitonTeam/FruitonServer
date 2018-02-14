@@ -1,4 +1,4 @@
-package cz.cuni.mff.fruiton.component;
+package cz.cuni.mff.fruiton.test.integration;
 
 import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
@@ -18,11 +18,11 @@ import java.net.URISyntaxException;
 
 import static org.junit.Assert.fail;
 
-//@RunWith(SpringRunner.class)
-//@SpringBootTest(classes = cz.cuni.mff.fruiton.Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-//@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-//@ActiveProfiles("production")
-public class GameTest {
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = cz.cuni.mff.fruiton.Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@ActiveProfiles("production")
+public class MatchmakingTest {
 
     private static final String LOGIN1 = "test1";
     private static final String LOGIN2 = "test2";
@@ -40,7 +40,7 @@ public class GameTest {
     private TestWebSocketClient client1;
     private TestWebSocketClient client2;
 
-    //@Before
+    @Before
     public void setup() throws URISyntaxException, InterruptedException {
 
         registrationService.register(TestUtils.getRegistrationData("test1@test.com", LOGIN1, PASSWORD));
@@ -56,8 +56,7 @@ public class GameTest {
         client2.connectBlocking();
     }
 
-    // TODO: repair - disabled for now
-    //@Test
+    @Test
     public void matchMakingTest() throws InterruptedException {
         client1.send(TestUtils.buildFindGameMsgWrapped().toByteArray());
         client2.send(TestUtils.buildFindGameMsgWrapped().toByteArray());
@@ -72,8 +71,9 @@ public class GameTest {
             if (tries > MESSAGE_POLL_TRIES) {
                 fail("Exceeded maximum tries for GameReady message");
             }
+
             CommonProtos.WrapperMessage msg = client.blockingPoll();
-            if (msg.getMessageCase() == CommonProtos.WrapperMessage.MessageCase.GAMEREADY) {
+            if (msg != null && msg.getMessageCase() == CommonProtos.WrapperMessage.MessageCase.GAMEREADY) {
                 break;
             }
 

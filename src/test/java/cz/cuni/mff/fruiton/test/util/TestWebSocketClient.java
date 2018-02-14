@@ -1,7 +1,7 @@
 package cz.cuni.mff.fruiton.test.util;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import cz.cuni.mff.fruiton.dto.CommonProtos;
+import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ServerHandshake;
@@ -24,7 +24,7 @@ public class TestWebSocketClient extends WebSocketClient {
 
     private static final Logger logger = Logger.getLogger(TestWebSocketClient.class.getName());
 
-    private BlockingQueue<CommonProtos.WrapperMessage> messageQueue = new LinkedBlockingQueue<>();
+    private BlockingQueue<WrapperMessage> messageQueue = new LinkedBlockingQueue<>();
 
     public TestWebSocketClient(final String token, final int port) throws URISyntaxException {
         super(new URI("ws://localhost:" + port + "/socket"), new Draft_6455(), Map.of(TOKEN_HEADER, token), CONNECTION_TIMEOUT);
@@ -39,7 +39,7 @@ public class TestWebSocketClient extends WebSocketClient {
     public void onMessage(String message) {
         logger.log(Level.FINE, "Received message {0}", message);
         try {
-            messageQueue.add(CommonProtos.WrapperMessage.parseFrom(message.getBytes()));
+            messageQueue.add(WrapperMessage.parseFrom(message.getBytes()));
         } catch (InvalidProtocolBufferException e) {
             logger.log(Level.SEVERE, "Cannot parse message {0}", message);
         }
@@ -47,9 +47,10 @@ public class TestWebSocketClient extends WebSocketClient {
 
     @Override
     public void onMessage(ByteBuffer bytes) {
-        logger.log(Level.FINE, "Received message {0}", bytes);
         try {
-            messageQueue.add(CommonProtos.WrapperMessage.parseFrom(bytes.array()));
+            WrapperMessage msg = WrapperMessage.parseFrom(bytes.array());
+            logger.log(Level.FINE, "Received message {0}", msg);
+            messageQueue.add(msg);
         } catch (InvalidProtocolBufferException e) {
             logger.log(Level.SEVERE, "Cannot parse message {0}", bytes);
         }
@@ -65,16 +66,16 @@ public class TestWebSocketClient extends WebSocketClient {
         logger.log(Level.WARNING, "WebSocket error", e);
     }
 
-    public CommonProtos.WrapperMessage blockingPoll() throws InterruptedException {
+    public WrapperMessage blockingPoll() throws InterruptedException {
         return messageQueue.poll(5, TimeUnit.SECONDS);
     }
 
-    public CommonProtos.WrapperMessage peek() {
+    public WrapperMessage peek() {
         return messageQueue.peek();
     }
 
-    public boolean hasInQueue(CommonProtos.WrapperMessage.MessageCase messageCase) {
-        for (CommonProtos.WrapperMessage msg : messageQueue) {
+    public boolean hasInQueue(WrapperMessage.MessageCase messageCase) {
+        for (WrapperMessage msg : messageQueue) {
             if (msg.getMessageCase() == messageCase) {
                 return true;
             }

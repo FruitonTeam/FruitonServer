@@ -1,4 +1,4 @@
-package cz.cuni.mff.fruiton.test;
+package cz.cuni.mff.fruiton.test.integration;
 
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.FruitonTeam;
