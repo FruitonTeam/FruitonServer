@@ -1,0 +1,16 @@
+<mongoChangeLog>
+    <changeSet changeId="Quests-Init2" author="ahornace">
+        <script>
+            db.quest.insert({
+                "name" : "Fighter", "description" : "Win a game with 5 fruitons standing", "goal": 5, "image" : "fighter.png", "reward" : {
+                    "money" : 15
+                }
+            });
+            db.quest.insert({
+                "name" : "Tenacious", "description" : "Win a game with your king having full hp", "image" : "tenacious.png", "reward" : {
+                    "money" : 20
+                }
+            });
+        </script>
+    </changeSet>
+</mongoChangeLog>
