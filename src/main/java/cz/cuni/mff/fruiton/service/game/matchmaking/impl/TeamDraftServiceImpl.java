@@ -115,6 +115,10 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnDisconnec
 
     @Override
     public void onDisconnected(final UserIdHolder user) {
+        removeFromDraft(user);
+    }
+
+    private void removeFromDraft(final UserIdHolder user) {
         TeamDraftPicker picker = getPicker(user);
         if (picker != null) {
             UserIdHolder opponent = picker.getOpponent(user);
@@ -172,6 +176,11 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnDisconnec
             gameService.createGame(picker.user1, picker.team1Builder.build(),
                     picker.user2, picker.team2Builder.build(), picker.gameMode);
         }
+    }
+
+    @ProtobufMessage(messageCase = MessageCase.DRAFTSURRENDERMESSAGE)
+    private void handleDraftSurrenderMessage(final UserIdHolder user) {
+        removeFromDraft(user);
     }
 
     @Scheduled(fixedDelay = DRAFT_CHECK_TIME_REFRESH_TIME)
