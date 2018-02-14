@@ -159,7 +159,6 @@ public interface FruitonService {
 
             return info;
         }
-
     }
 
     List<FruitonInfo> getFruitonInfos(List<Integer> fruitonIds);
@@ -167,6 +166,8 @@ public interface FruitonService {
     FruitonInfo getFruitonInfo(int fruitonId);
 
     List<Integer> getRandomFruitons();
+
+    List<Integer> getRandomFruitons(int count, List<Integer> excludedFruitons);
 
     List<Integer> filter(List<Integer> fruitonIds, FruitonType type);
 

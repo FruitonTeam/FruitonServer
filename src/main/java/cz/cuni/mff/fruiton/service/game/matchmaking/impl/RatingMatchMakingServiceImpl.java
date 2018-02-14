@@ -11,7 +11,7 @@ import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.TeamDraftService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
-import cz.cuni.mff.fruiton.util.KernelUtils;
+import cz.cuni.mff.fruiton.util.FruitonTeamUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -83,8 +83,9 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
     @Override
     @ProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.FINDGAME)
     public synchronized void findGame(final UserIdHolder user, final GameProtos.FindGame findGameMsg) {
-        if (!KernelUtils.isTeamValid(findGameMsg.getTeam())) {
-            throw new IllegalArgumentException("Invalid team " + findGameMsg.getTeam());
+        if (findGameMsg.getPickMode() == PickMode.STANDARD_PICK
+                && !FruitonTeamUtils.isTeamValid(user, findGameMsg.getTeam(), userService)) {
+            throw new IllegalArgumentException("Invalid team: " + findGameMsg.getTeam());
         }
 
         logger.log(Level.FINEST, "Adding {0} to waiting list", user);

@@ -99,4 +99,6 @@ public interface UserService {
 
     void setFraction(UserIdHolder user, GameProtos.Fraction fraction);
 
+    boolean teamContainsUnlockedFruitons(UserIdHolder user, FruitonTeam team);
+
 }

@@ -12,6 +12,7 @@ import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage.MessageCase;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.dto.form.EditProfileForm;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
+import cz.cuni.mff.fruiton.service.game.FruitonService;
 import cz.cuni.mff.fruiton.service.game.QuestService;
 import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
 import cz.cuni.mff.fruiton.service.social.UserService;
@@ -30,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.util.StringUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -51,10 +53,21 @@ public final class UserServiceImpl implements UserService {
 
     private static final int RANDOM_GOOGLE_SUFFIX_SIZE = 3;
 
+    private static final int COUNT_OF_FRUITONS_UNLOCKED_AFTER_FRACTION_SET = 3;
+
     private static final Logger logger = Logger.getLogger(UserServiceImpl.class.getName());
 
     @Value("#{'${default.unlocked.fruitons}'.split(',')}")
     private List<Integer> defaultUnlockedFruitons;
+
+    @Value("#{'${guacamole-guerillas.unlocked.fruitons}'.split(',')}")
+    private List<Integer> guacamoleGuerillasFruitons;
+
+    @Value("#{'${cranberry-crusade.unlocked.fruitons}'.split(',')}")
+    private List<Integer> cranberryCrusadeFruitons;
+
+    @Value("#{'${tzatziki-tsardom.unlocked.fruitons}'.split(',')}")
+    private List<Integer> tzatzikiTsardomFruitons;
 
     private final RandomNameGenerator nameGenerator = new RandomNameGenerator();
 
@@ -69,6 +82,8 @@ public final class UserServiceImpl implements UserService {
 
     private final SessionService sessionService;
 
+    private final FruitonService fruitonService;
+
     @Autowired
     public UserServiceImpl(
             final UserRepository repository,
@@ -76,7 +91,8 @@ public final class UserServiceImpl implements UserService {
             final EmailConfirmationService emailConfirmationService,
             final QuestService questService,
             final PasswordEncoder passwordEncoder,
-            final SessionService sessionService
+            final SessionService sessionService,
+            final FruitonService fruitonService
     ) {
         this.repository = repository;
         this.imageService = imageService;
@@ -84,6 +100,7 @@ public final class UserServiceImpl implements UserService {
         this.questService = questService;
         this.passwordEncoder = passwordEncoder;
         this.sessionService = sessionService;
+        this.fruitonService = fruitonService;
     }
 
     private User getUser(final UserIdHolder idHolder) {
@@ -288,14 +305,6 @@ public final class UserServiceImpl implements UserService {
     public void addFruitonTeam(final UserIdHolder idHolder, final FruitonTeam teamToAdd) {
         User user = getUser(idHolder);
 
-        List<Integer> availableFruitons = getAvailableFruitons(user);
-
-        for (FruitonTeamMember member : teamToAdd.getFruitons()) {
-            if (!availableFruitons.contains(member.getFruitonId())) {
-                throw new IllegalArgumentException("User does not have unlocked fruiton with id " + member.getFruitonId());
-            }
-        }
-
         // if team with the same name exists then remove it
         user.getTeams().removeIf(ft -> ft.getName().equals(teamToAdd.getName()));
         user.getTeams().add(teamToAdd);
@@ -400,8 +409,41 @@ public final class UserServiceImpl implements UserService {
     @Override
     public void setFraction(final UserIdHolder user, final GameProtos.Fraction fraction) {
         User u = getUser(user);
-        u.setFraction(fraction);
-        repository.save(u);
+        if (u.getFraction() == GameProtos.Fraction.NONE) {
+            u.setFraction(fraction);
+            List<Integer> fruitonsToUnlock = new ArrayList<>();
+            switch (fraction) {
+                case GUACAMOLE_GUERILLAS:
+                    fruitonsToUnlock.addAll(guacamoleGuerillasFruitons);
+                    break;
+                case CRANBERRY_CRUSADE:
+                    fruitonsToUnlock.addAll(cranberryCrusadeFruitons);
+                    break;
+                case TZATZIKI_TSARDOM:
+                    fruitonsToUnlock.addAll(tzatzikiTsardomFruitons);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown fraction " + fraction);
+            }
+            fruitonsToUnlock.addAll(fruitonService.getRandomFruitons(
+                    COUNT_OF_FRUITONS_UNLOCKED_AFTER_FRACTION_SET, fruitonsToUnlock));
+
+            u.unlockFruitons(fruitonsToUnlock);
+
+            repository.save(u);
+        }
+    }
+
+    @Override
+    public boolean teamContainsUnlockedFruitons(final UserIdHolder user, final FruitonTeam team) {
+        List<Integer> availableFruitons = getAvailableFruitons(user);
+
+        for (FruitonTeamMember member : team.getFruitons()) {
+            if (!availableFruitons.contains(member.getFruitonId())) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }
