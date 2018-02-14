@@ -69,13 +69,15 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
                 new Object[] {session.getPrincipal(), session.getId()});
         sessionService.register(session);
 
-        sendLoggedPlayerInfo(session);
+        synchronized (this) {
+            sendLoggedPlayerInfo(session);
 
-        if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
-            sendPlayersOnTheSameNetworkInfo(session);
+            if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
+                sendPlayersOnTheSameNetworkInfo(session);
+            }
+
+            sendStatusChangedToOnlineMessage(session);
         }
-
-        sendStatusChangedToOnlineMessage(session);
     }
 
     private void sendLoggedPlayerInfo(final WebSocketSession session) throws IOException {
