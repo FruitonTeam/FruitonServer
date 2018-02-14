@@ -13,7 +13,9 @@ import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.QuestService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -23,9 +25,9 @@ public final class QuestServiceImpl implements QuestService {
 
     private static final String QUEST_COMPLETED_NOTIFICATION_TITLE = "Quest completed";
 
-    private static final int MAX_QUEST_NUMBER = 1; // TODO: change to 2/3 when more quests will be available
-
     private static final Logger logger = Logger.getLogger(QuestServiceImpl.class.getName());
+
+    private final Random random = new Random();
 
     private final UserRepository userRepository;
 
@@ -35,6 +37,8 @@ public final class QuestServiceImpl implements QuestService {
     private final CommunicationService communicationService;
 
     private final ResourceHelper resourceHelper;
+
+    private List<Quest> allQuests;
 
     public QuestServiceImpl(
             final UserRepository userRepository,
@@ -50,13 +54,21 @@ public final class QuestServiceImpl implements QuestService {
         this.resourceHelper = resourceHelper;
     }
 
+    @PostConstruct
+    private void init() {
+        allQuests = questRepository.findAll();
+    }
+
     @Override
     public void assignNewQuests(final User user) {
         if (user.canGenerateNewQuest()) {
-            // TODO: change when we will have more quests available
-            user.setAssignedQuests(List.of(questRepository.findByName("Winner")));
+            user.setAssignedQuests(List.of(getRandomQuest()));
             userRepository.save(user);
         }
+    }
+
+    private Quest getRandomQuest() {
+        return allQuests.get(random.nextInt(allQuests.size()));
     }
 
     @Override

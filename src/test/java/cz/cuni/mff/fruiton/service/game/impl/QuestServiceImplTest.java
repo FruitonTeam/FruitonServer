@@ -20,8 +20,6 @@ import static org.junit.Assert.assertTrue;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class QuestServiceImplTest {
 
-    private static final String QUEST_NAME = "Winner";
-
     @Autowired
     private QuestServiceImpl questService;
 
@@ -41,7 +39,7 @@ public class QuestServiceImplTest {
         // quests are assigned on login
         TestUtils.login(TestUtils.DEFAULT_LOGIN, TestUtils.DEFAULT_PASSWORD, port);
 
-        questService.completeQuest(UserIdHolder.of(user), QUEST_NAME);
+        questService.completeQuest(UserIdHolder.of(user), questService.getAllQuests(UserIdHolder.of(user)).get(0).getName());
 
         user = userRepository.findOne(user.getId());
         assertTrue("User must have received some money for completed quest", user.getMoney() > 0);
