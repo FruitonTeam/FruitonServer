@@ -18,6 +18,7 @@ import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.QuestService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
+import cz.cuni.mff.fruiton.util.HaxeUtils;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import fruiton.kernel.Fruiton;
 import fruiton.kernel.GameState;
@@ -40,6 +41,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -53,6 +55,10 @@ public final class GameServiceImpl implements GameService {
     private static final int STANDARD_MONEY_REWARD = 50;
 
     private static final int TURN_TIME_CHECK_REFRESH_TIME = 1000;
+
+    private static final String WINNER_ACHIEVEMENT = "Winner";
+    private static final String FIGHTER_ACHIEVEMENT = "Fighter";
+    private static final String TENACIOUS_ACHIEVEMENT = "Tenacious";
 
     private static final Logger logger = Logger.getLogger(GameServiceImpl.class.getName());
 
@@ -337,7 +343,7 @@ public final class GameServiceImpl implements GameService {
         sendGameOverMessage(loser.user, GameProtos.GameOver.Reason.STANDARD, generateLoserGameResults());
         PlayerRecord winner = gameData.getOpponentPlayer(loser.player);
         sendGameOverMessage(winner.user, GameProtos.GameOver.Reason.STANDARD,
-                generateWinnerGameResults(winner.user));
+                generateWinnerGameResults(winner.user, gameData));
         gameData.setGameOver();
     }
 
@@ -374,7 +380,8 @@ public final class GameServiceImpl implements GameService {
                 }
                 UserIdHolder opponent = gameData.getOpponentUser(surrenderedUser);
                 gameData.setGameOver();
-                sendGameOverMessage(opponent, GameProtos.GameOver.Reason.SURRENDER, generateWinnerGameResults(opponent));
+                sendGameOverMessage(opponent, GameProtos.GameOver.Reason.SURRENDER,
+                        generateWinnerGameResults(opponent, gameData));
                 userStateService.setNewState(UserStateService.UserState.MAIN_MENU, opponent);
             }
         }
@@ -384,13 +391,13 @@ public final class GameServiceImpl implements GameService {
         return GameResults.newBuilder().build();
     }
 
-    private GameResults generateWinnerGameResults(final UserIdHolder user) {
+    private GameResults generateWinnerGameResults(final UserIdHolder user, final GameData gameData) {
         List<Integer> unlockedFruitons = fruitonService.getRandomFruitons();
         for (int fruiton : unlockedFruitons) {
             userService.unlockFruiton(user, fruiton);
         }
 
-        List<Quest> completedQuests = processWinnerCompletedQuests(user);
+        List<Quest> completedQuests = processWinnerCompletedQuests(user, gameData);
 
         userService.adjustMoney(user, STANDARD_MONEY_REWARD);
 
@@ -405,12 +412,39 @@ public final class GameServiceImpl implements GameService {
                 .build();
     }
 
-    private List<Quest> processWinnerCompletedQuests(final UserIdHolder user) {
+    private List<Quest> processWinnerCompletedQuests(final UserIdHolder user, final GameData gameData) {
         List<Quest> quests = questService.getAllQuests(user);
         for (Quest q : quests) {
-            if (q.getName().equals("Winner")) {
-                questService.completeQuest(user, "Winner");
-                return Collections.singletonList(q);
+            switch (q.getName()) {
+                case WINNER_ACHIEVEMENT: {
+                    questService.completeQuest(user, WINNER_ACHIEVEMENT);
+                    return Collections.singletonList(q);
+                }
+                case FIGHTER_ACHIEVEMENT: {
+                    PlayerRecord player = gameData.getPlayer(user);
+                    long aliveFruitons = HaxeUtils.toStream(gameData.kernel.currentState.fruitons)
+                            .filter(f -> f.owner.equals(player.player)).count();
+                    if (aliveFruitons >= q.getGoal()) {
+                        questService.completeQuest(user, FIGHTER_ACHIEVEMENT);
+                        return Collections.singletonList(q);
+                    }
+                }
+                case TENACIOUS_ACHIEVEMENT: {
+                    PlayerRecord player = gameData.getPlayer(user);
+                    Optional<Fruiton> king = HaxeUtils.toStream(gameData.kernel.currentState.fruitons)
+                            .filter(f -> f.type == Fruiton.KING_TYPE)
+                            .filter(f -> f.owner.equals(player.player))
+                            .findAny();
+                    if (king.isPresent()) {
+                        if (king.get().currentAttributes.hp == king.get().originalAttributes.hp) {
+                            questService.completeQuest(user, TENACIOUS_ACHIEVEMENT);
+                            return Collections.singletonList(q);
+                        }
+                    }
+                    break;
+                }
+                default:
+                    // ignore
             }
         }
         return Collections.emptyList();
@@ -490,7 +524,8 @@ public final class GameServiceImpl implements GameService {
                 }
                 UserIdHolder opponent = gameData.getOpponentUser(user);
                 gameData.setGameOver();
-                sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT, generateWinnerGameResults(opponent));
+                sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT,
+                        generateWinnerGameResults(opponent, gameData));
                 userStateService.setNewState(UserStateService.UserState.MAIN_MENU, opponent);
             }
         }
@@ -568,6 +603,16 @@ public final class GameServiceImpl implements GameService {
                 return player2;
             } else {
                 throw new IllegalStateException("No player in game with id " + id);
+            }
+        }
+
+        private PlayerRecord getPlayer(final UserIdHolder user) {
+            if (player1.user.equals(user)) {
+                return player1;
+            } else if (player2.user.equals(user)) {
+                return player2;
+            } else {
+                throw new IllegalStateException(user + " is not part of this game");
             }
         }
 
