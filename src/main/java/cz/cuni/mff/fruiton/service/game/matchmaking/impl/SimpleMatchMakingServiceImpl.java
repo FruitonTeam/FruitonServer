@@ -10,8 +10,9 @@ import cz.cuni.mff.fruiton.dto.GameProtos.PickMode;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.TeamDraftService;
+import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
-import cz.cuni.mff.fruiton.util.KernelUtils;
+import cz.cuni.mff.fruiton.util.FruitonTeamUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -41,15 +42,19 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
 
     private final TeamDraftService draftService;
 
+    private final UserService userService;
+
     @Autowired
     public SimpleMatchMakingServiceImpl(
             final GameService gameService,
             final UserStateService userStateService,
-            final TeamDraftService draftService
+            final TeamDraftService draftService,
+            final UserService userService
     ) {
         this.gameService = gameService;
         this.userStateService = userStateService;
         this.draftService = draftService;
+        this.userService = userService;
 
         for (PickMode pickMode : PickMode.values()) {
             for (GameMode gameMode : GameMode.values()) {
@@ -61,8 +66,9 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
     @Override
     @ProtobufMessage(messageCase = MessageCase.FINDGAME)
     public synchronized void findGame(final UserIdHolder user, final FindGame findGameMsg) {
-        if (findGameMsg.getPickMode() == PickMode.STANDARD_PICK && !KernelUtils.isTeamValid(findGameMsg.getTeam())) {
-            throw new IllegalArgumentException("Invalid team " + findGameMsg.getTeam());
+        if (findGameMsg.getPickMode() == PickMode.STANDARD_PICK
+                && !FruitonTeamUtils.isTeamValid(user, findGameMsg.getTeam(), userService)) {
+            throw new IllegalArgumentException("Invalid team: " + findGameMsg.getTeam());
         }
 
         userStateService.setNewState(UserStateService.UserState.IN_MATCHMAKING, user);

@@ -18,6 +18,7 @@ import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.QuestService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
+import cz.cuni.mff.fruiton.util.FruitonTeamUtils;
 import cz.cuni.mff.fruiton.util.HaxeUtils;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import fruiton.kernel.Fruiton;
@@ -110,7 +111,10 @@ public final class GameServiceImpl implements GameService {
             final UserIdHolder user2,
             final FruitonTeam team2,
             final GameMode gameMode
-        ) {
+    ) {
+        checkTeamValidity(user1, team1);
+        checkTeamValidity(user2, team2);
+
         logger.log(Level.FINE, "Creating game between {0} and {1} with teams {2} and {3}",
                 new Object[] {user1, user2, team1, team2});
 
@@ -151,6 +155,12 @@ public final class GameServiceImpl implements GameService {
 
         sendGameReadyMessages(user1, user2, finalTeam1, finalTeam2, firstUserStartsFirst, mapId);
         userStateService.setNewState(UserStateService.UserState.IN_BATTLE, user1, user2);
+    }
+
+    private void checkTeamValidity(final UserIdHolder user, final FruitonTeam team) {
+        if (!FruitonTeamUtils.isTeamValid(user, team, userService)) {
+            throw new IllegalArgumentException("Cannot create game with invalid team: " + team + " of user " + user);
+        }
     }
 
     private FruitonTeam convertFruitonPositions(final FruitonTeam team) {

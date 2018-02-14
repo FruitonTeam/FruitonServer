@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +31,10 @@ public final class FruitonServiceImpl implements FruitonService {
 
     private RangedProbabilityRandom<Integer> fruitonsGenerator;
 
+    private final Random random = new Random();
+
+    private List<Integer> nonDefaultFruitons;
+
     @PostConstruct
     private void init() {
         List<Integer> nonDefaultFruitons = new ArrayList<>();
@@ -42,6 +47,7 @@ public final class FruitonServiceImpl implements FruitonService {
                 nonDefaultFruitons.add(fruitonId);
             }
         }
+        this.nonDefaultFruitons = Collections.unmodifiableList(nonDefaultFruitons);
 
         // every fruiton with the same probability for now
         fruitonsGenerator = new RangedProbabilityRandom<>(nonDefaultFruitons, Collections.nCopies(nonDefaultFruitons.size(), 1));
@@ -77,6 +83,20 @@ public final class FruitonServiceImpl implements FruitonService {
             result.add(fruitonsGenerator.next());
         }
 
+        return result;
+    }
+
+    @Override
+    public List<Integer> getRandomFruitons(final int count, final List<Integer> excludedFruitons) {
+        List<Integer> availableFruitons = new ArrayList<>(nonDefaultFruitons);
+        availableFruitons.removeAll(excludedFruitons);
+
+        List<Integer> result = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            int randomIdx = random.nextInt(availableFruitons.size());
+            result.add(availableFruitons.get(randomIdx));
+            availableFruitons.remove(randomIdx);
+        }
         return result;
     }
 

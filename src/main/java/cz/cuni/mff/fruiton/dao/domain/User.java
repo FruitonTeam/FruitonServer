@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -181,6 +182,10 @@ public final class User {
 
     public void unlockFruiton(final int fruitonId) {
         unlockedFruitons.add(fruitonId);
+    }
+
+    public void unlockFruitons(final Collection<Integer> fruitonIds) {
+        unlockedFruitons.addAll(fruitonIds);
     }
 
     public void removeFruitonFromUnlockedFruitons(final int fruitonId) {
