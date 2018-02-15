@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 public final class MessageController {
@@ -29,6 +30,7 @@ public final class MessageController {
         this.chatService = chatService;
     }
 
+    @ResponseBody
     @GetMapping(value = "/api/secured/getAllMessagesWithUser", produces = MediaTypes.PROTOBOUF)
     public ChatProtos.ChatMessages getAllMessagesWithUser(
             @RequestParam("otherUserLogin") final String otherLogin,
@@ -40,6 +42,7 @@ public final class MessageController {
         return chatService.getMessagesBetweenUsers(user, otherUser, page);
     }
 
+    @ResponseBody
     @GetMapping(value = "/api/secured/getAllMessagesBefore", produces = MediaTypes.PROTOBOUF)
     public ChatProtos.ChatMessages getAllMessagesBefore(
             @RequestParam final String messageId,

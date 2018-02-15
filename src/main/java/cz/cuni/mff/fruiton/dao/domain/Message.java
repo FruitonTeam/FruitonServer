@@ -8,7 +8,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 
 @Document
 public final class Message {
@@ -67,8 +66,8 @@ public final class Message {
         this.created = created;
     }
 
-    public String getTimestamp() {
-        return created.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE);
+    public long getTimestamp() {
+        return created.atZone(ZoneId.systemDefault()).toEpochSecond();
     }
 
     public ChatProtos.ChatMessage toProtobuf() {
