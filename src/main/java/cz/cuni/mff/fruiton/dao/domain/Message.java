@@ -76,7 +76,7 @@ public final class Message {
                 .setRecipient(recipient.getLogin())
                 .setSender(sender.getLogin())
                 .setMessage(content)
-                .setTimestamp(getTimestamp())
+                .setTimestamp(String.valueOf(getTimestamp()))
                 .build();
     }
 
