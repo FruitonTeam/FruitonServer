@@ -20,6 +20,7 @@ import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.TeamDraftService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
+import cz.cuni.mff.fruiton.util.FruitonTeamUtils;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -148,6 +149,10 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnDisconnec
 
     @ProtobufMessage(messageCase = MessageCase.DRAFTRESPONSE)
     private void handleDraftResponse(final UserIdHolder user, final DraftResponse draftResponse) {
+        if (!userService.getAvailableFruitons(user).contains(draftResponse.getFruitonId())) {
+            throw new FruitonTeamUtils.NotUnlockedFruitonException(List.of(draftResponse.getFruitonId()));
+        }
+
         TeamDraftPicker picker = getPicker(user);
         synchronized (picker.lock) {
             if (!picker.getPickingUser().equals(user)) {
