@@ -31,6 +31,7 @@ import fruiton.kernel.actions.MoveAction;
 import fruiton.kernel.events.DeathEvent;
 import fruiton.kernel.events.Event;
 import fruiton.kernel.events.GameOverEvent;
+import haxe.lang.HaxeException;
 import haxe.root.Array;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -299,20 +300,27 @@ public final class GameServiceImpl implements GameService {
             logger.log(Level.FINEST, "User {0} is performing action {1} in game {2}",
                     new Object[] {user, protobufAction, gameData});
 
+            Kernel kernel = gameData.kernel;
 
             if (!gameData.getActivePlayer().user.equals(user)) {
-                throw new GameException("User " + user + " cannot perform action " + protobufAction
-                        + " because he is no longer active");
+                logger.log(Level.WARNING,
+                        "User {0} is trying to perform action even though he is no longer active, sending correct game state",
+                        user);
+                sendKernelState(user, kernel);
+                return;
             }
-
-            Kernel kernel = gameData.kernel;
 
             Action kernelAction = KernelUtils.getActionFromProtobuf(protobufAction, kernel);
 
-            Array<Event> events = kernel.performAction(kernelAction);
-            processEvents(events, gameData);
+            try {
+                Array<Event> events = kernel.performAction(kernelAction);
+                processEvents(events, gameData);
 
-            onAfterAction(gameData, user, protobufAction);
+                onAfterAction(gameData, user, protobufAction);
+            } catch (HaxeException e) {
+                logger.log(Level.WARNING, "Exception while performing kernel action, sending correct game state", e);
+                sendKernelState(user, kernel);
+            }
         }
     }
 
@@ -378,6 +386,13 @@ public final class GameServiceImpl implements GameService {
                 achievementService.updateAchievementProgress(user, achievement, 1);
             }
         }
+    }
+
+    private void sendKernelState(final UserIdHolder user, final Kernel kernel) {
+        communicationService.send(user, CommonProtos.WrapperMessage.newBuilder()
+                .setStateCorrection(GameProtos.StateCorrection.newBuilder()
+                        .setGameState(kernel.currentState.serializeToString()))
+                .build());
     }
 
     @ProtobufMessage(messageCase = MessageCase.SURRENDER)
@@ -494,7 +509,6 @@ public final class GameServiceImpl implements GameService {
 
                     if (game.kernel.currentState.turnState.isTimeout()) {
                         PlayerRecord activePlayer = game.getActivePlayer();
-                        PlayerRecord otherPlayer = game.getInactivePlayer();
 
                         logger.log(Level.FINEST, "User {0} timed out, performing end turn", activePlayer.user);
 
@@ -503,8 +517,6 @@ public final class GameServiceImpl implements GameService {
                         GameProtos.Action endTurnAction = GameProtos.Action.newBuilder().setId(EndTurnAction.ID).build();
 
                         performAction(activePlayer.user, endTurnAction);
-
-                        communicationService.send(otherPlayer.user, wrapProtobufAction(endTurnAction));
                     }
 
                     processed.add(game);

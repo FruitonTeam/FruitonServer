@@ -117,7 +117,7 @@
         <dependency>
             <groupId>cz.cuni.mff</groupId>
             <artifactId>fruiton-kernel</artifactId>
-            <version>0.2.0</version>
+            <version>0.2.3</version>
         </dependency>
 
         <dependency>
