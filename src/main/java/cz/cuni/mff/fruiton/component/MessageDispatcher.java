@@ -4,7 +4,9 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Descriptors;
 import cz.cuni.mff.fruiton.annotation.ProtobufMessage;
 import cz.cuni.mff.fruiton.dto.CommonProtos.ErrorMessage;
+import cz.cuni.mff.fruiton.dto.CommonProtos.ErrorMessage.ErrorId;
 import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
+import cz.cuni.mff.fruiton.exception.FruitonServerException;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.util.ReflectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,14 +97,24 @@ public class MessageDispatcher {
         } catch (IllegalAccessException e) {
             logger.log(Level.SEVERE, "Could not dispatch message", e);
         } catch (InvocationTargetException e) {
-            logger.log(Level.SEVERE, "Exception while processing WebSocket message", e);
-            communicationService.send(session.getPrincipal(), createErrorMessage(e.getCause().getMessage()));
+            Throwable cause = e.getCause();
+            logger.log(Level.WARNING, "Exception while processing WebSocket message", cause);
+            communicationService.send(session.getPrincipal(), createErrorMessage(cause));
         }
     }
 
-    private WrapperMessage createErrorMessage(final String message) {
+    private ErrorId getErrorId(final Throwable throwable) {
+        if (throwable instanceof FruitonServerException) {
+            return ((FruitonServerException) throwable).getErrorId();
+        }
+        return ErrorId.GENERAL;
+    }
+
+    private WrapperMessage createErrorMessage(final Throwable throwable) {
         return WrapperMessage.newBuilder()
-                .setErrorMessage(ErrorMessage.newBuilder().setMessage(message).build())
+                .setErrorMessage(ErrorMessage.newBuilder()
+                        .setMessage(throwable.getMessage())
+                        .setErrorId(getErrorId(throwable)))
                 .build();
     }
 

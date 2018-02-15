@@ -83,9 +83,8 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
     @Override
     @ProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.FINDGAME)
     public synchronized void findGame(final UserIdHolder user, final GameProtos.FindGame findGameMsg) {
-        if (findGameMsg.getPickMode() == PickMode.STANDARD_PICK
-                && !FruitonTeamUtils.isTeamValid(user, findGameMsg.getTeam(), userService)) {
-            throw new IllegalArgumentException("Invalid team: " + findGameMsg.getTeam());
+        if (findGameMsg.getPickMode() == PickMode.STANDARD_PICK) {
+            FruitonTeamUtils.checkTeamValidity(user, findGameMsg.getTeam(), userService);
         }
 
         logger.log(Level.FINEST, "Adding {0} to waiting list", user);

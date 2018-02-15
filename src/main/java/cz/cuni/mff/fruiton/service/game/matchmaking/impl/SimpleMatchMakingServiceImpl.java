@@ -66,9 +66,8 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
     @Override
     @ProtobufMessage(messageCase = MessageCase.FINDGAME)
     public synchronized void findGame(final UserIdHolder user, final FindGame findGameMsg) {
-        if (findGameMsg.getPickMode() == PickMode.STANDARD_PICK
-                && !FruitonTeamUtils.isTeamValid(user, findGameMsg.getTeam(), userService)) {
-            throw new IllegalArgumentException("Invalid team: " + findGameMsg.getTeam());
+        if (findGameMsg.getPickMode() == PickMode.STANDARD_PICK) {
+            FruitonTeamUtils.checkTeamValidity(user, findGameMsg.getTeam(), userService);
         }
 
         userStateService.setNewState(UserStateService.UserState.IN_MATCHMAKING, user);
