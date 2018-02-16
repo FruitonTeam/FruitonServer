@@ -5,7 +5,6 @@ import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.game.PlayerService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -33,9 +32,6 @@ public final class PlayerServiceImpl implements PlayerService {
     @Override
     public boolean isOnline(final String login) {
         UserIdHolder player = userService.findUserByLogin(login);
-        if (player == null) {
-            throw new UsernameNotFoundException("No user with login " + login);
-        }
         return isOnline(player);
     }
 

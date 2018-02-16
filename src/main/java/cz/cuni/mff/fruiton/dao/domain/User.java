@@ -201,11 +201,15 @@ public final class User {
     }
 
     public void addFriend(final User user) {
-        friends.add(user);
+        synchronized (friends) {
+            friends.add(user);
+        }
     }
 
-    public void removeFriend(final User user) {
-        friends.remove(user);
+    public void removeFriendByName(final String login) {
+        synchronized (friends) {
+            friends.removeIf(u -> u.getLogin().equals(login));
+        }
     }
 
     public Set<User> getFriends() {

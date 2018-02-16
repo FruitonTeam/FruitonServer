@@ -59,6 +59,8 @@ public interface UserService {
 
     UserIdHolder findUserByLogin(String login);
 
+    UserIdHolder tryFindUserByLogin(String login);
+
     UserIdHolder findUser(String id);
 
     GameProtos.LoggedPlayerInfo getLoggedPlayerInfo(UserIdHolder user);
@@ -100,5 +102,7 @@ public interface UserService {
     void setFraction(UserIdHolder user, GameProtos.Fraction fraction);
 
     boolean teamContainsUnlockedFruitons(UserIdHolder user, FruitonTeam team);
+
+    void removeFriend(UserIdHolder user, UserIdHolder friendToRemove);
 
 }
