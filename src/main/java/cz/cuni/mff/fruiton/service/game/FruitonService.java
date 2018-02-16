@@ -126,7 +126,7 @@ public interface FruitonService {
             }
 
             FruitonInfo info = new FruitonInfo();
-            info.id = fruiton.id;
+            info.id = fruiton.dbId;
             info.type = FruitonType.fromTypeId(fruiton.type);
             info.name = fruiton.name;
             info.model = fruiton.model;
