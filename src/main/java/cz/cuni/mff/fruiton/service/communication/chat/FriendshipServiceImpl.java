@@ -127,6 +127,8 @@ public final class FriendshipServiceImpl implements FriendshipService {
 
     @ProtobufMessage(messageCase = MessageCase.FRIENDREMOVAL)
     private void removeFriend(final UserIdHolder from, final FriendRemoval friendRemovalMsg) {
+        logger.log(Level.FINER, "Removing friendship between {0} and {1}",
+                new Object[] {from.getUsername(), friendRemovalMsg.getLogin()});
         UserIdHolder friendToRemove = userService.findUserByLogin(friendRemovalMsg.getLogin());
 
         userService.removeFriend(from, friendToRemove);

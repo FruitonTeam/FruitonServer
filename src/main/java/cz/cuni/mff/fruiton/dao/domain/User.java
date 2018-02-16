@@ -17,6 +17,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -208,6 +209,13 @@ public final class User {
 
     public void removeFriendByName(final String login) {
         synchronized (friends) {
+            for (Iterator<User> it = friends.iterator(); it.hasNext();) {
+                User u = it.next();
+                if (u.getLogin().equals(login)) {
+                    it.remove();
+                    break;
+                }
+            }
             friends.removeIf(u -> u.getLogin().equals(login));
         }
     }
