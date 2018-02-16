@@ -13,6 +13,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.server.HandshakeInterceptor;
+import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 import java.security.Principal;
@@ -26,6 +27,8 @@ import java.util.logging.Logger;
 public class WebSocketConfig implements WebSocketConfigurer {
 
     private static final String TOKEN_HEADER_KEY = "x-auth-token";
+
+    private static final int IDLE_TIMEOUT = 2 * 60 * 1000; // 2 min
 
     private static final Logger logger = Logger.getLogger(WebSocketConfig.class.getName());
 
@@ -42,19 +45,24 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public final void registerWebSocketHandlers(final WebSocketHandlerRegistry registry) {
         registry.addHandler(handler, "/socket")
                 .addInterceptors(websocketInterceptor())
-                .setHandshakeHandler(new DefaultHandshakeHandler() {
+                .setHandshakeHandler(defaultHandshakeHandler());
+    }
 
-                    @Override
-                    protected Principal determineUser(
-                            final ServerHttpRequest request,
-                            final WebSocketHandler wsHandler,
-                            final Map<String, Object> attributes
-                    ) {
-                        String token = request.getHeaders().get(TOKEN_HEADER_KEY).get(0);
-                        return tokenService.getUser(token);
-                    }
+    @Bean
+    public DefaultHandshakeHandler defaultHandshakeHandler() {
+        return new DefaultHandshakeHandler() {
 
-                });
+            @Override
+            protected Principal determineUser(
+                    final ServerHttpRequest request,
+                    final WebSocketHandler wsHandler,
+                    final Map<String, Object> attributes
+            ) {
+                String token = request.getHeaders().get(TOKEN_HEADER_KEY).get(0);
+                return tokenService.getUser(token);
+            }
+
+        };
     }
 
     @Bean
@@ -66,8 +74,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
                     final ServerHttpResponse serverHttpResponse,
                     final WebSocketHandler webSocketHandler,
                     final Map<String, Object> map
-            ) throws Exception {
-
+            ) {
                 List<String> tokens = serverHttpRequest.getHeaders().get(TOKEN_HEADER_KEY);
                 if (tokens == null || tokens.isEmpty()) {
                     logger.log(Level.WARNING, "Received websocket handshake request without token from: {0}",
@@ -98,6 +105,14 @@ public class WebSocketConfig implements WebSocketConfigurer {
             }
 
         };
+    }
+
+    @Bean
+    public ServletServerContainerFactoryBean createWebSocketContainer() {
+        ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
+        // TODO: set max message buffer sizes
+        container.setMaxSessionIdleTimeout(IDLE_TIMEOUT);
+        return container;
     }
 
 }
