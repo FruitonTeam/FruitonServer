@@ -7,8 +7,9 @@ import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.FriendRequestRepository;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dto.ChatProtos;
+import cz.cuni.mff.fruiton.dto.ChatProtos.FriendRemoval;
 import cz.cuni.mff.fruiton.dto.ChatProtos.FriendRequestResult;
-import cz.cuni.mff.fruiton.dto.CommonProtos;
+import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
 import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage.MessageCase;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
@@ -80,7 +81,7 @@ public final class FriendshipServiceImpl implements FriendshipService {
         friendRequestRepository.save(request);
 
         if (sessionService.isOnline(UserIdHolder.of(friend))) {
-            communicationService.send(UserIdHolder.of(friend), CommonProtos.WrapperMessage.newBuilder()
+            communicationService.send(UserIdHolder.of(friend), WrapperMessage.newBuilder()
                     .setFriendRequest(ChatProtos.FriendRequest.newBuilder().setFriendToAdd(user.getUsername()))
                     .build());
         }
@@ -109,7 +110,7 @@ public final class FriendshipServiceImpl implements FriendshipService {
             communicationService.sendNotification(UserIdHolder.of(request.getFrom()),
                     userService.getBase64Avatar(request.getTo().getLogin()).orElse(""),
                     FRIEND_ADDED_NOTIF_HEADER, request.getTo().getLogin());
-            communicationService.send(UserIdHolder.of(request.getFrom()), CommonProtos.WrapperMessage.newBuilder()
+            communicationService.send(UserIdHolder.of(request.getFrom()), WrapperMessage.newBuilder()
                     .setFriendRequestResult(
                             FriendRequestResult.newBuilder()
                                     .setFriendToAdd(request.getTo().getLogin())
@@ -122,6 +123,21 @@ public final class FriendshipServiceImpl implements FriendshipService {
 
         request.getTo().addFriend(request.getFrom());
         userRepository.save(request.getTo());
+    }
+
+    @ProtobufMessage(messageCase = MessageCase.FRIENDREMOVAL)
+    private void removeFriend(final UserIdHolder from, final FriendRemoval friendRemovalMsg) {
+        logger.log(Level.FINER, "Removing friendship between {0} and {1}",
+                new Object[] {from.getUsername(), friendRemovalMsg.getLogin()});
+        UserIdHolder friendToRemove = userService.findUserByLogin(friendRemovalMsg.getLogin());
+
+        userService.removeFriend(from, friendToRemove);
+        userService.removeFriend(friendToRemove, from);
+
+        communicationService.send(friendToRemove, WrapperMessage.newBuilder()
+                .setFriendRemoval(FriendRemoval.newBuilder()
+                        .setLogin(from.getUsername()))
+                .build());
     }
 
     @Override

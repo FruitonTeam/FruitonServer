@@ -198,6 +198,18 @@ public final class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserIdHolder tryFindUserByLogin(final String login) {
+        if (login == null) {
+            throw new IllegalArgumentException("Cannot find user for null login");
+        }
+        User user = repository.findByLogin(login);
+        if (user == null) {
+            return null;
+        }
+        return UserIdHolder.of(user);
+    }
+
+    @Override
     public UserIdHolder findUser(final String id) {
         if (id == null) {
             throw new IllegalArgumentException("Cannot find user for null id");
@@ -444,6 +456,13 @@ public final class UserServiceImpl implements UserService {
             }
         }
         return true;
+    }
+
+    @Override
+    public void removeFriend(final UserIdHolder user, final UserIdHolder friendToRemove) {
+        User u = getUser(user);
+        u.removeFriendByName(friendToRemove.getUsername());
+        repository.save(u);
     }
 
 }

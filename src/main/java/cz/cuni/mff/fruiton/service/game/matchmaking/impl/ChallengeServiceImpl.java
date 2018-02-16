@@ -73,7 +73,7 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
     @Override
     @ProtobufMessage(messageCase = MessageCase.CHALLENGE)
     public void challenge(final UserIdHolder from, final Challenge challengeMsg) {
-        UserIdHolder challenged = userService.findUserByLogin(challengeMsg.getChallengeFor());
+        UserIdHolder challenged = userService.tryFindUserByLogin(challengeMsg.getChallengeFor());
         if (challenged == null) {
             logger.log(Level.WARNING, "Could not find challenged user " + challengeMsg.getChallengeFor());
             communicationService.send(from, getChallengeNotAcceptedMsg(from.getUsername()));
@@ -92,7 +92,7 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
             return;
         }
 
-        ChallengeData data = new ChallengeData(from, challengeMsg.getTeam(), challenged, challengeMsg.getMode());
+        ChallengeData data = new ChallengeData(from, challengeMsg.getTeam(), challenged, challengeMsg.getGameMode());
         synchronized (challenges) {
             challenges.add(data);
         }
