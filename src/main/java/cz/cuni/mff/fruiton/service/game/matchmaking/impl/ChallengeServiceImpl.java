@@ -3,16 +3,20 @@ package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
 import cz.cuni.mff.fruiton.annotation.ProtobufMessage;
 import cz.cuni.mff.fruiton.component.util.OnDisconnectedListener;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
-import cz.cuni.mff.fruiton.dto.CommonProtos;
+import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
 import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage.MessageCase;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos.Challenge;
 import cz.cuni.mff.fruiton.dto.GameProtos.ChallengeResult;
+import cz.cuni.mff.fruiton.dto.GameProtos.FruitonTeam;
+import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
+import cz.cuni.mff.fruiton.dto.GameProtos.PickMode;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.game.AchievementService;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.ChallengeService;
+import cz.cuni.mff.fruiton.service.game.matchmaking.TeamDraftService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +51,8 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
 
     private final AchievementService achievementService;
 
+    private final TeamDraftService draftService;
+
     @Autowired
     public ChallengeServiceImpl(
             final GameService gameService,
@@ -54,7 +60,8 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
             final UserService userService,
             final CommunicationService communicationService,
             final UserStateService userStateService,
-            final AchievementService achievementService
+            final AchievementService achievementService,
+            final TeamDraftService draftService
     ) {
         this.gameService = gameService;
         this.sessionService = sessionService;
@@ -62,6 +69,7 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
         this.communicationService = communicationService;
         this.userStateService = userStateService;
         this.achievementService = achievementService;
+        this.draftService = draftService;
     }
 
     @PostConstruct
@@ -92,14 +100,24 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
             return;
         }
 
-        ChallengeData data = new ChallengeData(from, challengeMsg.getTeam(), challenged, challengeMsg.getGameMode());
+        ChallengeData data = new ChallengeData(from, challengeMsg.getTeam(), challenged, challengeMsg.getGameMode(),
+                challengeMsg.getPickMode());
+
         synchronized (challenges) {
             challenges.add(data);
         }
+
+        // send challenge message to other user
+        if (!from.getUsername().equals(challengeMsg.getChallengeFrom())) {
+            Challenge challenge = Challenge.newBuilder(challengeMsg).setChallengeFrom(from.getUsername()).build();
+            communicationService.send(challenged, WrapperMessage.newBuilder().setChallenge(challenge).build());
+        } else {
+            communicationService.send(challenged, WrapperMessage.newBuilder().setChallenge(challengeMsg).build());
+        }
     }
 
-    private CommonProtos.WrapperMessage getChallengeNotAcceptedMsg(final String challengeFrom) {
-        return CommonProtos.WrapperMessage.newBuilder()
+    private WrapperMessage getChallengeNotAcceptedMsg(final String challengeFrom) {
+        return WrapperMessage.newBuilder()
                 .setChallengeResult(ChallengeResult.newBuilder()
                         .setChallengeAccepted(false)
                         .setChallengeFrom(challengeFrom))
@@ -132,8 +150,13 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
             // (it.remove() - The behavior of an iterator is unspecified if the underlying collection is modified while
             // the iteration is in progress in any way other than by calling this method.)
             if (dataForGameCreation != null) {
-                gameService.createGame(dataForGameCreation.challenger, dataForGameCreation.challengerTeam,
-                        dataForGameCreation.challenged, challengeResultMsg.getTeam(), dataForGameCreation.gameMode);
+                if (dataForGameCreation.pickMode == PickMode.STANDARD_PICK) {
+                    gameService.createGame(dataForGameCreation.challenger, dataForGameCreation.challengerTeam,
+                            dataForGameCreation.challenged, challengeResultMsg.getTeam(), dataForGameCreation.gameMode);
+                } else {
+                    draftService.startDraft(dataForGameCreation.challenger, dataForGameCreation.challenged,
+                            dataForGameCreation.gameMode);
+                }
                 unlockChallengeAchievement(dataForGameCreation.challenger);
                 unlockChallengeAchievement(dataForGameCreation.challenged);
             }
@@ -159,7 +182,7 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
     }
 
     private void sendRevokeMessage(final UserIdHolder sendTo) {
-        communicationService.send(sendTo, CommonProtos.WrapperMessage.newBuilder()
+        communicationService.send(sendTo, WrapperMessage.newBuilder()
                 .setRevokeChallenge(GameProtos.RevokeChallenge.newBuilder())
                 .build());
     }
@@ -196,20 +219,23 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
     private static class ChallengeData {
 
         private final UserIdHolder challenger;
-        private final GameProtos.FruitonTeam challengerTeam;
+        private final FruitonTeam challengerTeam;
         private final UserIdHolder challenged;
-        private final GameProtos.GameMode gameMode;
+        private final GameMode gameMode;
+        private final PickMode pickMode;
 
         ChallengeData(
                 final UserIdHolder challenger,
-                final GameProtos.FruitonTeam challengerTeam,
+                final FruitonTeam challengerTeam,
                 final UserIdHolder challenged,
-                final GameProtos.GameMode mode
+                final GameMode mode,
+                final PickMode pickMode
         ) {
             this.challenger = challenger;
             this.challengerTeam = challengerTeam;
             this.challenged = challenged;
             this.gameMode = mode;
+            this.pickMode = pickMode;
         }
     }
 
