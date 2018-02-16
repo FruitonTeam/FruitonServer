@@ -202,7 +202,11 @@ public final class UserServiceImpl implements UserService {
         if (login == null) {
             throw new IllegalArgumentException("Cannot find user for null login");
         }
-        return UserIdHolder.of(repository.findByLogin(login));
+        User user = repository.findByLogin(login);
+        if (user == null) {
+            return null;
+        }
+        return UserIdHolder.of(user);
     }
 
     @Override
