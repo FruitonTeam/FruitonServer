@@ -83,7 +83,7 @@ public final class ChatServiceImpl implements ChatService {
             communicationService.send(UserIdHolder.of(recipient), WrapperMessage.newBuilder().setChatMessage(
                     message.toBuilder()
                             .setId(msgToPersist.getId())
-                            .setTimestamp(String.valueOf(msgToPersist.getTimestamp())))
+                            .setTimestamp(msgToPersist.getTimestamp()))
                     .build());
         }
     }

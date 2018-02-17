@@ -150,7 +150,7 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
     private CommonProtos.WrapperMessage getOnlineStatusChangedMessage(final String login, final GameProtos.Status status) {
         return CommonProtos.WrapperMessage.newBuilder()
-                .setOnlineStatusChange(GameProtos.OnlineStatusChange.newBuilder()
+                .setStatusChange(GameProtos.StatusChange.newBuilder()
                         .setLogin(login)
                         .setStatus(status)
                         .build())
