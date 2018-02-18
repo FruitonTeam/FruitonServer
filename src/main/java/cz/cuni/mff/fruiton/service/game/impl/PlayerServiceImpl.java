@@ -26,7 +26,7 @@ public final class PlayerServiceImpl implements PlayerService {
 
     @Override
     public boolean isOnline(final UserIdHolder user) {
-        return sessionService.getSession(user) != null;
+        return sessionService.isOnline(user);
     }
 
     @Override

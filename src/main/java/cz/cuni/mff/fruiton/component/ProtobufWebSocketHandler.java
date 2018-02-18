@@ -36,6 +36,8 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
     private boolean applicationClosing = false;
 
+    private final Object lock = new Object();
+
     @Autowired
     public ProtobufWebSocketHandler(
             final MessageDispatcher dispatcher,
@@ -69,7 +71,7 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
                 new Object[] {session.getPrincipal(), session.getId()});
         sessionService.register(session);
 
-        synchronized (this) {
+        synchronized (lock) {
             sendLoggedPlayerInfo(session);
 
             if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
@@ -124,16 +126,17 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
     public final void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) throws IOException {
         logger.log(Level.FINEST, "Closed connection for {0} with status: {1}", new Object[] {session.getPrincipal(), status});
         if (!applicationClosing) {
-            if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
-                sendPlayerOnTheSameNetworkDisconnected(session);
-            }
+            synchronized (lock) {
+                if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
+                    sendPlayerOnTheSameNetworkDisconnected(session);
+                }
+                sessionService.unregister(session);
 
-            sendStatusChangedToOfflineMessage(session);
+                sendStatusChangedToOfflineMessage(session);
 
-            sessionService.unregister(session);
-
-            for (OnDisconnectedListener listener : onDisconnectedListeners) {
-                listener.onDisconnected((UserIdHolder) session.getPrincipal());
+                for (OnDisconnectedListener listener : onDisconnectedListeners) {
+                    listener.onDisconnected((UserIdHolder) session.getPrincipal());
+                }
             }
         }
     }
