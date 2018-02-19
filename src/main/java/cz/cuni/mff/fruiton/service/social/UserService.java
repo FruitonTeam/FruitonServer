@@ -105,4 +105,6 @@ public interface UserService {
 
     void removeFriend(UserIdHolder user, UserIdHolder friendToRemove);
 
+    void setRating(UserIdHolder user, int newRating);
+
 }
