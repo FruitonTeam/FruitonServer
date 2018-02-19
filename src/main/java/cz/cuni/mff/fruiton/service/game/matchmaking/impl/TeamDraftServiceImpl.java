@@ -1,7 +1,6 @@
 package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
 
 import cz.cuni.mff.fruiton.annotation.ProtobufMessage;
-import cz.cuni.mff.fruiton.component.util.OnDisconnectedListener;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
@@ -14,18 +13,21 @@ import cz.cuni.mff.fruiton.dto.GameProtos.FruitonTeam;
 import cz.cuni.mff.fruiton.dto.GameProtos.FruitonType;
 import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
 import cz.cuni.mff.fruiton.dto.GameProtos.Position;
+import cz.cuni.mff.fruiton.dto.GameProtos.Status;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.FruitonService;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.TeamDraftService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
+import cz.cuni.mff.fruiton.service.util.UserStateService.OnUserStateChangedListener;
 import cz.cuni.mff.fruiton.util.FruitonTeamUtils;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,7 +41,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Service
-public final class TeamDraftServiceImpl implements TeamDraftService, OnDisconnectedListener {
+public final class TeamDraftServiceImpl implements TeamDraftService, OnUserStateChangedListener {
 
     private static final int DRAFT_CHECK_TIME_REFRESH_TIME = 1000;
 
@@ -74,6 +76,11 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnDisconnec
         this.userStateService = userStateService;
         this.userService = userService;
         this.fruitonService = fruitonService;
+    }
+
+    @PostConstruct
+    private void init() {
+        userStateService.addListener(this);
     }
 
     @Override
@@ -114,11 +121,6 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnDisconnec
                 .build());
     }
 
-    @Override
-    public void onDisconnected(final UserIdHolder user) {
-        removeFromDraft(user);
-    }
-
     private void removeFromDraft(final UserIdHolder user) {
         TeamDraftPicker picker = getPicker(user);
         if (picker != null) {
@@ -130,7 +132,7 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnDisconnec
                 picker.setFinished();
             }
 
-            userStateService.setNewState(UserStateService.UserState.MAIN_MENU, opponent);
+            userStateService.setNewState(Status.MAIN_MENU, opponent);
         }
     }
 
@@ -225,6 +227,13 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnDisconnec
 
         } finally {
             draftPickersLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void onUserStateChanged(final UserIdHolder user, final Status newState) {
+        if (newState == Status.OFFLINE) {
+            removeFromDraft(user);
         }
     }
 

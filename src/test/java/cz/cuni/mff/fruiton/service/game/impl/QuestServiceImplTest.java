@@ -4,6 +4,7 @@ import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
+import cz.cuni.mff.fruiton.service.game.quest.impl.QuestServiceImpl;
 import cz.cuni.mff.fruiton.test.util.TestUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;

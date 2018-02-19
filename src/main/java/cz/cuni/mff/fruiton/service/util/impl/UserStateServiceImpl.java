@@ -1,7 +1,10 @@
 package cz.cuni.mff.fruiton.service.util.impl;
 
-import cz.cuni.mff.fruiton.component.util.OnDisconnectedListener;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
+import cz.cuni.mff.fruiton.dto.CommonProtos;
+import cz.cuni.mff.fruiton.dto.GameProtos;
+import cz.cuni.mff.fruiton.dto.GameProtos.Status;
+import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,23 +18,29 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Service
-public final class UserStateServiceImpl implements UserStateService, OnDisconnectedListener {
+public final class UserStateServiceImpl implements UserStateService {
 
     private static final Logger logger = Logger.getLogger(UserStateServiceImpl.class.getName());
 
-    private Map<UserIdHolder, UserState> states = new ConcurrentHashMap<>();
+    private Map<UserIdHolder, Status> states = new ConcurrentHashMap<>();
 
     private final SessionService sessionService;
+
+    private final CommunicationService communicationService;
 
     private final List<OnUserStateChangedListener> onUserStateChangedListeners = new LinkedList<>();
 
     @Autowired
-    public UserStateServiceImpl(final SessionService sessionService) {
+    public UserStateServiceImpl(
+            final SessionService sessionService,
+            final CommunicationService communicationService
+    ) {
         this.sessionService = sessionService;
+        this.communicationService = communicationService;
     }
 
     @Override
-    public void setNewState(final UserState newState, final UserIdHolder... users) {
+    public void setNewState(final Status newState, final UserIdHolder... users) {
         if (users == null) {
             throw new IllegalArgumentException("Cannot change state for null users");
         }
@@ -42,12 +51,20 @@ public final class UserStateServiceImpl implements UserStateService, OnDisconnec
         logger.log(Level.FINEST, "Changing state of users {0} to {1}", new Object[] {users, newState});
 
         for (UserIdHolder user : users) {
-            if (!sessionService.isOnline(user)) {
-                logger.log(Level.WARNING, "Cannot change state of offline user");
-                continue;
+            if (newState == Status.OFFLINE) {
+                states.remove(user);
+            } else {
+                if (!sessionService.isOnline(user)) {
+                    logger.log(Level.WARNING, "Cannot change state of offline user");
+                    continue;
+                }
+                states.put(user, newState);
             }
-
-            states.put(user, newState);
+            communicationService.sendToAllContacts(user, CommonProtos.WrapperMessage.newBuilder()
+                    .setStatusChange(GameProtos.StatusChange.newBuilder()
+                            .setLogin(user.getUsername())
+                            .setStatus(newState))
+                    .build());
 
             synchronized (onUserStateChangedListeners) {
                 for (OnUserStateChangedListener listener : onUserStateChangedListeners) {
@@ -58,14 +75,15 @@ public final class UserStateServiceImpl implements UserStateService, OnDisconnec
     }
 
     @Override
-    public UserState getState(final UserIdHolder user) {
+    public Status getState(final UserIdHolder user) {
         if (user == null) {
             throw new IllegalArgumentException("Cannot get state for null user");
         }
-        if (!sessionService.isOnline(user)) {
-            return UserState.OFFLINE;
+        Status status = states.get(user);
+        if (status == null) {
+            return Status.OFFLINE;
         }
-        return states.computeIfAbsent(user, key -> UserState.MAIN_MENU);
+        return status;
     }
 
     @Override
@@ -73,11 +91,6 @@ public final class UserStateServiceImpl implements UserStateService, OnDisconnec
         synchronized (onUserStateChangedListeners) {
             onUserStateChangedListeners.add(listener);
         }
-    }
-
-    @Override
-    public void onDisconnected(final UserIdHolder user) {
-        states.remove(user);
     }
 
 }

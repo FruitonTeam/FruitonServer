@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackages = {
         "cz.cuni.mff.fruiton.controller",
         "cz.cuni.mff.fruiton.config",
+        "cz.cuni.mff.fruiton.dao",
         "cz.cuni.mff.fruiton.service",
         "cz.cuni.mff.fruiton.component"
 })

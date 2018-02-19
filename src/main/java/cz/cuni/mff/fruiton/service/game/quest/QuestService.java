@@ -1,4 +1,4 @@
-package cz.cuni.mff.fruiton.service.game;
+package cz.cuni.mff.fruiton.service.game.quest;
 
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.Quest;

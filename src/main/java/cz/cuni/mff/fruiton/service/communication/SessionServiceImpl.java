@@ -91,9 +91,12 @@ public final class SessionServiceImpl implements SessionService {
             playersOnTheSameAddressLock.readLock().lock();
 
             Set<WebSocketSession> otherSameNetworkSessions = new HashSet<>();
-            for (Principal principal : playersOnTheSameAddressMap.get(session.getRemoteAddress().getAddress())) {
-                if (!principal.equals(session.getPrincipal())) {
-                    otherSameNetworkSessions.add(sessions.get(principal));
+            Set<Principal> otherPlayers = playersOnTheSameAddressMap.get(session.getRemoteAddress().getAddress());
+            if (otherPlayers != null) {
+                for (Principal principal : otherPlayers) {
+                    if (!principal.equals(session.getPrincipal())) {
+                        otherSameNetworkSessions.add(sessions.get(principal));
+                    }
                 }
             }
             return otherSameNetworkSessions;

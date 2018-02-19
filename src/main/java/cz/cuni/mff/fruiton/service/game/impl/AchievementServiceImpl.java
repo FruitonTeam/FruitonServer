@@ -103,6 +103,9 @@ public final class AchievementServiceImpl implements AchievementService {
         if (achievement == null) {
             throw new IllegalArgumentException("Cannot unlock achievement for null achievement");
         }
+        if (userService.getUnlockedAchievements(user).contains(achievement)) {
+            return;
+        }
         userService.unlockAchievement(user, achievement);
 
         logger.log(Level.FINE, "User {0} unlocked achievement {1}", new Object[] {user, achievement});

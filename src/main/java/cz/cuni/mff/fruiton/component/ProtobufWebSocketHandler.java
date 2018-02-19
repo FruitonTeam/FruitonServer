@@ -1,11 +1,11 @@
 package cz.cuni.mff.fruiton.component;
 
-import cz.cuni.mff.fruiton.component.util.OnDisconnectedListener;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.social.UserService;
+import cz.cuni.mff.fruiton.service.util.UserStateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
@@ -16,7 +16,6 @@ import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,23 +31,23 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
     private final UserService userService;
 
-    private final List<OnDisconnectedListener> onDisconnectedListeners;
-
     private boolean applicationClosing = false;
 
     private final Object lock = new Object();
+
+    private final UserStateService userStateService;
 
     @Autowired
     public ProtobufWebSocketHandler(
             final MessageDispatcher dispatcher,
             final SessionService sessionService,
             final UserService userService,
-            final List<OnDisconnectedListener> onDisconnectedListeners
+            final UserStateService userStateService
     ) {
         this.dispatcher = dispatcher;
         this.sessionService = sessionService;
         this.userService = userService;
-        this.onDisconnectedListeners = onDisconnectedListeners;
+        this.userStateService = userStateService;
     }
 
     @PreDestroy
@@ -78,7 +77,7 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
                 sendPlayersOnTheSameNetworkInfo(session);
             }
 
-            sendStatusChangedToOnlineMessage(session);
+            userStateService.setNewState(GameProtos.Status.MAIN_MENU, (UserIdHolder) session.getPrincipal());
         }
     }
 
@@ -112,16 +111,6 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
                 .build();
     }
 
-    private void sendStatusChangedToOnlineMessage(final WebSocketSession session) throws IOException {
-        for (UserIdHolder friend : userService.getFriends((UserIdHolder) session.getPrincipal())) {
-            if (sessionService.isOnline(friend)) {
-                sessionService.getSession(friend).sendMessage(new BinaryMessage(
-                        getOnlineStatusChangedMessage(((UserIdHolder) session.getPrincipal()).getUsername(),
-                                GameProtos.Status.ONLINE).toByteArray()));
-            }
-        }
-    }
-
     @Override
     public final void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) throws IOException {
         logger.log(Level.FINEST, "Closed connection for {0} with status: {1}", new Object[] {session.getPrincipal(), status});
@@ -130,34 +119,12 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
                 if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
                     sendPlayerOnTheSameNetworkDisconnected(session);
                 }
+
+                userStateService.setNewState(GameProtos.Status.OFFLINE, (UserIdHolder) session.getPrincipal());
+
                 sessionService.unregister(session);
-
-                sendStatusChangedToOfflineMessage(session);
-
-                for (OnDisconnectedListener listener : onDisconnectedListeners) {
-                    listener.onDisconnected((UserIdHolder) session.getPrincipal());
-                }
             }
         }
-    }
-
-    private void sendStatusChangedToOfflineMessage(final WebSocketSession session) throws IOException {
-        for (UserIdHolder friend : userService.getFriends((UserIdHolder) session.getPrincipal())) {
-            if (sessionService.isOnline(friend)) {
-                sessionService.getSession(friend).sendMessage(new BinaryMessage(
-                        getOnlineStatusChangedMessage(((UserIdHolder) session.getPrincipal()).getUsername(),
-                                GameProtos.Status.OFFLINE).toByteArray()));
-            }
-        }
-    }
-
-    private CommonProtos.WrapperMessage getOnlineStatusChangedMessage(final String login, final GameProtos.Status status) {
-        return CommonProtos.WrapperMessage.newBuilder()
-                .setStatusChange(GameProtos.StatusChange.newBuilder()
-                        .setLogin(login)
-                        .setStatus(status)
-                        .build())
-                .build();
     }
 
     private void sendPlayerOnTheSameNetworkDisconnected(final WebSocketSession session) throws IOException {

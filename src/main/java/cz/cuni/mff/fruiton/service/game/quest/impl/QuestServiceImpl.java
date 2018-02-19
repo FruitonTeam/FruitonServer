@@ -1,4 +1,4 @@
-package cz.cuni.mff.fruiton.service.game.impl;
+package cz.cuni.mff.fruiton.service.game.quest.impl;
 
 import cz.cuni.mff.fruiton.component.util.ResourceHelper;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
@@ -10,7 +10,7 @@ import cz.cuni.mff.fruiton.dao.repository.QuestRepository;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
-import cz.cuni.mff.fruiton.service.game.QuestService;
+import cz.cuni.mff.fruiton.service.game.quest.QuestService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;

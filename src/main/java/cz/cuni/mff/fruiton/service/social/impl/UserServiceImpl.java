@@ -11,12 +11,12 @@ import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage.MessageCase;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.dto.form.EditProfileForm;
-import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.game.FruitonService;
-import cz.cuni.mff.fruiton.service.game.QuestService;
+import cz.cuni.mff.fruiton.service.game.quest.QuestService;
 import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.ImageService;
+import cz.cuni.mff.fruiton.service.util.UserStateService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import fruiton.kernel.Fruiton;
 import org.apache.commons.collections4.ListUtils;
@@ -80,7 +80,7 @@ public final class UserServiceImpl implements UserService {
 
     private final PasswordEncoder passwordEncoder;
 
-    private final SessionService sessionService;
+    private final UserStateService userStateService;
 
     private final FruitonService fruitonService;
 
@@ -91,7 +91,7 @@ public final class UserServiceImpl implements UserService {
             final EmailConfirmationService emailConfirmationService,
             final QuestService questService,
             final PasswordEncoder passwordEncoder,
-            final SessionService sessionService,
+            final UserStateService userStateService,
             final FruitonService fruitonService
     ) {
         this.repository = repository;
@@ -99,7 +99,7 @@ public final class UserServiceImpl implements UserService {
         this.emailConfirmationService = emailConfirmationService;
         this.questService = questService;
         this.passwordEncoder = passwordEncoder;
-        this.sessionService = sessionService;
+        this.userStateService = userStateService;
         this.fruitonService = fruitonService;
     }
 
@@ -253,8 +253,7 @@ public final class UserServiceImpl implements UserService {
     private List<GameProtos.Friend> getFriends(final User user) {
         return user.getFriends().stream().map(u -> GameProtos.Friend.newBuilder()
                 .setLogin(u.getLogin())
-                .setStatus(sessionService.isOnline(UserIdHolder.of(u))
-                        ? GameProtos.Status.ONLINE : GameProtos.Status.OFFLINE)
+                .setStatus(userStateService.getState(UserIdHolder.of(user)))
                 .build())
                 .collect(Collectors.toList());
     }
