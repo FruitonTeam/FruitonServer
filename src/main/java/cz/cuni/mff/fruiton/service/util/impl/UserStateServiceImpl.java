@@ -52,6 +52,10 @@ public final class UserStateServiceImpl implements UserStateService {
         logger.log(Level.FINEST, "Changing state of users {0} to {1}", new Object[] {Arrays.toString(users), newState});
 
         for (UserIdHolder user : users) {
+            if (getState(user) == newState) { // state was not changed
+                continue;
+            }
+
             if (newState == Status.OFFLINE) {
                 states.remove(user);
             } else {

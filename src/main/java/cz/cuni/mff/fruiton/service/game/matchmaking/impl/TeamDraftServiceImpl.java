@@ -99,6 +99,8 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnUserState
                 picker.sendRequest(communicationService);
             }
 
+            userStateService.setNewState(Status.IN_MATCHMAKING, user1, user2);
+
         } finally {
             draftPickersLock.writeLock().unlock();
         }

@@ -106,6 +106,8 @@ public final class ChallengeServiceImpl implements ChallengeService, OnUserState
             challenges.add(data);
         }
 
+        logger.log(Level.FINER, "Challenge added from {0} for {1}", new Object[] {data.challenger, data.challenged});
+
         // send challenge message to other user
         if (!from.getUsername().equals(challengeMsg.getChallengeFrom())) {
             Challenge challenge = Challenge.newBuilder(challengeMsg).setChallengeFrom(from.getUsername()).build();
@@ -125,6 +127,8 @@ public final class ChallengeServiceImpl implements ChallengeService, OnUserState
 
     @ProtobufMessage(messageCase = MessageCase.CHALLENGERESULT)
     private void handleChallengeResult(final UserIdHolder from, final ChallengeResult challengeResultMsg) {
+        logger.log(Level.FINER, "Received challenge result from {0} : {1}", new Object[] {from, challengeResultMsg});
+
         ChallengeData dataForGameCreation = null;
         synchronized (challenges) {
             for (Iterator<ChallengeData> it = challenges.iterator(); it.hasNext();) {
@@ -152,6 +156,9 @@ public final class ChallengeServiceImpl implements ChallengeService, OnUserState
             // (it.remove() - The behavior of an iterator is unspecified if the underlying collection is modified while
             // the iteration is in progress in any way other than by calling this method.)
             if (dataForGameCreation != null) {
+                logger.log(Level.FINE, "Creating challenge game between {0} and {1}",
+                        new Object[] {dataForGameCreation.challenger, dataForGameCreation.challenged});
+
                 if (dataForGameCreation.pickMode == PickMode.STANDARD_PICK) {
                     gameService.createGame(dataForGameCreation.challenger, dataForGameCreation.challengerTeam,
                             dataForGameCreation.challenged, challengeResultMsg.getTeam(), dataForGameCreation.gameMode);
@@ -171,11 +178,13 @@ public final class ChallengeServiceImpl implements ChallengeService, OnUserState
 
     @ProtobufMessage(messageCase = MessageCase.REVOKECHALLENGE)
     private void revokeChallenge(final UserIdHolder user) {
+        logger.log(Level.FINER, "Received revoke challenge from: {0}", user);
+
         synchronized (challenges) {
             for (Iterator<ChallengeData> it = challenges.iterator(); it.hasNext();) {
                 ChallengeData data = it.next();
                 if (data.challenger.equals(user)) {
-                    sendRevokeMessage(data.challenged);
+                    sendRevokeMessage(data.challenged, user.getUsername());
                     it.remove();
                     break;
                 }
@@ -183,18 +192,20 @@ public final class ChallengeServiceImpl implements ChallengeService, OnUserState
         }
     }
 
-    private void sendRevokeMessage(final UserIdHolder sendTo) {
+    private void sendRevokeMessage(final UserIdHolder sendTo, final String from) {
         communicationService.send(sendTo, WrapperMessage.newBuilder()
-                .setRevokeChallenge(GameProtos.RevokeChallenge.newBuilder())
+                .setRevokeChallenge(GameProtos.RevokeChallenge.newBuilder().setChallengeFrom(from))
                 .build());
     }
 
     private void removeFromChallenges(final UserIdHolder user) {
+        logger.log(Level.FINER, "Removing {0} from challenges", user);
+
         synchronized (challenges) {
             for (Iterator<ChallengeData> it = challenges.iterator(); it.hasNext();) {
                 ChallengeData data = it.next();
                 if (data.challenger.equals(user)) {
-                    sendRevokeMessage(data.challenged);
+                    sendRevokeMessage(data.challenged, data.challenger.getUsername());
                     it.remove();
                     break;
                 } else if (data.challenged.equals(user)) {
