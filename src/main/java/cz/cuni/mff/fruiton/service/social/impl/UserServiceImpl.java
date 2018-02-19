@@ -251,9 +251,9 @@ public final class UserServiceImpl implements UserService {
     }
 
     private List<GameProtos.Friend> getFriends(final User user) {
-        return user.getFriends().stream().map(u -> GameProtos.Friend.newBuilder()
-                .setLogin(u.getLogin())
-                .setStatus(userStateService.getState(UserIdHolder.of(user)))
+        return user.getFriends().stream().map(friend -> GameProtos.Friend.newBuilder()
+                .setLogin(friend.getLogin())
+                .setStatus(userStateService.getState(UserIdHolder.of(friend)))
                 .build())
                 .collect(Collectors.toList());
     }
