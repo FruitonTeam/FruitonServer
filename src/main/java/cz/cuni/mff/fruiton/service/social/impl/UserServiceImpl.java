@@ -465,4 +465,11 @@ public final class UserServiceImpl implements UserService {
         repository.save(u);
     }
 
+    @Override
+    public void setRating(final UserIdHolder user, final int newRating) {
+        User u = getUser(user);
+        u.setRating(newRating);
+        repository.save(u);
+    }
+
 }

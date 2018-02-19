@@ -1,8 +1,10 @@
 package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
 
-import cz.cuni.mff.fruiton.dao.domain.User;
+import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.service.game.GameResult;
 import cz.cuni.mff.fruiton.service.game.matchmaking.RatingService;
+import cz.cuni.mff.fruiton.service.social.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
@@ -18,22 +20,32 @@ public final class EloRatingServiceImpl implements RatingService {
 
     private static final Logger logger = Logger.getLogger(EloRatingServiceImpl.class.getName());
 
-    @Override
-    public void adjustRating(final User player1, final User player2, final GameResult firstPlayerResult) {
-        Pair<Double, Double> expectedScores = computeExpectedScores(player1.getRating(), player2.getRating());
+    private final UserService userService;
 
-        int rating1 = (int) (player1.getRating()
+    @Autowired
+    public EloRatingServiceImpl(final UserService userService) {
+        this.userService = userService;
+    }
+
+    @Override
+    public void adjustRating(final UserIdHolder player1, final UserIdHolder player2, final GameResult firstPlayerResult) {
+        int player1Rating = userService.getRating(player1);
+        int player2Rating = userService.getRating(player2);
+
+        Pair<Double, Double> expectedScores = computeExpectedScores(player1Rating, player2Rating);
+
+        int rating1 = (int) (player1Rating
                 + K_FACTOR * (gameResultScore(firstPlayerResult) - expectedScores.getFirst()));
-        int rating2 = (int) (player2.getRating()
+        int rating2 = (int) (player2Rating
                 + K_FACTOR * (gameResultScore(firstPlayerResult.inverse()) - expectedScores.getSecond()));
 
         logger.log(Level.FINEST, "Changing rating for {0} from {1} to {2}",
-                new Object[] {player1, player1.getRating(), rating1});
+                new Object[] {player1, player1Rating, rating1});
         logger.log(Level.FINEST, "Changing rating for {0} from {1} to {2}",
-                new Object[] {player2, player2.getRating(), rating2});
+                new Object[] {player2, player2Rating, rating2});
 
-        player1.setRating(rating1);
-        player2.setRating(rating2);
+        userService.setRating(player1, rating1);
+        userService.setRating(player2, rating2);
     }
 
     private static Pair<Double, Double> computeExpectedScores(final int rating1, final int rating2) {

@@ -14,8 +14,10 @@ import cz.cuni.mff.fruiton.dto.GameProtos.Quest;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.AchievementService;
 import cz.cuni.mff.fruiton.service.game.FruitonService;
+import cz.cuni.mff.fruiton.service.game.GameResult;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.QuestService;
+import cz.cuni.mff.fruiton.service.game.matchmaking.RatingService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
 import cz.cuni.mff.fruiton.util.FruitonTeamUtils;
@@ -86,6 +88,8 @@ public final class GameServiceImpl implements GameService {
 
     private final UserStateService userStateService;
 
+    private final RatingService ratingService;
+
     @Autowired
     public GameServiceImpl(
             final CommunicationService communicationService,
@@ -94,7 +98,8 @@ public final class GameServiceImpl implements GameService {
             final UserService userService,
             final FruitonService fruitonService,
             final QuestService questService,
-            final UserStateService userStateService
+            final UserStateService userStateService,
+            final RatingService ratingService
     ) {
         this.communicationService = communicationService;
         this.achievementService = achievementService;
@@ -103,6 +108,7 @@ public final class GameServiceImpl implements GameService {
         this.fruitonService = fruitonService;
         this.questService = questService;
         this.userStateService = userStateService;
+        this.ratingService = ratingService;
     }
 
     @Override
@@ -363,6 +369,8 @@ public final class GameServiceImpl implements GameService {
         sendGameOverMessage(winner.user, GameProtos.GameOver.Reason.STANDARD,
                 generateWinnerGameResults(winner.user, gameData));
         gameData.setGameOver();
+
+        ratingService.adjustRating(loser.user, winner.user, GameResult.LOSE);
     }
 
     private void standardGameOverWithMultipleLosers(final GameOverEvent event, final GameData gameData) {
@@ -372,6 +380,7 @@ public final class GameServiceImpl implements GameService {
             sendGameOverMessage(loser.user, GameProtos.GameOver.Reason.STANDARD, generateLoserGameResults());
             gameData.setGameOver();
         }
+        ratingService.adjustRating(gameData.player1.user, gameData.player2.user, GameResult.DRAW);
     }
 
     private void onAfterAction(final GameData gameData, final UserIdHolder user, final GameProtos.Action protobufAction) {
@@ -408,6 +417,8 @@ public final class GameServiceImpl implements GameService {
                 sendGameOverMessage(opponent, GameProtos.GameOver.Reason.SURRENDER,
                         generateWinnerGameResults(opponent, gameData));
                 userStateService.setNewState(UserStateService.UserState.MAIN_MENU, opponent);
+
+                ratingService.adjustRating(surrenderedUser, opponent, GameResult.LOSE);
             }
         }
     }
@@ -549,6 +560,8 @@ public final class GameServiceImpl implements GameService {
                 sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT,
                         generateWinnerGameResults(opponent, gameData));
                 userStateService.setNewState(UserStateService.UserState.MAIN_MENU, opponent);
+
+                ratingService.adjustRating(user, opponent, GameResult.LOSE);
             }
         }
     }
