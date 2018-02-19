@@ -17,8 +17,8 @@ public final class UserDAO {
         this.userRepository = userRepository;
     }
 
-    public List<UserIdHolder> getFriends(final UserIdHolder userIdHolder) {
-        return userRepository.findOne(userIdHolder.getId()).getFriends().stream()
+    public List<UserIdHolder> getFriends(final UserIdHolder user) {
+        return userRepository.findOne(user.getId()).getFriends().stream()
                 .map(UserIdHolder::of)
                 .collect(Collectors.toList());
     }

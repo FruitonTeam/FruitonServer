@@ -68,14 +68,14 @@ public final class CommunicationServiceImpl implements CommunicationService {
     }
 
     private Set<WebSocketSession> getAllOnlineContacts(final Principal principal) {
-        Set<WebSocketSession> sendChangeList = new HashSet<>(
+        Set<WebSocketSession> onlineContacts = new HashSet<>(
                 sessionService.getOtherSessionsOnTheSameNetwork(sessionService.getSession(principal)));
 
-        sendChangeList.addAll(userDAO.getFriends((UserIdHolder) principal).stream().map(sessionService::getSession)
+        onlineContacts.addAll(userDAO.getFriends((UserIdHolder) principal).stream().map(sessionService::getSession)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet()));
 
-        return sendChangeList;
+        return onlineContacts;
     }
 
     @Override
