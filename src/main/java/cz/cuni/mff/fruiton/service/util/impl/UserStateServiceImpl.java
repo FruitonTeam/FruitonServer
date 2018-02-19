@@ -10,6 +10,7 @@ import cz.cuni.mff.fruiton.service.util.UserStateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ public final class UserStateServiceImpl implements UserStateService {
             throw new IllegalArgumentException("Cannot change state to null");
         }
 
-        logger.log(Level.FINEST, "Changing state of users {0} to {1}", new Object[] {users, newState});
+        logger.log(Level.FINEST, "Changing state of users {0} to {1}", new Object[] {Arrays.toString(users), newState});
 
         for (UserIdHolder user : users) {
             if (newState == Status.OFFLINE) {

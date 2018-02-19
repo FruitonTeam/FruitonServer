@@ -112,15 +112,24 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
     }
 
     @Override
-    public final void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) throws IOException {
+    public final void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) {
         logger.log(Level.FINEST, "Closed connection for {0} with status: {1}", new Object[] {session.getPrincipal(), status});
         if (!applicationClosing) {
             synchronized (lock) {
-                if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
-                    sendPlayerOnTheSameNetworkDisconnected(session);
+                try {
+                    if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
+                        sendPlayerOnTheSameNetworkDisconnected(session);
+                    }
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Could not send to other players on the network that player "
+                            + session.getPrincipal() + " went offline", e);
                 }
 
-                userStateService.setNewState(GameProtos.Status.OFFLINE, (UserIdHolder) session.getPrincipal());
+                try {
+                    userStateService.setNewState(GameProtos.Status.OFFLINE, (UserIdHolder) session.getPrincipal());
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Could not set state to offline for " + session.getPrincipal(), e);
+                }
 
                 sessionService.unregister(session);
             }
