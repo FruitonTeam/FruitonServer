@@ -5,6 +5,7 @@ import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.communication.chat.FriendshipService;
 import cz.cuni.mff.fruiton.service.social.UserService;
+import cz.cuni.mff.fruiton.service.util.UserStateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,19 +32,23 @@ public final class PlayerController {
 
     private final SessionService sessionService;
 
+    private final UserStateService userStateService;
+
     @Autowired
     public PlayerController(
             final UserRepository repository,
             final UserService userService,
             final AuthenticationService authService,
             final FriendshipService friendshipService,
-            final SessionService sessionService
+            final SessionService sessionService,
+            final UserStateService userStateService
     ) {
         this.repository = repository;
         this.userService = userService;
         this.authService = authService;
         this.friendshipService = friendshipService;
         this.sessionService = sessionService;
+        this.userStateService = userStateService;
     }
 
     @RequestMapping("/api/player/exists")
@@ -94,6 +99,12 @@ public final class PlayerController {
     @GetMapping("/api/player/isOnline")
     public boolean isOnline(@RequestParam final String login) {
         return sessionService.isOnline(userService.findUserByLogin(login));
+    }
+
+    @ResponseBody
+    @GetMapping(value = "/api/player/status")
+    public int getStatus(@RequestParam final String login) {
+        return userStateService.getState(userService.findUserByLogin(login)).getNumber();
     }
 
 }
