@@ -105,4 +105,9 @@ public final class FruitonServiceImpl implements FruitonService {
         return fruitonIds.stream().filter(id -> fruitonInfoMap.get(id).getType() == type).collect(Collectors.toList());
     }
 
+    @Override
+    public boolean exists(final int fruitonId) {
+        return fruitonInfoMap.containsKey(fruitonId);
+    }
+
 }

@@ -3,6 +3,7 @@ package cz.cuni.mff.fruiton.controller.web;
 import cz.cuni.mff.fruiton.dto.form.AddBazaarOfferForm;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
 import cz.cuni.mff.fruiton.service.game.BazaarService;
+import cz.cuni.mff.fruiton.service.game.FruitonService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import fruiton.kernel.Fruiton;
@@ -26,15 +27,19 @@ public final class BazaarController {
 
     private final AuthenticationService authService;
 
+    private final FruitonService fruitonService;
+
     @Autowired
     public BazaarController(
             final BazaarService bazaarService,
             final UserService userService,
-            final AuthenticationService authService
+            final AuthenticationService authService,
+            final FruitonService fruitonService
     ) {
         this.bazaarService = bazaarService;
         this.userService = userService;
         this.authService = authService;
+        this.fruitonService = fruitonService;
     }
 
     @GetMapping("/bazaar")
@@ -46,7 +51,11 @@ public final class BazaarController {
 
     @GetMapping("/bazaar/{id}")
     public String bazzarItem(final Model model, @PathVariable("id") final int id) {
-        Fruiton f = KernelUtils.getFruiton(id); // TODO: check if fruiton exists
+        if (!fruitonService.exists(id)) {
+            throw new IllegalArgumentException("No fruiton with id " + id + " exists");
+        }
+
+        Fruiton f = KernelUtils.getFruiton(id);
 
         model.addAttribute("fruitonName", f.model);
         model.addAttribute("offers", bazaarService.getOrderedOffersForFruiton(id));
