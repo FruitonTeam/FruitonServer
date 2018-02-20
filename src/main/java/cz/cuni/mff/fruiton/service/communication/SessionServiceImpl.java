@@ -12,9 +12,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Service
 public final class SessionServiceImpl implements SessionService {
+
+    private static final Logger logger = Logger.getLogger(SessionServiceImpl.class.getName());
 
     private Map<Principal, WebSocketSession> sessions = new HashMap<>();
 
@@ -59,6 +63,11 @@ public final class SessionServiceImpl implements SessionService {
             sessionsLock.writeLock().lock();
             playersOnTheSameAddressLock.writeLock().lock();
 
+            if (!sessions.containsKey(session.getPrincipal())) {
+                logger.log(Level.WARNING, "Trying to unregister unknown session {0}", session);
+                return;
+            }
+
             sessions.remove(session.getPrincipal());
 
             Set<Principal> players = playersOnTheSameAddressMap.get(session.getRemoteAddress().getAddress());
@@ -91,9 +100,12 @@ public final class SessionServiceImpl implements SessionService {
             playersOnTheSameAddressLock.readLock().lock();
 
             Set<WebSocketSession> otherSameNetworkSessions = new HashSet<>();
-            for (Principal principal : playersOnTheSameAddressMap.get(session.getRemoteAddress().getAddress())) {
-                if (!principal.equals(session.getPrincipal())) {
-                    otherSameNetworkSessions.add(sessions.get(principal));
+            Set<Principal> otherPlayers = playersOnTheSameAddressMap.get(session.getRemoteAddress().getAddress());
+            if (otherPlayers != null) {
+                for (Principal principal : otherPlayers) {
+                    if (!principal.equals(session.getPrincipal())) {
+                        otherSameNetworkSessions.add(sessions.get(principal));
+                    }
                 }
             }
             return otherSameNetworkSessions;

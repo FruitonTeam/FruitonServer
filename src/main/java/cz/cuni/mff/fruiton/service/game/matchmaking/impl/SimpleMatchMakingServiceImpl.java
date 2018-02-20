@@ -7,6 +7,7 @@ import cz.cuni.mff.fruiton.dto.GameProtos.FindGame;
 import cz.cuni.mff.fruiton.dto.GameProtos.FruitonTeam;
 import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
 import cz.cuni.mff.fruiton.dto.GameProtos.PickMode;
+import cz.cuni.mff.fruiton.dto.GameProtos.Status;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.TeamDraftService;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -63,6 +65,11 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
         }
     }
 
+    @PostConstruct
+    private void init() {
+        userStateService.addListener(this);
+    }
+
     @Override
     @ProtobufMessage(messageCase = MessageCase.FINDGAME)
     public synchronized void findGame(final UserIdHolder user, final FindGame findGameMsg) {
@@ -70,7 +77,7 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
             FruitonTeamUtils.checkTeamValidity(user, findGameMsg.getTeam(), userService);
         }
 
-        userStateService.setNewState(UserStateService.UserState.IN_MATCHMAKING, user);
+        userStateService.setNewState(Status.IN_MATCHMAKING, user);
 
         PickMode pickMode = findGameMsg.getPickMode();
         GameMode gameMode = findGameMsg.getGameMode();
@@ -101,7 +108,7 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
     @ProtobufMessage(messageCase = MessageCase.CANCELFINDINGGAME)
     public synchronized void removeFromMatchMaking(final UserIdHolder user) {
         removeFromQueue(user);
-        userStateService.setNewState(UserStateService.UserState.MAIN_MENU, user);
+        userStateService.setNewState(Status.MAIN_MENU, user);
     }
 
     private void removeFromQueue(final UserIdHolder user) {
@@ -116,8 +123,9 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
     }
 
     @Override
-    public void onDisconnected(final UserIdHolder user) {
-        removeFromQueue(user);
+    public void onUserStateChanged(final UserIdHolder user, final Status newState) {
+        if (newState == Status.OFFLINE) {
+            removeFromQueue(user);
+        }
     }
-
 }

@@ -6,6 +6,7 @@ import cz.cuni.mff.fruiton.dto.CommonProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
 import cz.cuni.mff.fruiton.dto.GameProtos.PickMode;
+import cz.cuni.mff.fruiton.dto.GameProtos.Status;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.TeamDraftService;
@@ -17,6 +18,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -80,6 +82,11 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
         }
     }
 
+    @PostConstruct
+    private void init() {
+        userStateService.addListener(this);
+    }
+
     @Override
     @ProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.FINDGAME)
     public synchronized void findGame(final UserIdHolder user, final GameProtos.FindGame findGameMsg) {
@@ -89,7 +96,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
         logger.log(Level.FINEST, "Adding {0} to waiting list", user);
 
-        userStateService.setNewState(UserStateService.UserState.IN_MATCHMAKING, user);
+        userStateService.setNewState(Status.IN_MATCHMAKING, user);
 
         PickMode pickMode = findGameMsg.getPickMode();
         if (pickMode == PickMode.STANDARD_PICK) {
@@ -102,7 +109,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
     @ProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.CANCELFINDINGGAME)
     public synchronized void removeFromMatchMaking(final UserIdHolder user) {
         remove(user);
-        userStateService.setNewState(UserStateService.UserState.MAIN_MENU, user);
+        userStateService.setNewState(Status.MAIN_MENU, user);
     }
 
     private void remove(final UserIdHolder user) {
@@ -188,8 +195,10 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
     }
 
     @Override
-    public void onDisconnected(final UserIdHolder user) {
-        remove(user);
+    public void onUserStateChanged(final UserIdHolder user, final Status newState) {
+        if (newState == Status.OFFLINE) {
+            remove(user);
+        }
     }
 
     private static final class WaitingUser {

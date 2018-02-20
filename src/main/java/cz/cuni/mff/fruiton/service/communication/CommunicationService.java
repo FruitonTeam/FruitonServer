@@ -8,6 +8,8 @@ public interface CommunicationService {
 
     void send(Principal principal, WrapperMessage message);
 
+    void sendToAllContacts(Principal from, WrapperMessage message);
+
     void sendNotification(Principal principal, String base64Image, String header, String text);
 
 }

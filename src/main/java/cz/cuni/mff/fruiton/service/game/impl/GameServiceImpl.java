@@ -11,12 +11,13 @@ import cz.cuni.mff.fruiton.dto.GameProtos.FruitonTeam;
 import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
 import cz.cuni.mff.fruiton.dto.GameProtos.GameResults;
 import cz.cuni.mff.fruiton.dto.GameProtos.Quest;
+import cz.cuni.mff.fruiton.dto.GameProtos.Status;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.game.AchievementService;
 import cz.cuni.mff.fruiton.service.game.FruitonService;
 import cz.cuni.mff.fruiton.service.game.GameResult;
 import cz.cuni.mff.fruiton.service.game.GameService;
-import cz.cuni.mff.fruiton.service.game.QuestService;
+import cz.cuni.mff.fruiton.service.game.quest.QuestService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.RatingService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
@@ -39,6 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -111,6 +113,11 @@ public final class GameServiceImpl implements GameService {
         this.ratingService = ratingService;
     }
 
+    @PostConstruct
+    private void init() {
+        userStateService.addListener(this);
+    }
+
     @Override
     public void createGame(
             final UserIdHolder user1,
@@ -161,7 +168,7 @@ public final class GameServiceImpl implements GameService {
         }
 
         sendGameReadyMessages(user1, user2, finalTeam1, finalTeam2, firstUserStartsFirst, mapId);
-        userStateService.setNewState(UserStateService.UserState.IN_BATTLE, user1, user2);
+        userStateService.setNewState(Status.IN_BATTLE, user1, user2);
     }
 
     private void checkTeamValidity(final UserIdHolder user, final FruitonTeam team) {
@@ -350,7 +357,7 @@ public final class GameServiceImpl implements GameService {
                 default:
                     throw new IllegalStateException("GameOverEvent with undefined number of losers " + gameOverEvent);
             }
-            userStateService.setNewState(UserStateService.UserState.MAIN_MENU, gameData.player1.user, gameData.player2.user);
+            userStateService.setNewState(Status.MAIN_MENU, gameData.player1.user, gameData.player2.user);
         } else if (e instanceof DeathEvent) {
             DeathEvent deathEvent = (DeathEvent) e;
 
@@ -416,7 +423,7 @@ public final class GameServiceImpl implements GameService {
                 gameData.setGameOver();
                 sendGameOverMessage(opponent, GameProtos.GameOver.Reason.SURRENDER,
                         generateWinnerGameResults(opponent, gameData));
-                userStateService.setNewState(UserStateService.UserState.MAIN_MENU, opponent);
+                userStateService.setNewState(Status.MAIN_MENU, surrenderedUser, opponent);
 
                 ratingService.adjustRating(surrenderedUser, opponent, GameResult.LOSE);
             }
@@ -548,20 +555,25 @@ public final class GameServiceImpl implements GameService {
     }
 
     @Override
-    public void onDisconnected(final UserIdHolder user) {
-        GameData gameData = getGameData(user);
-        if (gameData != null) {
-            synchronized (gameData.lock) {
-                if (gameData.isGameOver()) {
-                    return;
-                }
-                UserIdHolder opponent = gameData.getOpponentUser(user);
-                gameData.setGameOver();
-                sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT,
-                        generateWinnerGameResults(opponent, gameData));
-                userStateService.setNewState(UserStateService.UserState.MAIN_MENU, opponent);
+    public void onUserStateChanged(final UserIdHolder user, final Status newState) {
+        if (newState == Status.OFFLINE) {
+            GameData gameData = getGameData(user);
+            if (gameData != null) {
+                synchronized (gameData.lock) {
+                    if (gameData.isGameOver()) {
+                        return;
+                    }
 
-                ratingService.adjustRating(user, opponent, GameResult.LOSE);
+                    logger.log(Level.FINER, "User {0} disconnected while playing game", user);
+
+                    UserIdHolder opponent = gameData.getOpponentUser(user);
+                    gameData.setGameOver();
+                    sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT,
+                            generateWinnerGameResults(opponent, gameData));
+                    userStateService.setNewState(Status.MAIN_MENU, opponent);
+
+                    ratingService.adjustRating(user, opponent, GameResult.LOSE);
+                }
             }
         }
     }

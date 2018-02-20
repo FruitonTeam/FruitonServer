@@ -1,17 +1,10 @@
 package cz.cuni.mff.fruiton.service.game;
 
-import cz.cuni.mff.fruiton.component.util.OnDisconnectedListener;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.GameProtos;
+import cz.cuni.mff.fruiton.service.util.UserStateService.OnUserStateChangedListener;
 
-public interface GameService extends OnDisconnectedListener {
-
-    class GameException extends RuntimeException {
-
-        public GameException(final String message) {
-            super(message);
-        }
-    }
+public interface GameService extends OnUserStateChangedListener {
 
     void createGame(
             UserIdHolder user1,

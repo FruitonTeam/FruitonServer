@@ -1,7 +1,6 @@
 package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
 
 import cz.cuni.mff.fruiton.annotation.ProtobufMessage;
-import cz.cuni.mff.fruiton.component.util.OnDisconnectedListener;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
 import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage.MessageCase;
@@ -11,6 +10,7 @@ import cz.cuni.mff.fruiton.dto.GameProtos.ChallengeResult;
 import cz.cuni.mff.fruiton.dto.GameProtos.FruitonTeam;
 import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
 import cz.cuni.mff.fruiton.dto.GameProtos.PickMode;
+import cz.cuni.mff.fruiton.dto.GameProtos.Status;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.game.AchievementService;
@@ -19,6 +19,7 @@ import cz.cuni.mff.fruiton.service.game.matchmaking.ChallengeService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.TeamDraftService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
+import cz.cuni.mff.fruiton.service.util.UserStateService.OnUserStateChangedListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,8 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Service
-public final class ChallengeServiceImpl implements ChallengeService, OnDisconnectedListener,
-        UserStateService.OnUserStateChangedListener {
+public final class ChallengeServiceImpl implements ChallengeService, OnUserStateChangedListener {
 
     private static final String CHALLENGE_ACHV_NAME = "Challenge";
 
@@ -74,7 +74,6 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
 
     @PostConstruct
     private void init() {
-        // done differently than with `OnDisconnectedListener` to avoid cyclic dependency
         userStateService.addListener(this);
     }
 
@@ -94,7 +93,7 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
             return;
         }
 
-        if (userStateService.getState(challenged) != UserStateService.UserState.MAIN_MENU) {
+        if (userStateService.getState(challenged) != Status.MAIN_MENU) {
             logger.log(Level.WARNING, "Challenged user is not in main menu");
             communicationService.send(from, getChallengeNotAcceptedMsg(from.getUsername()));
             return;
@@ -106,6 +105,8 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
         synchronized (challenges) {
             challenges.add(data);
         }
+
+        logger.log(Level.FINER, "Challenge added from {0} for {1}", new Object[] {data.challenger, data.challenged});
 
         // send challenge message to other user
         if (!from.getUsername().equals(challengeMsg.getChallengeFrom())) {
@@ -126,6 +127,8 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
 
     @ProtobufMessage(messageCase = MessageCase.CHALLENGERESULT)
     private void handleChallengeResult(final UserIdHolder from, final ChallengeResult challengeResultMsg) {
+        logger.log(Level.FINER, "Received challenge result from {0} : {1}", new Object[] {from, challengeResultMsg});
+
         ChallengeData dataForGameCreation = null;
         synchronized (challenges) {
             for (Iterator<ChallengeData> it = challenges.iterator(); it.hasNext();) {
@@ -135,6 +138,9 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
                         && data.challenged.equals(from)) {
 
                     if (challengeResultMsg.getChallengeAccepted()) {
+                        communicationService.send(data.challenger, WrapperMessage.newBuilder()
+                                .setChallengeResult(challengeResultMsg)
+                                .build());
                         dataForGameCreation = data; // delay game creation, explained below
                     } else {
                         communicationService.send(data.challenger,
@@ -150,6 +156,9 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
             // (it.remove() - The behavior of an iterator is unspecified if the underlying collection is modified while
             // the iteration is in progress in any way other than by calling this method.)
             if (dataForGameCreation != null) {
+                logger.log(Level.FINE, "Creating challenge game between {0} and {1}",
+                        new Object[] {dataForGameCreation.challenger, dataForGameCreation.challenged});
+
                 if (dataForGameCreation.pickMode == PickMode.STANDARD_PICK) {
                     gameService.createGame(dataForGameCreation.challenger, dataForGameCreation.challengerTeam,
                             dataForGameCreation.challenged, challengeResultMsg.getTeam(), dataForGameCreation.gameMode);
@@ -169,11 +178,13 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
 
     @ProtobufMessage(messageCase = MessageCase.REVOKECHALLENGE)
     private void revokeChallenge(final UserIdHolder user) {
+        logger.log(Level.FINER, "Received revoke challenge from: {0}", user);
+
         synchronized (challenges) {
             for (Iterator<ChallengeData> it = challenges.iterator(); it.hasNext();) {
                 ChallengeData data = it.next();
                 if (data.challenger.equals(user)) {
-                    sendRevokeMessage(data.challenged);
+                    sendRevokeMessage(data.challenged, user.getUsername());
                     it.remove();
                     break;
                 }
@@ -181,23 +192,20 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
         }
     }
 
-    private void sendRevokeMessage(final UserIdHolder sendTo) {
+    private void sendRevokeMessage(final UserIdHolder sendTo, final String from) {
         communicationService.send(sendTo, WrapperMessage.newBuilder()
-                .setRevokeChallenge(GameProtos.RevokeChallenge.newBuilder())
+                .setRevokeChallenge(GameProtos.RevokeChallenge.newBuilder().setChallengeFrom(from))
                 .build());
     }
 
-    @Override
-    public void onDisconnected(final UserIdHolder user) {
-        removeFromChallenges(user);
-    }
-
     private void removeFromChallenges(final UserIdHolder user) {
+        logger.log(Level.FINER, "Removing {0} from challenges", user);
+
         synchronized (challenges) {
             for (Iterator<ChallengeData> it = challenges.iterator(); it.hasNext();) {
                 ChallengeData data = it.next();
                 if (data.challenger.equals(user)) {
-                    sendRevokeMessage(data.challenged);
+                    sendRevokeMessage(data.challenged, data.challenger.getUsername());
                     it.remove();
                     break;
                 } else if (data.challenged.equals(user)) {
@@ -210,8 +218,8 @@ public final class ChallengeServiceImpl implements ChallengeService, OnDisconnec
     }
 
     @Override
-    public void onUserStateChanged(final UserIdHolder user, final UserStateService.UserState newState) {
-        if (newState == UserStateService.UserState.IN_MATCHMAKING || newState == UserStateService.UserState.IN_BATTLE) {
+    public void onUserStateChanged(final UserIdHolder user, final Status newState) {
+        if (newState != Status.MAIN_MENU) {
             removeFromChallenges(user);
         }
     }
