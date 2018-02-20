@@ -25,8 +25,8 @@
 
                 <div class="form-group">
                     <select class="form-control" th:field="*{fruitonId}" id="fruiton">
-                        <option th:each="fruiton : ${fruitons}" th:text="${fruiton.model}"
-                                th:value="${fruiton.id}"></option>
+                        <option th:each="fruiton : ${fruitons}" th:text="${fruiton.name}"
+                                th:value="${fruiton.dbId}"></option>
                     </select>
                 </div>
 
