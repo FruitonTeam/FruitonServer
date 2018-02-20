@@ -1,0 +1,9 @@
+<mongoChangeLog>
+    <!-- Repairs quest goals -->
+    <changeSet changeId="Quests-Init3" author="ahornace">
+        <script>
+            db.quest.update({ "name" : "Fighter" }, { $set : { "goal" : 1 }});
+            db.quest.update({ "name" : "Tenacious" }, { $set : { "goal" : 1 }});
+        </script>
+    </changeSet>
+</mongoChangeLog>
