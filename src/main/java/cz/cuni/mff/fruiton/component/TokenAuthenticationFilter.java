@@ -45,30 +45,32 @@ public final class TokenAuthenticationFilter extends GenericFilterBean {
             final FilterChain filterChain
     ) throws IOException, ServletException {
 
-        HttpServletRequest request = (HttpServletRequest) servletRequest;
+        if (!isAuthenticated()) {
+            HttpServletRequest request = (HttpServletRequest) servletRequest;
 
-        boolean authorized = false;
-        String token = request.getHeader(AUTH_TOKEN_KEY);
-        if (token != null) {
-            final UserIdHolder user = tokenService.getUser(token);
-            if (user != null) {
-                authorize(user);
-                authorized = true;
-            }
-        }
-
-        if (!authorized) {
-            // token can be send as a param because Unity does not support opening browser with custom headers
-            token = request.getParameter(AUTH_TOKEN_KEY);
-
+            boolean authenticated = false;
+            String token = request.getHeader(AUTH_TOKEN_KEY);
             if (token != null) {
                 final UserIdHolder user = tokenService.getUser(token);
-                if (user != null
-                        && sessionService.getSession(user).getRemoteAddress().getAddress().getHostAddress().equals(
-                        servletRequest.getRemoteAddr())) { // check for the same address to improve security
-                    authorize(user);
-                    redirectWithoutAuthTokenParam((HttpServletRequest) servletRequest, (HttpServletResponse) servletResponse);
-                    return;
+                if (user != null) {
+                    authenticate(user);
+                    authenticated = true;
+                }
+            }
+
+            if (!authenticated) {
+                // token can be send as a param because Unity does not support opening browser with custom headers
+                token = request.getParameter(AUTH_TOKEN_KEY);
+
+                if (token != null) {
+                    final UserIdHolder user = tokenService.getUser(token);
+                    if (user != null
+                            && sessionService.getSession(user).getRemoteAddress().getAddress().getHostAddress().equals(
+                                    servletRequest.getRemoteAddr())) { // check for the same address to improve security
+                        authenticate(user);
+                        redirectWithoutAuthTokenParam((HttpServletRequest) servletRequest, (HttpServletResponse) servletResponse);
+                        return;
+                    }
                 }
             }
         }
@@ -76,7 +78,12 @@ public final class TokenAuthenticationFilter extends GenericFilterBean {
         filterChain.doFilter(servletRequest, servletResponse);
     }
 
-    private void authorize(final UserIdHolder user) {
+    private boolean isAuthenticated() {
+        return SecurityContextHolder.getContext().getAuthentication() != null
+                && SecurityContextHolder.getContext().getAuthentication().isAuthenticated();
+    }
+
+    private void authenticate(final UserIdHolder user) {
         Authentication auth = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
