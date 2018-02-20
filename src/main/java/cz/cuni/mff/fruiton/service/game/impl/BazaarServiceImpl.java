@@ -6,6 +6,7 @@ import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.BazaarOfferRepository;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.service.game.BazaarService;
+import cz.cuni.mff.fruiton.service.game.FruitonService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
 import fruiton.kernel.Fruiton;
@@ -36,17 +37,21 @@ public final class BazaarServiceImpl implements BazaarService {
 
     private final UserService userService;
 
+    private final FruitonService fruitonService;
+
     @Autowired
     public BazaarServiceImpl(
             final MongoTemplate mongoTemplate,
             final BazaarOfferRepository bazaarOfferRepository,
             final UserRepository userRepository,
-            final UserService userService
+            final UserService userService,
+            final FruitonService fruitonService
     ) {
         this.mongoTemplate = mongoTemplate;
         this.bazaarOfferRepository = bazaarOfferRepository;
         this.userRepository = userRepository;
         this.userService = userService;
+        this.fruitonService = fruitonService;
     }
 
     @Override
@@ -147,7 +152,9 @@ public final class BazaarServiceImpl implements BazaarService {
 
     @Override
     public List<BazaarOffer> getOrderedOffersForFruiton(final int fruitonId) {
-        // TODO: check if fruiton with given id exists
+        if (!fruitonService.exists(fruitonId)) {
+            throw new IllegalArgumentException("No fruiton with id " + fruitonId + " exists");
+        }
 
         return bazaarOfferRepository.findByFruitonIdOrderByPriceAsc(fruitonId);
     }

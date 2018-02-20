@@ -58,14 +58,20 @@ public class SettingsController {
             userService.changePassword(user, form.getPassword());
         }
 
-        return "redirect:" + referer; // TODO: if referer is null then redirect to home page
+        if (referer != null) {
+            return "redirect:" + referer;
+        }
+        return "redirect:/home";
     }
 
     @RequestMapping(value = "/settings/removeAvatar")
     public final String removeAvatar(@RequestHeader(value = "referer", required = false) final String referer) {
         userService.changeAvatar(authService.getLoggedInUser(), (MultipartFile) null);
 
-        return "redirect:" + referer; // TODO: if referer is null then redirect to home page
+        if (referer != null) {
+            return "redirect:" + referer;
+        }
+        return "redirect:/home";
     }
 
 }

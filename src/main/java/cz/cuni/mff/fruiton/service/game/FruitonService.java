@@ -171,4 +171,6 @@ public interface FruitonService {
 
     List<Integer> filter(List<Integer> fruitonIds, FruitonType type);
 
+    boolean exists(int fruitonId);
+
 }
