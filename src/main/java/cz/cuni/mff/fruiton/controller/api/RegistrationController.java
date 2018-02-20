@@ -26,6 +26,10 @@ import java.util.stream.Collectors;
 @RestController("apiRegistrationController")
 public class RegistrationController {
 
+    private static final String DUPLICATED_LOGIN_MSG = "User with provided login already exists";
+
+    private static final String DUPLICATED_EMAIL_MSG = "Email address is already in use";
+
     private final UserRepository userRepository;
 
     private final RegistrationService service;
@@ -74,7 +78,18 @@ public class RegistrationController {
 
     @ExceptionHandler(DuplicateKeyException.class)
     public final ResponseEntity<String> handleDuplicateKeyException(final DuplicateKeyException e) {
-        return new ResponseEntity<>(e.getErrorMessage(), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(getUserFriendlyDuplicateKeyExceptionMessage(e), HttpStatus.BAD_REQUEST);
+    }
+
+    private String getUserFriendlyDuplicateKeyExceptionMessage(final DuplicateKeyException e) {
+        String defaultMsg = e.getMessage();
+        if (defaultMsg.contains("login dup key")) {
+            return DUPLICATED_LOGIN_MSG;
+        } else if (defaultMsg.contains("email dup key")) {
+            return DUPLICATED_EMAIL_MSG;
+        } else {
+            return defaultMsg;
+        }
     }
 
     @ExceptionHandler(MailConfirmationNotFound.class)
