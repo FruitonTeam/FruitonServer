@@ -5,7 +5,6 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.net.InetAddress;
 import java.security.Principal;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -38,7 +37,7 @@ public final class SessionServiceImpl implements SessionService {
 
             sessions.put(principal, session);
             Set<Principal> players = playersOnTheSameAddressMap.computeIfAbsent(session.getRemoteAddress().getAddress(),
-                    address -> Collections.synchronizedSet(new HashSet<>()));
+                    address -> new HashSet<>());
 
             players.add(principal);
         } finally {

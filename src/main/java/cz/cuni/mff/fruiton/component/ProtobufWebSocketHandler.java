@@ -1,8 +1,9 @@
 package cz.cuni.mff.fruiton.component;
 
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
-import cz.cuni.mff.fruiton.dto.CommonProtos;
+import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
 import cz.cuni.mff.fruiton.dto.GameProtos;
+import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
@@ -37,17 +38,21 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
     private final UserStateService userStateService;
 
+    private final CommunicationService communicationService;
+
     @Autowired
     public ProtobufWebSocketHandler(
             final MessageDispatcher dispatcher,
             final SessionService sessionService,
             final UserService userService,
-            final UserStateService userStateService
+            final UserStateService userStateService,
+            final CommunicationService communicationService
     ) {
         this.dispatcher = dispatcher;
         this.sessionService = sessionService;
         this.userService = userService;
         this.userStateService = userStateService;
+        this.communicationService = communicationService;
     }
 
     @PreDestroy
@@ -65,7 +70,7 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
     }
 
     @Override
-    public final void afterConnectionEstablished(final WebSocketSession session) throws Exception {
+    public final void afterConnectionEstablished(final WebSocketSession session) {
         logger.log(Level.FINEST, "Opened connection for {0} with id: {1}",
                 new Object[] {session.getPrincipal(), session.getId()});
 
@@ -82,30 +87,29 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
         }
     }
 
-    private void sendLoggedPlayerInfo(final WebSocketSession session) throws IOException {
-        CommonProtos.WrapperMessage wrapperMessage = CommonProtos.WrapperMessage.newBuilder()
+    private void sendLoggedPlayerInfo(final WebSocketSession session) {
+        WrapperMessage wrapperMessage = WrapperMessage.newBuilder()
                 .setLoggedPlayerInfo(userService.getLoggedPlayerInfo((UserIdHolder) session.getPrincipal()))
                 .build();
 
-        session.sendMessage(new BinaryMessage(wrapperMessage.toByteArray()));
+        communicationService.send(session, wrapperMessage);
     }
 
-    private void sendPlayersOnTheSameNetworkInfo(final WebSocketSession session) throws IOException {
+    private void sendPlayersOnTheSameNetworkInfo(final WebSocketSession session) {
         Set<WebSocketSession> otherPlayersSessions = sessionService.getOtherSessionsOnTheSameNetwork(session);
 
-        session.sendMessage(new BinaryMessage(getPlayersOnlineMessage(
-                otherPlayersSessions.stream().map(s -> s.getPrincipal().getName()).collect(Collectors.toSet()))
-                .toByteArray()));
+        communicationService.send(session, getPlayersOnlineMessage(
+                otherPlayersSessions.stream().map(s -> s.getPrincipal().getName()).collect(Collectors.toSet())));
 
         BinaryMessage playerOnlineMsg = new BinaryMessage(
                 getPlayersOnlineMessage(Collections.singleton(session.getPrincipal().getName())).toByteArray());
         for (WebSocketSession s : otherPlayersSessions) {
-            s.sendMessage(playerOnlineMsg);
+            communicationService.send(s, playerOnlineMsg);
         }
     }
 
-    private CommonProtos.WrapperMessage getPlayersOnlineMessage(final Set<String> onlinePlayers) {
-        return CommonProtos.WrapperMessage.newBuilder().setPlayersOnSameNetworkOnline(
+    private WrapperMessage getPlayersOnlineMessage(final Set<String> onlinePlayers) {
+        return WrapperMessage.newBuilder().setPlayersOnSameNetworkOnline(
                 GameProtos.PlayersOnSameNetworkOnline.newBuilder()
                         .addAllLogins(onlinePlayers)
                         .build())
@@ -139,16 +143,16 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
         }
     }
 
-    private void sendPlayerOnTheSameNetworkDisconnected(final WebSocketSession session) throws IOException {
+    private void sendPlayerOnTheSameNetworkDisconnected(final WebSocketSession session) {
         BinaryMessage message = new BinaryMessage(getPlayerOfflineMessage(session.getPrincipal().getName()).toByteArray());
 
         for (WebSocketSession playerSession : sessionService.getOtherSessionsOnTheSameNetwork(session)) {
-            playerSession.sendMessage(message);
+            communicationService.send(playerSession, message);
         }
     }
 
-    private CommonProtos.WrapperMessage getPlayerOfflineMessage(final String offlinePlayer) {
-        return CommonProtos.WrapperMessage.newBuilder().setPlayerOnSameNetworkOffline(
+    private WrapperMessage getPlayerOfflineMessage(final String offlinePlayer) {
+        return WrapperMessage.newBuilder().setPlayerOnSameNetworkOffline(
                 GameProtos.PlayerOnSameNetworkOffline.newBuilder()
                         .setLogin(offlinePlayer)
                         .build())
