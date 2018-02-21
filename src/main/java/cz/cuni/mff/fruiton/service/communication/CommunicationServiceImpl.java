@@ -42,16 +42,24 @@ public final class CommunicationServiceImpl implements CommunicationService {
             logger.log(Level.WARNING, "Cannot send message because connection was lost with {0}", principal);
             return;
         }
-        sendMessage(session, getBinaryMessage(message));
+        send(session, getBinaryMessage(message));
     }
 
     private BinaryMessage getBinaryMessage(final WrapperMessage message) {
         return new BinaryMessage(message.toByteArray());
     }
 
-    private void sendMessage(final WebSocketSession session, final BinaryMessage message) {
+    @Override
+    public void send(final WebSocketSession session, final WrapperMessage message) {
+        send(session, getBinaryMessage(message));
+    }
+
+    @Override
+    public void send(final WebSocketSession session, final BinaryMessage message) {
         try {
-            session.sendMessage(message);
+            synchronized (session) { // sendMessage is not thread-safe
+                session.sendMessage(message);
+            }
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Cannot send websocket message", e);
         }
@@ -63,7 +71,7 @@ public final class CommunicationServiceImpl implements CommunicationService {
 
         BinaryMessage msg = getBinaryMessage(message);
         for (WebSocketSession session : getAllOnlineContacts(from)) {
-            sendMessage(session, msg);
+            send(session, msg);
         }
     }
 
