@@ -145,7 +145,9 @@ public final class User {
     }
 
     public List<Integer> getUnlockedFruitons() {
-        return new ArrayList<>(unlockedFruitons); // make a copy
+        synchronized (unlockedFruitons) {
+            return new ArrayList<>(unlockedFruitons); // make a copy
+        }
     }
 
     public List<FruitonTeam> getTeams() {
@@ -182,15 +184,21 @@ public final class User {
     }
 
     public void unlockFruiton(final int fruitonId) {
-        unlockedFruitons.add(fruitonId);
+        synchronized (unlockedFruitons) {
+            unlockedFruitons.add(fruitonId);
+        }
     }
 
     public void unlockFruitons(final Collection<Integer> fruitonIds) {
-        unlockedFruitons.addAll(fruitonIds);
+        synchronized (unlockedFruitons) {
+            unlockedFruitons.addAll(fruitonIds);
+        }
     }
 
     public void removeFruitonFromUnlockedFruitons(final int fruitonId) {
-        unlockedFruitons.remove(Integer.valueOf(fruitonId));
+        synchronized (unlockedFruitons) {
+            unlockedFruitons.remove(Integer.valueOf(fruitonId));
+        }
     }
 
     public String getAvatarWebImageMapping() {

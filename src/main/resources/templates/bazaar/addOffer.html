@@ -21,7 +21,7 @@
             <div class="row">
             <form th:object="${formModel}" method="post" data-toggle="validator"
                   th:attr="oninput='profit.value = Math.trunc(price.valueAsNumber * '
-                      + ${T(cz.cuni.mff.fruiton.service.game.BazaarService).PROFIT} + ')'">
+                      + ${T(cz.cuni.mff.fruiton.service.game.bazaar.BazaarService).PROFIT} + ')'">
 
                 <div class="form-group">
                     <select class="form-control" th:field="*{fruitonId}" id="fruiton">

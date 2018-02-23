@@ -1,4 +1,4 @@
-package cz.cuni.mff.fruiton.service.game;
+package cz.cuni.mff.fruiton.service.game.bazaar;
 
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.BazaarOffer;
@@ -79,14 +79,20 @@ public interface BazaarService {
 
     void createOffer(UserIdHolder idHolder, int fruitonId, int price);
 
-    List<BazaarOfferListItemWithId> getOffersForUser(UserIdHolder idHolder);
+    String createOffer(UserIdHolder offeredBy, UserIdHolder offeredTo, int fruitonId, int price);
+
+    List<BazaarOfferListItemWithId> getOffersFromUser(UserIdHolder idHolder);
 
     void removeOffer(String offerId, UserIdHolder idHolder);
 
-    void buy(String offerId, UserIdHolder idHolder);
+    void removeOfferByOfferedTo(String offerId, UserIdHolder offeredTo);
+
+    void buy(String offerId, UserIdHolder idHolder, boolean boughtViaWeb);
 
     List<BazaarOffer> getOrderedOffersForFruiton(int fruitonId);
 
     int computeProfit(int price);
+
+    List<BazaarOffer> getOffersOfferedTo(UserIdHolder offeredTo);
 
 }

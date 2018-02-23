@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 public final class PlayerController {
@@ -79,6 +80,12 @@ public final class PlayerController {
     @RequestMapping("/api/secured/player/availableFruitons")
     public List<Integer> getAvailableFruitons() {
         return userService.getAvailableFruitons(authService.getLoggedInUser());
+    }
+
+    @GetMapping("/api/secured/player/fruitonsAvailableForSelling")
+    public List<Integer> getFruitonsAvailableForSelling() {
+        return userService.getFruitonsAvailableForSelling(authService.getLoggedInUser()).stream()
+                .map(fruiton -> fruiton.dbId).collect(Collectors.toList());
     }
 
     @RequestMapping("/api/player/avatar")

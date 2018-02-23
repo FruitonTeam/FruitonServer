@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface BazaarOfferRepository extends MongoRepository<BazaarOffer, String> {
 
-    List<BazaarOffer> findByFruitonIdOrderByPriceAsc(int fruitonId);
+    List<BazaarOffer> findByOfferedTo(User offeredTo);
 
     List<BazaarOffer> findByOfferedBy(User offeredBy);
 
