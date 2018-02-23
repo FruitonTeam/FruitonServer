@@ -9,6 +9,7 @@ import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage.MessageCase;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos.FruitonTeam;
 import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
+import cz.cuni.mff.fruiton.dto.GameProtos.GameOver.Reason;
 import cz.cuni.mff.fruiton.dto.GameProtos.GameResults;
 import cz.cuni.mff.fruiton.dto.GameProtos.Quest;
 import cz.cuni.mff.fruiton.dto.GameProtos.Status;
@@ -41,6 +42,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -61,6 +63,8 @@ public final class GameServiceImpl implements GameService {
     private static final int STANDARD_MONEY_REWARD = 50;
 
     private static final int TURN_TIME_CHECK_REFRESH_TIME = 1000;
+
+    private static final int PLAYER_READY_WAIT_TIME_SEC = 15;
 
     private static final String WINNER_ACHIEVEMENT = "Winner";
     private static final String FIGHTER_ACHIEVEMENT = "Fighter";
@@ -126,9 +130,6 @@ public final class GameServiceImpl implements GameService {
             final FruitonTeam team2,
             final GameMode gameMode
     ) {
-        checkTeamValidity(user1, team1);
-        checkTeamValidity(user2, team2);
-
         logger.log(Level.FINE, "Creating game between {0} and {1} with teams {2} and {3}",
                 new Object[] {user1, user2, team1, team2});
 
@@ -371,20 +372,23 @@ public final class GameServiceImpl implements GameService {
     private void standardGameOverWithOneLoser(final GameOverEvent event, final GameData gameData) {
         int loserId = (Integer) event.losers.__get(0);
         PlayerRecord loser = gameData.getPlayer(loserId);
-        sendGameOverMessage(loser.user, GameProtos.GameOver.Reason.STANDARD, generateLoserGameResults());
         PlayerRecord winner = gameData.getOpponentPlayer(loser.player);
-        sendGameOverMessage(winner.user, GameProtos.GameOver.Reason.STANDARD,
-                generateWinnerGameResults(winner.user, gameData));
-        gameData.setGameOver();
 
-        ratingService.adjustRating(loser.user, winner.user, GameResult.LOSE);
+        standardGameOverWithOneLoser(winner.user, loser.user, gameData);
+    }
+
+    private void standardGameOverWithOneLoser(final UserIdHolder winner, final UserIdHolder loser, final GameData gameData) {
+        sendGameOverMessage(winner, Reason.STANDARD, generateWinnerGameResults(winner, gameData));
+        sendGameOverMessage(loser, Reason.STANDARD, generateLoserGameResults());
+        ratingService.adjustRating(winner, loser, GameResult.WIN);
+        gameData.setGameOver();
     }
 
     private void standardGameOverWithMultipleLosers(final GameOverEvent event, final GameData gameData) {
         for (int i = 0; i < event.losers.length; i++) {
             int loserId = (Integer) event.losers.__get(i);
             PlayerRecord loser = gameData.getPlayer(loserId);
-            sendGameOverMessage(loser.user, GameProtos.GameOver.Reason.STANDARD, generateLoserGameResults());
+            sendGameOverMessage(loser.user, Reason.STANDARD, generateLoserGameResults());
             gameData.setGameOver();
         }
         ratingService.adjustRating(gameData.player1.user, gameData.player2.user, GameResult.DRAW);
@@ -421,8 +425,7 @@ public final class GameServiceImpl implements GameService {
                 }
                 UserIdHolder opponent = gameData.getOpponentUser(surrenderedUser);
                 gameData.setGameOver();
-                sendGameOverMessage(opponent, GameProtos.GameOver.Reason.SURRENDER,
-                        generateWinnerGameResults(opponent, gameData));
+                sendGameOverMessage(opponent, Reason.SURRENDER, generateWinnerGameResults(opponent, gameData));
                 userStateService.setNewState(Status.MAIN_MENU, surrenderedUser, opponent);
 
                 ratingService.adjustRating(surrenderedUser, opponent, GameResult.LOSE);
@@ -495,7 +498,7 @@ public final class GameServiceImpl implements GameService {
 
     private void sendGameOverMessage(
             final UserIdHolder to,
-            final GameProtos.GameOver.Reason reason,
+            final Reason reason,
             final GameResults results
     ) {
         communicationService.send(to, CommonProtos.WrapperMessage.newBuilder()
@@ -510,6 +513,9 @@ public final class GameServiceImpl implements GameService {
     private void checkTurnTimeLimitAndRemoveFinishedGames() {
         try {
             gamesLock.writeLock().lock();
+
+            Instant now = Instant.now();
+
             HashSet<GameData> processed = new HashSet<>();
             for (Iterator<Map.Entry<UserIdHolder, GameData>> it = userToGameData.entrySet().iterator(); it.hasNext();) {
                 Map.Entry<UserIdHolder, GameData> entry = it.next();
@@ -523,6 +529,13 @@ public final class GameServiceImpl implements GameService {
 
                     if (processed.contains(game)) { // map contains 2 same games (1 for each user)
                         continue;
+                    }
+
+                    if (!game.arePlayersReady()) {
+                        if (game.gameCreationTime.plusSeconds(PLAYER_READY_WAIT_TIME_SEC).isBefore(now)) {
+                            resolvePlayerReadyTimeLimitExceeded(game);
+                        }
+                        continue; // do not check for timeout in a game in which any player was not ready
                     }
 
                     if (game.kernel.currentState.turnState.isTimeout()) {
@@ -542,6 +555,20 @@ public final class GameServiceImpl implements GameService {
             }
         } finally {
             gamesLock.writeLock().unlock();
+        }
+    }
+
+    private void resolvePlayerReadyTimeLimitExceeded(final GameData gameData) {
+        if (gameData.player1.playerReady) {
+            standardGameOverWithOneLoser(gameData.player1.user, gameData.player2.user, gameData);
+        } else if (gameData.player2.playerReady) {
+            standardGameOverWithOneLoser(gameData.player2.user, gameData.player1.user, gameData);
+        } else { // neither of the users was ready
+            sendGameOverMessage(gameData.player1.user, Reason.STANDARD, generateLoserGameResults());
+            sendGameOverMessage(gameData.player2.user, Reason.STANDARD, generateLoserGameResults());
+
+            // we do not adjust ratings since none of the players responded to the game
+            gameData.setGameOver();
         }
     }
 
@@ -568,8 +595,7 @@ public final class GameServiceImpl implements GameService {
 
                     UserIdHolder opponent = gameData.getOpponentUser(user);
                     gameData.setGameOver();
-                    sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT,
-                            generateWinnerGameResults(opponent, gameData));
+                    sendGameOverMessage(opponent, Reason.DISCONNECT, generateWinnerGameResults(opponent, gameData));
                     userStateService.setNewState(Status.MAIN_MENU, opponent);
 
                     ratingService.adjustRating(user, opponent, GameResult.LOSE);
@@ -579,6 +605,8 @@ public final class GameServiceImpl implements GameService {
     }
 
     private static final class GameData {
+
+        private final Instant gameCreationTime = Instant.now();
 
         private PlayerRecord player1;
         private PlayerRecord player2;
