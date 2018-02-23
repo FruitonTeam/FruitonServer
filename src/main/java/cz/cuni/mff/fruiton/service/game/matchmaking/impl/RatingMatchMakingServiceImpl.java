@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -61,6 +62,8 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
     private final Map<UserIdHolder, GameProtos.FruitonTeam> teams = new ConcurrentHashMap<>();
 
+    private final Set<UserIdHolder> usersInThisMatchmaking = ConcurrentHashMap.newKeySet();
+
     private boolean iterateAscending = false;
 
     @Autowired
@@ -89,60 +92,82 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
     @Override
     @ProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.FINDGAME)
-    public synchronized void findGame(final UserIdHolder user, final GameProtos.FindGame findGameMsg) {
-        if (findGameMsg.getPickMode() == PickMode.STANDARD_PICK) {
-            FruitonTeamUtils.checkTeamValidity(user, findGameMsg.getTeam(), userService);
+    public void findGame(final UserIdHolder user, final GameProtos.FindGame findGameMsg) {
+        synchronized (user) {
+            if (usersInThisMatchmaking.contains(user)) {
+                throw new IllegalArgumentException("User " + user + " already is in this matchmaking");
+            }
+
+            if (findGameMsg.getPickMode() == PickMode.STANDARD_PICK) {
+                FruitonTeamUtils.checkTeamValidity(user, findGameMsg.getTeam(), userService);
+            }
+
+            logger.log(Level.FINEST, "Adding {0} to waiting list", user);
+
+            userStateService.setNewState(Status.IN_MATCHMAKING, user);
+
+            PickMode pickMode = findGameMsg.getPickMode();
+            if (pickMode == PickMode.STANDARD_PICK) {
+                teams.put(user, findGameMsg.getTeam());
+            }
+
+            usersInThisMatchmaking.add(user);
+
+            TreeSet<WaitingUser> users = waitingUsers.get(pickMode).get(findGameMsg.getGameMode());
+            synchronized (users) {
+                users.add(new WaitingUser(user, userService.getRating(user)));
+            }
         }
-
-        logger.log(Level.FINEST, "Adding {0} to waiting list", user);
-
-        userStateService.setNewState(Status.IN_MATCHMAKING, user);
-
-        PickMode pickMode = findGameMsg.getPickMode();
-        if (pickMode == PickMode.STANDARD_PICK) {
-            teams.put(user, findGameMsg.getTeam());
-        }
-        waitingUsers.get(pickMode).get(findGameMsg.getGameMode()).add(new WaitingUser(user, userService.getRating(user)));
     }
 
     @Override
     @ProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.CANCELFINDINGGAME)
-    public synchronized void removeFromMatchMaking(final UserIdHolder user) {
-        remove(user);
-        userStateService.setNewState(Status.MAIN_MENU, user);
+    public void removeFromMatchMaking(final UserIdHolder user) {
+        synchronized (user) {
+            remove(user);
+            userStateService.setNewState(Status.MAIN_MENU, user);
+        }
     }
 
     private void remove(final UserIdHolder user) {
-        WaitingUser waitingUser = new WaitingUser(user);
+        logger.log(Level.FINE, "Removing {0} from matchmaking", user);
+
+        WaitingUser waitingUser = new WaitingUser(user, userService.getRating(user));
         for (PickMode pickMode : PickMode.values()) {
-            for (TreeSet<WaitingUser> set : waitingUsers.get(pickMode).values()) {
-                if (set.contains(waitingUser)) {
-                    logger.log(Level.FINE, "Removing {0} from matchmaking", user);
-                    set.remove(waitingUser);
-                    break;
+            for (TreeSet<WaitingUser> users : waitingUsers.get(pickMode).values()) {
+                synchronized (users) {
+                    if (users.contains(waitingUser)) {
+                        users.remove(waitingUser);
+                        break;
+                    }
                 }
             }
         }
+        teams.remove(user);
+        usersInThisMatchmaking.remove(user);
     }
 
     @Scheduled(fixedDelay = MATCH_REFRESH_TIME)
-    public synchronized void match() {
+    public void match() {
         iterateAscending = !iterateAscending;
 
         for (PickMode pickMode : PickMode.values()) {
-            for (Map.Entry<GameMode, TreeSet<WaitingUser>> waitingUserEntry : waitingUsers.get(pickMode).entrySet()) {
-                if (waitingUserEntry.getValue().isEmpty()) {
-                    continue;
-                }
+            for (GameMode gameMode : GameMode.values()) {
+                TreeSet<WaitingUser> users = waitingUsers.get(pickMode).get(gameMode);
+                synchronized (users) {
+                    if (users.isEmpty()) {
+                        continue;
+                    }
 
-                matchWaitingUsers(waitingUserEntry, pickMode);
-                deleteMatchedUsers(waitingUserEntry.getValue());
+                    matchWaitingUsers(users, gameMode, pickMode);
+                    deleteMatchedUsers(users);
+                }
             }
         }
     }
 
-    private void matchWaitingUsers(final Map.Entry<GameMode, TreeSet<WaitingUser>> waitingUserEntry, final PickMode pickMode) {
-        Iterator<WaitingUser> it = getWaitingUsersIterator(waitingUserEntry.getValue());
+    private void matchWaitingUsers(final TreeSet<WaitingUser> users, final GameMode gameMode, final PickMode pickMode) {
+        Iterator<WaitingUser> it = getWaitingUsersIterator(users);
         WaitingUser previous = it.next();
         while (it.hasNext()) {
             WaitingUser current = it.next();
@@ -153,11 +178,17 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
                             teams.get(previous.user),
                             current.user,
                             teams.get(current.user),
-                            waitingUserEntry.getKey()
+                            gameMode
                     );
+
+                    teams.remove(previous.user);
+                    teams.remove(current.user);
                 } else {
-                    draftService.startDraft(previous.user, current.user, waitingUserEntry.getKey());
+                    draftService.startDraft(previous.user, current.user, gameMode);
                 }
+                usersInThisMatchmaking.remove(previous.user);
+                usersInThisMatchmaking.remove(current.user);
+
                 previous.markedForDelete = true;
                 current.markedForDelete = true;
 
@@ -166,7 +197,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
                 }
                 previous = it.next();
             } else {
-                previous.deltaWindow += getRatingDeltaWindow(waitingUserEntry.getValue());
+                previous.deltaWindow += getRatingDeltaWindow(users);
                 previous = current;
             }
         }
@@ -196,8 +227,16 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
     @Override
     public void onUserStateChanged(final UserIdHolder user, final Status newState) {
-        if (newState == Status.OFFLINE) {
-            remove(user);
+        synchronized (user) {
+            if (!usersInThisMatchmaking.contains(user)) {
+                return;
+            }
+            if (newState == Status.OFFLINE) {
+                remove(user);
+            } else {
+                logger.log(Level.SEVERE, "User's state changed to {0} even though he was in matchmaking: {1}",
+                        new Object[]{newState, user});
+            }
         }
     }
 
@@ -207,11 +246,6 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
         private final int rating;
         private int deltaWindow = DEFAULT_DELTA_WINDOW;
         private boolean markedForDelete = false;
-
-        private WaitingUser(final UserIdHolder user) {
-            this.user = user;
-            this.rating = 0;
-        }
 
         private WaitingUser(final UserIdHolder user, final int rating) {
             this.user = user;
