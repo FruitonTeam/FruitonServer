@@ -129,7 +129,7 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnUserState
         TeamDraftPicker picker = getPicker(user);
         if (picker != null) {
             UserIdHolder opponent = picker.getOpponent(user);
-            sendGameOverMessage(opponent, reason, GameRewards.newBuilder().build());
+            sendGameOverMessage(opponent, reason, GameRewards.newBuilder().build(), opponent.getName());
 
             synchronized (picker.lock) {
                 picker.setFinished();
@@ -142,12 +142,14 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnUserState
     private void sendGameOverMessage(
             final UserIdHolder to,
             final Reason reason,
-            final GameRewards rewards
+            final GameRewards rewards,
+            final String winnerLogin
     ) {
         communicationService.send(to, CommonProtos.WrapperMessage.newBuilder()
                 .setGameOver(GameProtos.GameOver.newBuilder()
                         .setReason(reason)
                         .setGameRewards(rewards)
+                        .setWinnerLogin(winnerLogin)
                         .build())
                 .build());
     }
