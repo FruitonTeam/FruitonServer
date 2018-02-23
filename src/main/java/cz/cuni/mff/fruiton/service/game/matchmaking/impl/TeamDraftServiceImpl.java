@@ -12,6 +12,8 @@ import cz.cuni.mff.fruiton.dto.GameProtos.DraftResult;
 import cz.cuni.mff.fruiton.dto.GameProtos.FruitonTeam;
 import cz.cuni.mff.fruiton.dto.GameProtos.FruitonType;
 import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
+import cz.cuni.mff.fruiton.dto.GameProtos.GameOver.Reason;
+import cz.cuni.mff.fruiton.dto.GameProtos.GameRewards;
 import cz.cuni.mff.fruiton.dto.GameProtos.Position;
 import cz.cuni.mff.fruiton.dto.GameProtos.Status;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
@@ -123,12 +125,11 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnUserState
                 .build());
     }
 
-    private void removeFromDraft(final UserIdHolder user) {
+    private void removeFromDraft(final UserIdHolder user, final Reason reason) {
         TeamDraftPicker picker = getPicker(user);
         if (picker != null) {
             UserIdHolder opponent = picker.getOpponent(user);
-            sendGameOverMessage(opponent, GameProtos.GameOver.Reason.DISCONNECT,
-                    GameProtos.GameResults.newBuilder().build());
+            sendGameOverMessage(opponent, reason, GameRewards.newBuilder().build());
 
             synchronized (picker.lock) {
                 picker.setFinished();
@@ -140,13 +141,13 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnUserState
 
     private void sendGameOverMessage(
             final UserIdHolder to,
-            final GameProtos.GameOver.Reason reason,
-            final GameProtos.GameResults results
+            final Reason reason,
+            final GameRewards rewards
     ) {
         communicationService.send(to, CommonProtos.WrapperMessage.newBuilder()
                 .setGameOver(GameProtos.GameOver.newBuilder()
                         .setReason(reason)
-                        .setResults(results)
+                        .setGameRewards(rewards)
                         .build())
                 .build());
     }
@@ -189,7 +190,7 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnUserState
 
     @ProtobufMessage(messageCase = MessageCase.DRAFTSURRENDERMESSAGE)
     private void handleDraftSurrenderMessage(final UserIdHolder user) {
-        removeFromDraft(user);
+        removeFromDraft(user, Reason.SURRENDER);
     }
 
     @Scheduled(fixedDelay = DRAFT_CHECK_TIME_REFRESH_TIME)
@@ -235,7 +236,7 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnUserState
     @Override
     public void onUserStateChanged(final UserIdHolder user, final Status newState) {
         if (newState == Status.OFFLINE) {
-            removeFromDraft(user);
+            removeFromDraft(user, Reason.DISCONNECT);
         }
     }
 
