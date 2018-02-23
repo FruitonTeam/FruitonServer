@@ -17,6 +17,9 @@ public final class BazaarOffer {
 
     private int fruitonId;
 
+    @DBRef
+    private User offeredTo;
+
     public BazaarOffer() {
     }
 
@@ -24,6 +27,13 @@ public final class BazaarOffer {
         this.price = price;
         this.offeredBy = offeredBy;
         this.fruitonId = fruitonId;
+    }
+
+    public BazaarOffer(final int price, final User offeredBy, final int fruitonId, final User offeredTo) {
+        this.price = price;
+        this.offeredBy = offeredBy;
+        this.fruitonId = fruitonId;
+        this.offeredTo = offeredTo;
     }
 
     public String getId() {
@@ -52,6 +62,10 @@ public final class BazaarOffer {
 
     public void setFruitonId(final int fruitonId) {
         this.fruitonId = fruitonId;
+    }
+
+    public User getOfferedTo() {
+        return offeredTo;
     }
 
     @Override

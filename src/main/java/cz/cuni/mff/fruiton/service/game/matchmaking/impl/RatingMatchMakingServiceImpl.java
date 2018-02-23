@@ -224,7 +224,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
 
         @Override
         public boolean equals(final Object o) {
-            return o instanceof WaitingUser && user.equals(o);
+            return o instanceof WaitingUser && user.equals(((WaitingUser) o).user);
         }
 
         @Override

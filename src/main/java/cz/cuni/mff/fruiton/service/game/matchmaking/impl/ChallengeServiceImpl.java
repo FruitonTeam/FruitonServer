@@ -82,7 +82,13 @@ public final class ChallengeServiceImpl implements ChallengeService, OnUserState
     public void challenge(final UserIdHolder from, final Challenge challengeMsg) {
         UserIdHolder challenged = userService.tryFindUserByLogin(challengeMsg.getChallengeFor());
         if (challenged == null) {
-            logger.log(Level.WARNING, "Could not find challenged user " + challengeMsg.getChallengeFor());
+            logger.log(Level.WARNING, "Could not find challenged user {0}", challengeMsg.getChallengeFor());
+            communicationService.send(from, getChallengeNotAcceptedMsg(from.getUsername()));
+            return;
+        }
+
+        if (from.equals(challenged)) { // user cannot challenge himself
+            logger.log(Level.WARNING, "User tried to challenge himself: {0}", from);
             communicationService.send(from, getChallengeNotAcceptedMsg(from.getUsername()));
             return;
         }
@@ -109,11 +115,11 @@ public final class ChallengeServiceImpl implements ChallengeService, OnUserState
         logger.log(Level.FINER, "Challenge added from {0} for {1}", new Object[] {data.challenger, data.challenged});
 
         // send challenge message to other user
-        if (!from.getUsername().equals(challengeMsg.getChallengeFrom())) {
+        if (from.getUsername().equals(challengeMsg.getChallengeFrom())) {
+            communicationService.send(challenged, WrapperMessage.newBuilder().setChallenge(challengeMsg).build());
+        } else { // repair challenge's from field
             Challenge challenge = Challenge.newBuilder(challengeMsg).setChallengeFrom(from.getUsername()).build();
             communicationService.send(challenged, WrapperMessage.newBuilder().setChallenge(challenge).build());
-        } else {
-            communicationService.send(challenged, WrapperMessage.newBuilder().setChallenge(challengeMsg).build());
         }
     }
 
@@ -207,11 +213,9 @@ public final class ChallengeServiceImpl implements ChallengeService, OnUserState
                 if (data.challenger.equals(user)) {
                     sendRevokeMessage(data.challenged, data.challenger.getUsername());
                     it.remove();
-                    break;
                 } else if (data.challenged.equals(user)) {
                     communicationService.send(data.challenger, getChallengeNotAcceptedMsg(data.challenger.getUsername()));
                     it.remove();
-                    break;
                 }
             }
         }

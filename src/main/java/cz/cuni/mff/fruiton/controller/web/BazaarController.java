@@ -2,7 +2,7 @@ package cz.cuni.mff.fruiton.controller.web;
 
 import cz.cuni.mff.fruiton.dto.form.AddBazaarOfferForm;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
-import cz.cuni.mff.fruiton.service.game.BazaarService;
+import cz.cuni.mff.fruiton.service.game.bazaar.BazaarService;
 import cz.cuni.mff.fruiton.service.game.FruitonService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.util.KernelUtils;
@@ -80,7 +80,7 @@ public final class BazaarController {
 
     @GetMapping("/bazaar/myOffers")
     public String myOffers(final Model model) {
-        model.addAttribute("offers", bazaarService.getOffersForUser(authService.getLoggedInUser()));
+        model.addAttribute("offers", bazaarService.getOffersFromUser(authService.getLoggedInUser()));
 
         return "bazaar/myOffers";
     }
@@ -100,7 +100,7 @@ public final class BazaarController {
 
     @GetMapping("/bazaar/buy")
     public String buy(@RequestParam final String offerId) {
-        bazaarService.buy(offerId, authService.getLoggedInUser());
+        bazaarService.buy(offerId, authService.getLoggedInUser(), true);
 
         return "redirect:/home";
     }
