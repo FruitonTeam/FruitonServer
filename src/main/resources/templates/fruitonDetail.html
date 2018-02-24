@@ -9,38 +9,52 @@
 
 <div class="container main-content">
 
-    <div class="jumbotron">
-
+    <div class="row text-center">
         <h2 th:text="${fruiton.name}"></h2>
+        <hr/>
+    </div>
 
-        <img th:src="@{'/img/fruiton/' + ${fruiton.model} + '.png'}" style="max-width: 256px;" class="thumbnail"
-             th:alt="${fruiton.model}" />
+    <div class="row">
 
-        <h3>Attributes</h3>
+        <div class="col-sm-6">
+            <img th:src="@{'/img/fruiton/' + ${fruiton.model} + '.png'}" style="max-width: 256px;"
+                 class="thumbnail pull-right-sm"
+                 th:alt="${fruiton.model}"/>
+        </div>
 
-        <h4>Type</h4>
-        <p th:text="${fruiton.type}"></p>
+        <div class="col-sm-6">
 
-        <h4>Attack</h4>
-        <p th:text="${fruiton.damage}"></p>
+            <h3>Type</h3>
+            <p th:text="${fruiton.type}"></p>
 
-        <h4>Health</h4>
-        <p th:text="${fruiton.hp}"></p>
+            <h3>Damage</h3>
+            <p th:text="${fruiton.damage}"></p>
 
-        <h4>Attack</h4>
-        <p th:text="${fruiton.attack}"></p>
+            <h3>Health</h3>
+            <p th:text="${fruiton.hp}"></p>
 
-        <h4>Movement</h4>
-        <p th:text="${fruiton.movement}"></p>
+            <h3>Attack</h3>
+            <p th:text="${fruiton.attack}"></p>
 
-        <h4>Abilities</h4>
-        <p th:text="${fruiton.abilities}"></p>
+            <h3>Movement</h3>
+            <p th:text="${fruiton.movement}"></p>
 
-        <h4>Effects</h4>
-        <p th:text="${fruiton.effects}"></p>
+            <div th:if="${!fruiton.abilities.isEmpty()}">
+                <h3>Abilities</h3>
+                <p th:text="${fruiton.abilities}"></p>
+            </div>
 
-        <h4>Immunities</h4>
-        <p th:text="${fruiton.immunities}"></p>
+            <div th:if="${!fruiton.effects.isEmpty()}">
+                <h3>Effects</h3>
+                <p th:text="${fruiton.effects}"></p>
+            </div>
+
+            <div th:if="${!fruiton.immunities.isEmpty()}">
+                <h3>Immunities</h3>
+                <p th:text="${fruiton.immunities}"></p>
+            </div>
+
+        </div>
 
     </div>
 

@@ -1,3 +1,9 @@
+@media (min-width: 768px) {
+    .pull-right-sm {
+        float: right;
+    }
+}
+
 body {
     background-color: white;
 }
