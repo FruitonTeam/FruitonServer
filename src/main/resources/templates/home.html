@@ -22,7 +22,17 @@
             </div>
         </div>
         <div class="col-md-9">
-            <h2>Hello :)</h2>
+          <h2>Hi <span th:text="${#authentication.getPrincipal().getName()}"></span>, welcome to Fruitonweb!</h2>
+          <h4>There is a lot of stuff you can do here.</h4>
+          <ul>
+            <li>Compare yourself to the others in <a th:href="@{/ladder}">Ladder</a>.</li>
+			<li>Check your <a th:href="@{/achievements}">Achievements</a>.</li>
+			<li>Browse your <a th:href="@{/collection}">Collection</a>.</li>
+			<li>Trade Fruitons in <a th:href="@{/bazaar}">Bazaar</a>.</li>
+			<li>Adjust your personal <a th:href="@{/settings}">Settings</a>.</li>
+			<li><a href="/home/lohman/Fruitons.zip" download>Download Fruitons.</a></li>
+          </ul>
+		  
         </div>
 
     </div>
