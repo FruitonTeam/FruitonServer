@@ -1,4 +1,4 @@
-package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
+package cz.cuni.mff.fruiton.component;
 
 import cz.cuni.mff.fruiton.annotation.ProtobufMessage;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
@@ -15,7 +15,6 @@ import cz.cuni.mff.fruiton.service.communication.CommunicationService;
 import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.game.AchievementService;
 import cz.cuni.mff.fruiton.service.game.GameService;
-import cz.cuni.mff.fruiton.service.game.matchmaking.ChallengeService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.TeamDraftService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
@@ -31,11 +30,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Service
-public final class ChallengeServiceImpl implements ChallengeService, OnUserStateChangedListener {
+public final class Challenges implements OnUserStateChangedListener {
 
     private static final String CHALLENGE_ACHV_NAME = "Challenge";
 
-    private static final Logger logger = Logger.getLogger(ChallengeServiceImpl.class.getName());
+    private static final Logger logger = Logger.getLogger(Challenges.class.getName());
 
     private final List<ChallengeData> challenges = new LinkedList<>();
 
@@ -54,7 +53,7 @@ public final class ChallengeServiceImpl implements ChallengeService, OnUserState
     private final TeamDraftService draftService;
 
     @Autowired
-    public ChallengeServiceImpl(
+    public Challenges(
             final GameService gameService,
             final SessionService sessionService,
             final UserService userService,
@@ -77,7 +76,6 @@ public final class ChallengeServiceImpl implements ChallengeService, OnUserState
         userStateService.addListener(this);
     }
 
-    @Override
     @ProtobufMessage(messageCase = MessageCase.CHALLENGE)
     public void challenge(final UserIdHolder from, final Challenge challengeMsg) {
         UserIdHolder challenged = userService.tryFindUserByLogin(challengeMsg.getChallengeFor());

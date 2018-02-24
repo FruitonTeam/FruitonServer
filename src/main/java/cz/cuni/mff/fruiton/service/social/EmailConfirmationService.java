@@ -12,8 +12,16 @@ public interface EmailConfirmationService {
 
     }
 
+    /**
+     * Sends confirm email request to specified user.
+     * @param user user to whom send confirm email request
+     */
     void sendEmailConfirmationRequest(User user);
 
+    /**
+     * Confirms email address.
+     * @param confirmationId id of the email confirmation
+     */
     void confirmEmail(String confirmationId);
 
 }

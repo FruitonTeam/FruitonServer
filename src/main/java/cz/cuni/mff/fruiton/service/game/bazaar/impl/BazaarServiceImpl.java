@@ -103,8 +103,8 @@ public final class BazaarServiceImpl implements BazaarService {
     }
 
     @Override
-    public void createOffer(final UserIdHolder idHolder, final int fruitonId, final int price) {
-        createOffer(idHolder, null, fruitonId, price);
+    public void createOffer(final UserIdHolder user, final int fruitonId, final int price) {
+        createOffer(user, null, fruitonId, price);
     }
 
     @Override
@@ -139,7 +139,7 @@ public final class BazaarServiceImpl implements BazaarService {
     }
 
     @Override
-    public List<BazaarOfferListItemWithId> getOffersFromUser(final UserIdHolder idHolder) {
+    public List<BazaarOfferListItemWithId> getOffersCreatedBy(final UserIdHolder idHolder) {
         User user = userRepository.findOne(idHolder.getId());
 
         return bazaarOfferRepository.findByOfferedBy(user).stream().map(offer -> {
@@ -191,7 +191,7 @@ public final class BazaarServiceImpl implements BazaarService {
     }
 
     @Override
-    public void buy(final String offerId, final UserIdHolder idHolder, final boolean boughtViaWeb) {
+    public void buy(final String offerId, final UserIdHolder idHolder, final boolean buyingViaWeb) {
         if (idHolder == null) {
             throw new IllegalArgumentException("Null user cannot buy a fruiton");
         }
@@ -234,7 +234,7 @@ public final class BazaarServiceImpl implements BazaarService {
                 sendBazaarOfferResult(offeredBy, profit);
             }
 
-            if (boughtViaWeb && sessionService.isOnline(idHolder)) {
+            if (buyingViaWeb && sessionService.isOnline(idHolder)) {
                 sendBazaarOfferResolvedOnTheWeb(idHolder, offerId);
             }
 
@@ -266,8 +266,7 @@ public final class BazaarServiceImpl implements BazaarService {
         return mongoTemplate.find(query, BazaarOffer.class);
     }
 
-    @Override
-    public int computeProfit(final int price) {
+    private int computeProfit(final int price) {
         return (int) (price * PROFIT);
     }
 

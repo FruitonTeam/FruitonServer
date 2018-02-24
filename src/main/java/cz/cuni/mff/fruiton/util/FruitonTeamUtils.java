@@ -51,7 +51,7 @@ public class FruitonTeamUtils {
     ) {
         if (!KernelUtils.isTeamValid(fruitonTeam)) {
             throw new InvalidTeamException(fruitonTeam);
-        } else if (!userService.teamContainsUnlockedFruitons(user, FruitonTeam.fromProtobuf(fruitonTeam))) {
+        } else if (!userService.teamContainsAvailableFruitons(user, FruitonTeam.fromProtobuf(fruitonTeam))) {
             List<Integer> fruitonsList = new ArrayList<>(fruitonTeam.getFruitonIDsList());
             fruitonsList.removeAll(userService.getAvailableFruitons(user));
             throw new NotUnlockedFruitonException(fruitonsList);
@@ -64,7 +64,7 @@ public class FruitonTeamUtils {
             final UserService userService
     ) {
         return KernelUtils.isTeamValid(fruitonTeam)
-                && userService.teamContainsUnlockedFruitons(
+                && userService.teamContainsAvailableFruitons(
                         user, cz.cuni.mff.fruiton.dao.domain.FruitonTeam.fromProtobuf(fruitonTeam));
     }
 

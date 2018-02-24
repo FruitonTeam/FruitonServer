@@ -161,16 +161,47 @@ public interface FruitonService {
         }
     }
 
-    List<FruitonInfo> getFruitonInfos(List<Integer> fruitonIds);
-
+    /**
+     * Returns basic information about specified fruiton.
+     * @param fruitonId id of the fruiton which information to return
+     * @return basic information about specified fruiton
+     */
     FruitonInfo getFruitonInfo(int fruitonId);
 
+    /**
+     * Returns basic information about specified fruitons.
+     * @param fruitonIds ids of the fruitons which information to return
+     * @return basic information about specified fruitons
+     */
+    List<FruitonInfo> getFruitonInfos(List<Integer> fruitonIds);
+
+    /**
+     * Returns random fruitons.
+     * @return ids of randomly selected fruitons
+     */
     List<Integer> getRandomFruitons();
 
+    /**
+     * Returns random fruitons by specified criteria.
+     * @param count number of fruitons that will be returned
+     * @param excludedFruitons list of fruitons that will not be selected
+     * @return ids of randomly selected fruitons
+     */
     List<Integer> getRandomFruitons(int count, List<Integer> excludedFruitons);
 
+    /**
+     * Filters fruitons by specified type.
+     * @param fruitonIds set of fruitons which will be filtered
+     * @param type type of fruitons that will be returned
+     * @return a subset of {@code fruitonIds} which have the same type as {@code type}
+     */
     List<Integer> filter(List<Integer> fruitonIds, FruitonType type);
 
+    /**
+     * Determines whether fruiton with given id exists.
+     * @param fruitonId id of the fruiton which existence will be checked
+     * @return true if fruiton with given id exists, false otherwise
+     */
     boolean exists(int fruitonId);
 
 }
