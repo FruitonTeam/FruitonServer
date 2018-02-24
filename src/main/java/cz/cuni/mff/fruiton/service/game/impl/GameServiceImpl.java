@@ -4,13 +4,14 @@ import cz.cuni.mff.fruiton.annotation.ProtobufMessage;
 import cz.cuni.mff.fruiton.component.AchievementHelper;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.domain.Achievement;
-import cz.cuni.mff.fruiton.dto.CommonProtos;
+import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
 import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage.MessageCase;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.dto.GameProtos.FruitonTeam;
 import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
+import cz.cuni.mff.fruiton.dto.GameProtos.GameOver;
 import cz.cuni.mff.fruiton.dto.GameProtos.GameOver.Reason;
-import cz.cuni.mff.fruiton.dto.GameProtos.GameResults;
+import cz.cuni.mff.fruiton.dto.GameProtos.GameRewards;
 import cz.cuni.mff.fruiton.dto.GameProtos.Quest;
 import cz.cuni.mff.fruiton.dto.GameProtos.Status;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
@@ -249,7 +250,7 @@ public final class GameServiceImpl implements GameService {
                 .setMapId(mapId)
                 .build();
 
-        communicationService.send(recipient, CommonProtos.WrapperMessage.newBuilder()
+        communicationService.send(recipient, WrapperMessage.newBuilder()
                 .setGameReady(gameReadyMessage)
                 .build());
     }
@@ -294,7 +295,7 @@ public final class GameServiceImpl implements GameService {
     }
 
     private void sendGameStartsMessage(final UserIdHolder to) {
-        communicationService.send(to, CommonProtos.WrapperMessage.newBuilder()
+        communicationService.send(to, WrapperMessage.newBuilder()
                 .setGameStarts(GameProtos.GameStarts.newBuilder().build())
                 .build());
     }
@@ -378,8 +379,8 @@ public final class GameServiceImpl implements GameService {
     }
 
     private void standardGameOverWithOneLoser(final UserIdHolder winner, final UserIdHolder loser, final GameData gameData) {
-        sendGameOverMessage(winner, Reason.STANDARD, generateWinnerGameResults(winner, gameData));
-        sendGameOverMessage(loser, Reason.STANDARD, generateLoserGameResults());
+        sendGameOverMessage(winner, Reason.STANDARD, generateWinnerGameRewards(winner, gameData), winner.getName());
+        sendGameOverMessage(loser, Reason.STANDARD, generateLoserGameRewards(), winner.getName());
         ratingService.adjustRating(winner, loser, GameResult.WIN);
         gameData.setGameOver();
     }
@@ -388,7 +389,7 @@ public final class GameServiceImpl implements GameService {
         for (int i = 0; i < event.losers.length; i++) {
             int loserId = (Integer) event.losers.__get(i);
             PlayerRecord loser = gameData.getPlayer(loserId);
-            sendGameOverMessage(loser.user, Reason.STANDARD, generateLoserGameResults());
+            sendGameOverMessage(loser.user, Reason.STANDARD, generateLoserGameRewards(), null);
             gameData.setGameOver();
         }
         ratingService.adjustRating(gameData.player1.user, gameData.player2.user, GameResult.DRAW);
@@ -409,7 +410,7 @@ public final class GameServiceImpl implements GameService {
     }
 
     private void sendKernelState(final UserIdHolder user, final Kernel kernel) {
-        communicationService.send(user, CommonProtos.WrapperMessage.newBuilder()
+        communicationService.send(user, WrapperMessage.newBuilder()
                 .setStateCorrection(GameProtos.StateCorrection.newBuilder()
                         .setGameState(kernel.currentState.serializeToString()))
                 .build());
@@ -425,7 +426,8 @@ public final class GameServiceImpl implements GameService {
                 }
                 UserIdHolder opponent = gameData.getOpponentUser(surrenderedUser);
                 gameData.setGameOver();
-                sendGameOverMessage(opponent, Reason.SURRENDER, generateWinnerGameResults(opponent, gameData));
+                sendGameOverMessage(opponent, Reason.SURRENDER, generateWinnerGameRewards(opponent, gameData),
+                        opponent.getName());
                 userStateService.setNewState(Status.MAIN_MENU, surrenderedUser, opponent);
 
                 ratingService.adjustRating(surrenderedUser, opponent, GameResult.LOSE);
@@ -433,11 +435,11 @@ public final class GameServiceImpl implements GameService {
         }
     }
 
-    private GameResults generateLoserGameResults() {
-        return GameResults.newBuilder().build();
+    private GameRewards generateLoserGameRewards() {
+        return GameRewards.newBuilder().build();
     }
 
-    private GameResults generateWinnerGameResults(final UserIdHolder user, final GameData gameData) {
+    private GameRewards generateWinnerGameRewards(final UserIdHolder user, final GameData gameData) {
         List<Integer> unlockedFruitons = fruitonService.getRandomFruitons();
         for (int fruiton : unlockedFruitons) {
             userService.unlockFruiton(user, fruiton);
@@ -451,7 +453,7 @@ public final class GameServiceImpl implements GameService {
             achievementService.updateAchievementProgress(user, achievement, 1);
         }
 
-        return GameResults.newBuilder()
+        return GameRewards.newBuilder()
                 .setMoney(STANDARD_MONEY_REWARD)
                 .addAllUnlockedFruitons(unlockedFruitons)
                 .addAllQuests(completedQuests)
@@ -499,14 +501,18 @@ public final class GameServiceImpl implements GameService {
     private void sendGameOverMessage(
             final UserIdHolder to,
             final Reason reason,
-            final GameResults results
+            final GameRewards rewards,
+            final String winner
     ) {
-        communicationService.send(to, CommonProtos.WrapperMessage.newBuilder()
-                .setGameOver(GameProtos.GameOver.newBuilder()
-                        .setReason(reason)
-                        .setResults(results)
-                        .build())
-                .build());
+        GameOver.Builder gameOverMessageBuilder = GameOver.newBuilder()
+                .setReason(reason)
+                .setGameRewards(rewards);
+
+        if (winner != null) {
+            gameOverMessageBuilder.setWinnerLogin(winner);
+        }
+
+        communicationService.send(to, WrapperMessage.newBuilder().setGameOver(gameOverMessageBuilder).build());
     }
 
     @Scheduled(fixedDelay = TURN_TIME_CHECK_REFRESH_TIME)
@@ -564,8 +570,8 @@ public final class GameServiceImpl implements GameService {
         } else if (gameData.player2.playerReady) {
             standardGameOverWithOneLoser(gameData.player2.user, gameData.player1.user, gameData);
         } else { // neither of the users was ready
-            sendGameOverMessage(gameData.player1.user, Reason.STANDARD, generateLoserGameResults());
-            sendGameOverMessage(gameData.player2.user, Reason.STANDARD, generateLoserGameResults());
+            sendGameOverMessage(gameData.player1.user, Reason.STANDARD, generateLoserGameRewards(), null);
+            sendGameOverMessage(gameData.player2.user, Reason.STANDARD, generateLoserGameRewards(), null);
 
             // we do not adjust ratings since none of the players responded to the game
             gameData.setGameOver();
@@ -573,12 +579,12 @@ public final class GameServiceImpl implements GameService {
     }
 
     private void sendTimeOutMessage(final UserIdHolder user) {
-        communicationService.send(user, CommonProtos.WrapperMessage.newBuilder()
+        communicationService.send(user, WrapperMessage.newBuilder()
                 .setTimeout(GameProtos.Timeout.newBuilder()).build());
     }
 
-    private CommonProtos.WrapperMessage wrapProtobufAction(final GameProtos.Action protobufAction) {
-        return CommonProtos.WrapperMessage.newBuilder().setAction(protobufAction).build();
+    private WrapperMessage wrapProtobufAction(final GameProtos.Action protobufAction) {
+        return WrapperMessage.newBuilder().setAction(protobufAction).build();
     }
 
     @Override
@@ -595,7 +601,8 @@ public final class GameServiceImpl implements GameService {
 
                     UserIdHolder opponent = gameData.getOpponentUser(user);
                     gameData.setGameOver();
-                    sendGameOverMessage(opponent, Reason.DISCONNECT, generateWinnerGameResults(opponent, gameData));
+                    sendGameOverMessage(opponent, Reason.DISCONNECT, generateWinnerGameRewards(opponent, gameData),
+                            opponent.getName());
                     userStateService.setNewState(Status.MAIN_MENU, opponent);
 
                     ratingService.adjustRating(user, opponent, GameResult.LOSE);
