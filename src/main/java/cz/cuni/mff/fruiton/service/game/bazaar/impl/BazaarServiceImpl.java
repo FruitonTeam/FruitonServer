@@ -95,7 +95,7 @@ public final class BazaarServiceImpl implements BazaarService {
 
         for (BestOfferAggrResult res : result) {
             Fruiton f = KernelUtils.getFruiton(res.fruitonId);
-            BazaarOfferListItem listItem = new BazaarOfferListItem(f.model, res.minPrice, res.fruitonId);
+            BazaarOfferListItem listItem = new BazaarOfferListItem(f.name, res.minPrice, res.fruitonId);
             listItems.add(listItem);
         }
 
@@ -145,7 +145,7 @@ public final class BazaarServiceImpl implements BazaarService {
         return bazaarOfferRepository.findByOfferedBy(user).stream().map(offer -> {
             Fruiton f = KernelUtils.getFruiton(offer.getFruitonId());
             return new BazaarOfferListItemWithId(offer.getId(),
-                    new BazaarOfferListItem(f.model, offer.getPrice(), offer.getFruitonId()));
+                    new BazaarOfferListItem(f.name, offer.getPrice(), offer.getFruitonId()));
         }).collect(Collectors.toList());
     }
 

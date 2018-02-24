@@ -57,7 +57,7 @@ public final class BazaarController {
 
         Fruiton f = KernelUtils.getFruiton(id);
 
-        model.addAttribute("fruitonName", f.model);
+        model.addAttribute("fruitonName", f.name);
         model.addAttribute("offers", bazaarService.getOrderedOffersForFruiton(id));
 
         return "bazaar/bazaarItem";
