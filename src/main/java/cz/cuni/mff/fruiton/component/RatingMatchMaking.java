@@ -1,4 +1,4 @@
-package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
+package cz.cuni.mff.fruiton.component;
 
 import cz.cuni.mff.fruiton.annotation.ProtobufMessage;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
@@ -8,15 +8,15 @@ import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
 import cz.cuni.mff.fruiton.dto.GameProtos.PickMode;
 import cz.cuni.mff.fruiton.dto.GameProtos.Status;
 import cz.cuni.mff.fruiton.service.game.GameService;
-import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.TeamDraftService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
+import cz.cuni.mff.fruiton.service.util.UserStateService.OnUserStateChangedListener;
 import cz.cuni.mff.fruiton.util.FruitonTeamUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.Comparator;
@@ -29,9 +29,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@Service
+@Component
 @Profile("production")
-public final class RatingMatchMakingServiceImpl implements MatchMakingService {
+public final class RatingMatchMaking implements OnUserStateChangedListener {
 
     private static final int MATCH_REFRESH_TIME = 2000;
 
@@ -40,7 +40,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
     private static final int DEFAULT_DELTA_WINDOW = 10;
     private static final int LOW_PLAYERS_MODE_DELTA_WINDOW = 100;
 
-    private static final Logger logger = Logger.getLogger(RatingMatchMakingServiceImpl.class.getName());
+    private static final Logger logger = Logger.getLogger(RatingMatchMaking.class.getName());
 
     private static final Comparator<WaitingUser> USER_COMPARATOR = (u1, u2) -> {
         if (u1.getRating() != u2.getRating()) {
@@ -67,7 +67,7 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
     private boolean iterateAscending = false;
 
     @Autowired
-    public RatingMatchMakingServiceImpl(
+    public RatingMatchMaking(
             final GameService gameService,
             final UserService userService,
             final UserStateService userStateService,
@@ -90,7 +90,6 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
         userStateService.addListener(this);
     }
 
-    @Override
     @ProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.FINDGAME)
     public void findGame(final UserIdHolder user, final GameProtos.FindGame findGameMsg) {
         synchronized (user) {
@@ -120,7 +119,6 @@ public final class RatingMatchMakingServiceImpl implements MatchMakingService {
         }
     }
 
-    @Override
     @ProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.CANCELFINDINGGAME)
     public void removeFromMatchMaking(final UserIdHolder user) {
         synchronized (user) {

@@ -75,24 +75,71 @@ public interface BazaarService {
         }
     }
 
+    /**
+     * Aggregates all bazaar offers and picks the best ones for each fruiton.
+     * @return list of best offers, one for each fruiton
+     */
     List<BazaarOfferListItem> getBestOffers();
 
-    void createOffer(UserIdHolder idHolder, int fruitonId, int price);
+    /**
+     * Create generic bazaar offer visible to all users.
+     * @param user user who creating an offer
+     * @param fruitonId id of the fruiton for selling
+     * @param price price for which other users can buy this offer
+     */
+    void createOffer(UserIdHolder user, int fruitonId, int price);
 
+    /**
+     * Creates specific bazaar offer visible only to {@code offeredTo} user.
+     * @param offeredBy user who creating an offer
+     * @param offeredTo user for whom the offer is created
+     * @param fruitonId id of the fruiton for selling
+     * @param price price for which other users can buy this offer
+     * @return id of the newly created offer
+     */
     String createOffer(UserIdHolder offeredBy, UserIdHolder offeredTo, int fruitonId, int price);
 
-    List<BazaarOfferListItemWithId> getOffersFromUser(UserIdHolder idHolder);
+    /**
+     * Returns all offer created by specified user.
+     * @param user user who created returned offers
+     * @return offers created by {@code user}
+     */
+    List<BazaarOfferListItemWithId> getOffersCreatedBy(UserIdHolder user);
 
-    void removeOffer(String offerId, UserIdHolder idHolder);
+    /**
+     * Removes bazaar offer.
+     * @param offerId id of the offer to remove
+     * @param user user who is performing the removal
+     */
+    void removeOffer(String offerId, UserIdHolder user);
 
-    void removeOfferByOfferedTo(String offerId, UserIdHolder offeredTo);
+    /**
+     * Removes bazaar offer by the user for whom it was created.
+     * @param offerId id of the offer to remove
+     * @param user user who is performing the removal
+     */
+    void removeOfferByOfferedTo(String offerId, UserIdHolder user);
 
-    void buy(String offerId, UserIdHolder idHolder, boolean boughtViaWeb);
+    /**
+     * Performs buy on the specified offer.
+     * @param offerId id of the offer which is being bought
+     * @param user user who is buying the offer
+     * @param buyingViaWeb specifies if this offer is being bought from the web
+     */
+    void buy(String offerId, UserIdHolder user, boolean buyingViaWeb);
 
+    /**
+     * Returns all offers for specified fruiton.
+     * @param fruitonId id of the fruiton
+     * @return all offer for specified fruiton
+     */
     List<BazaarOffer> getOrderedOffersForFruiton(int fruitonId);
 
-    int computeProfit(int price);
-
+    /**
+     * Returns all offers that were offered to specified user.
+     * @param offeredTo user for whom the returned offers were offered to
+     * @return all offers that were offered to {@code offeredTo}
+     */
     List<BazaarOffer> getOffersOfferedTo(UserIdHolder offeredTo);
 
 }

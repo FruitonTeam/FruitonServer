@@ -1,8 +1,8 @@
-package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
+package cz.cuni.mff.fruiton.service.game.impl;
 
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.service.game.GameResult;
-import cz.cuni.mff.fruiton.service.game.matchmaking.RatingService;
+import cz.cuni.mff.fruiton.service.game.RatingService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;

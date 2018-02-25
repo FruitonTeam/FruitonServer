@@ -3,7 +3,7 @@ package cz.cuni.mff.fruiton.dao.domain;
 import cz.cuni.mff.fruiton.component.util.UserInfoCache;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dto.GameProtos;
-import cz.cuni.mff.fruiton.service.game.matchmaking.impl.EloRatingServiceImpl;
+import cz.cuni.mff.fruiton.service.game.impl.EloRatingServiceImpl;
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotBlank;

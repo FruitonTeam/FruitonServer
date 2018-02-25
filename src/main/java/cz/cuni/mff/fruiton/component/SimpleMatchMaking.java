@@ -1,4 +1,4 @@
-package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
+package cz.cuni.mff.fruiton.component;
 
 import cz.cuni.mff.fruiton.annotation.ProtobufMessage;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
@@ -9,14 +9,14 @@ import cz.cuni.mff.fruiton.dto.GameProtos.GameMode;
 import cz.cuni.mff.fruiton.dto.GameProtos.PickMode;
 import cz.cuni.mff.fruiton.dto.GameProtos.Status;
 import cz.cuni.mff.fruiton.service.game.GameService;
-import cz.cuni.mff.fruiton.service.game.matchmaking.MatchMakingService;
 import cz.cuni.mff.fruiton.service.game.matchmaking.TeamDraftService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
+import cz.cuni.mff.fruiton.service.util.UserStateService.OnUserStateChangedListener;
 import cz.cuni.mff.fruiton.util.FruitonTeamUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.Deque;
@@ -28,11 +28,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@Service
+@Component
 @Profile("debug")
-public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
+public final class SimpleMatchMaking implements OnUserStateChangedListener {
 
-    private static final Logger logger = Logger.getLogger(SimpleMatchMakingServiceImpl.class.getName());
+    private static final Logger logger = Logger.getLogger(SimpleMatchMaking.class.getName());
 
     private final Map<PickMode, Map<GameMode, Deque<UserIdHolder>>> waitingForOpponent = new HashMap<>();
 
@@ -47,7 +47,7 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
     private final UserService userService;
 
     @Autowired
-    public SimpleMatchMakingServiceImpl(
+    public SimpleMatchMaking(
             final GameService gameService,
             final UserStateService userStateService,
             final TeamDraftService draftService,
@@ -70,7 +70,6 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
         userStateService.addListener(this);
     }
 
-    @Override
     @ProtobufMessage(messageCase = MessageCase.FINDGAME)
     public synchronized void findGame(final UserIdHolder user, final FindGame findGameMsg) {
         if (findGameMsg.getPickMode() == PickMode.STANDARD_PICK) {
@@ -104,7 +103,6 @@ public final class SimpleMatchMakingServiceImpl implements MatchMakingService {
         return Optional.ofNullable(waitingForOpponent.get(pickMode).get(gameMode).poll());
     }
 
-    @Override
     @ProtobufMessage(messageCase = MessageCase.CANCELFINDINGGAME)
     public synchronized void removeFromMatchMaking(final UserIdHolder user) {
         removeFromQueue(user);

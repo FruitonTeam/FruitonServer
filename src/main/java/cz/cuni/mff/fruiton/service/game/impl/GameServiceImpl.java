@@ -20,7 +20,7 @@ import cz.cuni.mff.fruiton.service.game.FruitonService;
 import cz.cuni.mff.fruiton.service.game.GameResult;
 import cz.cuni.mff.fruiton.service.game.GameService;
 import cz.cuni.mff.fruiton.service.game.quest.QuestService;
-import cz.cuni.mff.fruiton.service.game.matchmaking.RatingService;
+import cz.cuni.mff.fruiton.service.game.RatingService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
 import cz.cuni.mff.fruiton.util.FruitonTeamUtils;

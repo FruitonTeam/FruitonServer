@@ -446,7 +446,7 @@ public final class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean teamContainsUnlockedFruitons(final UserIdHolder user, final FruitonTeam team) {
+    public boolean teamContainsAvailableFruitons(final UserIdHolder user, final FruitonTeam team) {
         List<Integer> availableFruitons = getAvailableFruitons(user);
 
         for (FruitonTeamMember member : team.getFruitons()) {

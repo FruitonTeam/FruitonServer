@@ -73,10 +73,10 @@ public class ChatServiceImplTest {
         UserIdHolder user4 = TestUtils.createUser(userRepository, "user4");
         UserIdHolder user5 = TestUtils.createUser(userRepository, "user5");
 
-        chatService.accept(user1, getChatMessage("user2", "testContent"));
-        chatService.accept(user1, getChatMessage("user4", "testContent2"));
-        chatService.accept(user4, getChatMessage("user3", "testContent3"));
-        chatService.accept(user4, getChatMessage("user1", "testContent4"));
+        chatService.deliver(user1, getChatMessage("user2", "testContent"));
+        chatService.deliver(user1, getChatMessage("user4", "testContent2"));
+        chatService.deliver(user4, getChatMessage("user3", "testContent3"));
+        chatService.deliver(user4, getChatMessage("user1", "testContent4"));
 
         ChatProtos.ChatMessages messages = chatService.getMessagesBetweenUsers(user1, user4, 0);
 
@@ -89,9 +89,9 @@ public class ChatServiceImplTest {
         UserIdHolder user1 = TestUtils.createUser(userRepository, "user1");
         UserIdHolder user2 = TestUtils.createUser(userRepository, "user2");
 
-        chatService.accept(user1, getChatMessage("user2", "testContent"));
-        chatService.accept(user1, getChatMessage("user2", "testContent2"));
-        chatService.accept(user1, getChatMessage("user2", "testContent3"));
+        chatService.deliver(user1, getChatMessage("user2", "testContent"));
+        chatService.deliver(user1, getChatMessage("user2", "testContent2"));
+        chatService.deliver(user1, getChatMessage("user2", "testContent3"));
 
         List<Message> messageList = messageRepository.findAll();
         messageList.sort(Comparator.comparing(Message::getCreated));

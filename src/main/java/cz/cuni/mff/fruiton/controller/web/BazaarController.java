@@ -80,7 +80,7 @@ public final class BazaarController {
 
     @GetMapping("/bazaar/myOffers")
     public String myOffers(final Model model) {
-        model.addAttribute("offers", bazaarService.getOffersFromUser(authService.getLoggedInUser()));
+        model.addAttribute("offers", bazaarService.getOffersCreatedBy(authService.getLoggedInUser()));
 
         return "bazaar/myOffers";
     }

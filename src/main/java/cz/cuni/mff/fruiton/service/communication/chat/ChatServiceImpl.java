@@ -66,7 +66,7 @@ public final class ChatServiceImpl implements ChatService {
 
     @Override
     @ProtobufMessage(messageCase = MessageCase.CHATMESSAGE)
-    public void accept(final UserIdHolder sender, final ChatMessage message) {
+    public void deliver(final UserIdHolder sender, final ChatMessage message) {
         logger.log(Level.FINE, "Chat message received from {0} with content: {1}", new Object[] {sender, message});
 
         Message msgToPersist = new Message();

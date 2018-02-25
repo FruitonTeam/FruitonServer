@@ -1,7 +1,6 @@
-package cz.cuni.mff.fruiton.service.game.matchmaking;
+package cz.cuni.mff.fruiton.service.game;
 
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
-import cz.cuni.mff.fruiton.service.game.GameResult;
 
 public interface RatingService {
 

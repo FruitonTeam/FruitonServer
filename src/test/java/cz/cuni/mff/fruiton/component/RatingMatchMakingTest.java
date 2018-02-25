@@ -1,4 +1,4 @@
-package cz.cuni.mff.fruiton.service.game.matchmaking.impl;
+package cz.cuni.mff.fruiton.component;
 
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.verify;
 @SpringBootTest(classes = cz.cuni.mff.fruiton.Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("production")
-public class RatingMatchMakingServiceImplTest {
+public class RatingMatchMakingTest {
 
     @Mock
     private GameService gameService;
@@ -49,7 +49,7 @@ public class RatingMatchMakingServiceImplTest {
     @Autowired
     private TeamDraftService draftService;
 
-    private RatingMatchMakingServiceImpl ratingMatchMakingService;
+    private RatingMatchMaking ratingMatchMakingService;
 
     @Captor
     private ArgumentCaptor<UserIdHolder> userCaptor1;
@@ -59,7 +59,7 @@ public class RatingMatchMakingServiceImplTest {
 
     @Before
     public void setup() {
-        ratingMatchMakingService = new RatingMatchMakingServiceImpl(gameService, userService, userStateService, draftService);
+        ratingMatchMakingService = new RatingMatchMaking(gameService, userService, userStateService, draftService);
     }
 
     @Test
