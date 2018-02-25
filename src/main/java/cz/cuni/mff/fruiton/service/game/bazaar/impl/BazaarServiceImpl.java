@@ -162,9 +162,11 @@ public final class BazaarServiceImpl implements BazaarService {
                         + " because this offer was not offered by him");
             }
 
-            UserIdHolder offeredTo = UserIdHolder.of(offer.getOfferedTo());
-            if (sessionService.isOnline(offeredTo)) {
-                sendBazaarOfferResolvedOnTheWeb(offeredTo, offerId);
+            if (offer.getOfferedTo() != null) {
+                UserIdHolder offeredTo = UserIdHolder.of(offer.getOfferedTo());
+                if (sessionService.isOnline(offeredTo)) {
+                    sendBazaarOfferResolvedOnTheWeb(offeredTo, offerId);
+                }
             }
 
             userService.unlockFruiton(idHolder, offer.getFruitonId());

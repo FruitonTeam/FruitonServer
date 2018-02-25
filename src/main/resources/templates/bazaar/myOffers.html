@@ -24,7 +24,7 @@
                     <div class="pull-right">
                         <span>Price: </span><strong><span th:text="${offer.item.price}"></span></strong>
                         <span class="btn btn-xs btn-danger"
-                              th:onclick="'window.location.href = \'/bazaar/removeOffer?offerId=' + ${offer.id} + '\''">
+                              th:onclick="'window.location.href = \'' + @{/bazaar/removeOffer(offerId = ${offer.id})} + '\''">
                             <span aria-hidden="true" class="glyphicon glyphicon-remove"></span>
                         </span>
                     </div>
