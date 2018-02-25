@@ -89,7 +89,7 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnUserState
     public void startDraft(final UserIdHolder user1, final UserIdHolder user2, final GameMode gameMode) {
         boolean firstUserPicks = random.nextBoolean();
 
-        TeamDraftPicker picker = new TeamDraftPicker(user1, user2, gameMode, firstUserPicks);
+        TeamDraftPicker picker = new TeamDraftPicker(user1, user2, gameMode, firstUserPicks, userService);
 
         try {
             draftPickersLock.writeLock().lock();
@@ -156,10 +156,6 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnUserState
 
     @ProtobufMessage(messageCase = MessageCase.DRAFTRESPONSE)
     private void handleDraftResponse(final UserIdHolder user, final DraftResponse draftResponse) {
-        if (!userService.getAvailableFruitons(user).contains(draftResponse.getFruitonId())) {
-            throw new FruitonTeamUtils.NotUnlockedFruitonException(List.of(draftResponse.getFruitonId()));
-        }
-
         TeamDraftPicker picker = getPicker(user);
         synchronized (picker.lock) {
             if (!picker.getPickingUser().equals(user)) {
@@ -218,7 +214,7 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnUserState
 
                     if (picker.requestTime.plusSeconds(picker.getActiveOption().pickTime).isBefore(now)) {
                         // pick random
-                        List<Integer> availableFruitons = userService.getAvailableFruitons(picker.getPickingUser());
+                        List<Integer> availableFruitons = picker.getPickingUserAvailableFruitons();
                         List<Integer> fruitonsWithCorrectType = fruitonService.filter(availableFruitons,
                                 FruitonService.FruitonType.fromProtobuf(picker.getActiveOption().type));
                         picker.addFruiton(fruitonsWithCorrectType.get(random.nextInt(fruitonsWithCorrectType.size())),
@@ -293,16 +289,23 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnUserState
 
         private boolean finished = false;
 
+        private final List<Integer> user1AvailableFruitons;
+        private final List<Integer> user2AvailableFruitons;
+
         private TeamDraftPicker(
                 final UserIdHolder user1,
                 final UserIdHolder user2,
                 final GameMode gameMode,
-                final boolean firstUserPicks
+                final boolean firstUserPicks,
+                final UserService userService
         ) {
             this.user1 = user1;
             this.user2 = user2;
             this.gameMode = gameMode;
             this.firstUserPicks = firstUserPicks;
+
+            user1AvailableFruitons = userService.getAvailableFruitons(user1);
+            user2AvailableFruitons = userService.getAvailableFruitons(user2);
         }
 
         private FruitonPickOption getActiveOption() {
@@ -330,6 +333,14 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnUserState
                 return team1Builder;
             } else {
                 return team2Builder;
+            }
+        }
+
+        private List<Integer> getPickingUserAvailableFruitons() {
+            if (firstUserPicks) {
+                return user1AvailableFruitons;
+            } else {
+                return user2AvailableFruitons;
             }
         }
 
@@ -364,6 +375,10 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnUserState
         private void addFruiton(final int fruitonId, final CommunicationService communicationService) {
             if (finished) {
                 throw new IllegalStateException("Cannot send request because picking is finished");
+            }
+
+            if (!getPickingUserAvailableFruitons().remove(Integer.valueOf(fruitonId))) {
+                throw new FruitonTeamUtils.NotUnlockedFruitonException(List.of(fruitonId));
             }
 
             FruitonPickOption option = getActiveOption();

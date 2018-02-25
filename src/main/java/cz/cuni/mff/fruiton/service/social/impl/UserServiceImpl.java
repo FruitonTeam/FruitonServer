@@ -450,7 +450,7 @@ public final class UserServiceImpl implements UserService {
         List<Integer> availableFruitons = getAvailableFruitons(user);
 
         for (FruitonTeamMember member : team.getFruitons()) {
-            if (!availableFruitons.contains(member.getFruitonId())) {
+            if (!availableFruitons.remove(Integer.valueOf(member.getFruitonId()))) {
                 return false;
             }
         }
