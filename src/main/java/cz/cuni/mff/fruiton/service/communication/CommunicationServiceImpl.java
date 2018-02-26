@@ -82,7 +82,12 @@ public final class CommunicationServiceImpl implements CommunicationService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet()));
 
-        return onlineContacts;
+        // some of the sessions might be already closed
+        // (this might happen for two users who are contacts of each other and if one user went offline which will
+        // trigger status change for another user)
+        return onlineContacts.stream()
+                .filter(WebSocketSession::isOpen)
+                .collect(Collectors.toSet());
     }
 
     @Override

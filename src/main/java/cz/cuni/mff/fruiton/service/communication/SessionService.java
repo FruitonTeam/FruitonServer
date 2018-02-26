@@ -21,17 +21,10 @@ public interface SessionService {
     WebSocketSession getSession(Principal principal);
 
     /**
-     * Unregisters specified session from this service. This method should be called after
-     * {@link #unregisterFromSameNetwork(WebSocketSession)}.
+     * Unregisters specified session from this service.
      * @param session session to unregister
      */
     void unregister(WebSocketSession session);
-
-    /**
-     * Unregisters session from the same network data.
-     * @param session session to unregister
-     */
-    void unregisterFromSameNetwork(WebSocketSession session);
 
     /**
      * Determines whether any other players are on the same network as provided session.
