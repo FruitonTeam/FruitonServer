@@ -21,7 +21,7 @@ public interface SessionService {
     WebSocketSession getSession(Principal principal);
 
     /**
-     * Unregisters specified session for this service.
+     * Unregisters specified session from this service.
      * @param session session to unregister
      */
     void unregister(WebSocketSession session);

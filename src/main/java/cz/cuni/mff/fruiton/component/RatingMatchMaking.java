@@ -60,11 +60,13 @@ public final class RatingMatchMaking implements OnUserStateChangedListener {
 
     private final Map<PickMode, Map<GameMode, TreeSet<WaitingUser>>> waitingUsers = new HashMap<>();
 
-    private final Map<UserIdHolder, GameProtos.FruitonTeam> teams = new ConcurrentHashMap<>();
+    private final Map<UserIdHolder, GameProtos.FruitonTeam> teams = new HashMap<>();
 
     private final Set<UserIdHolder> usersInThisMatchmaking = ConcurrentHashMap.newKeySet();
 
     private boolean iterateAscending = false;
+
+    private final Object lock = new Object();
 
     @Autowired
     public RatingMatchMaking(
@@ -92,11 +94,10 @@ public final class RatingMatchMaking implements OnUserStateChangedListener {
 
     @ProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.FINDGAME)
     public void findGame(final UserIdHolder user, final GameProtos.FindGame findGameMsg) {
-        synchronized (user) {
-            if (usersInThisMatchmaking.contains(user)) {
-                throw new IllegalArgumentException("User " + user + " already is in this matchmaking");
-            }
-
+        if (usersInThisMatchmaking.contains(user)) {
+            throw new IllegalArgumentException("User " + user + " already is in this matchmaking");
+        }
+        synchronized (lock) {
             if (findGameMsg.getPickMode() == PickMode.STANDARD_PICK) {
                 FruitonTeamUtils.checkTeamValidity(user, findGameMsg.getTeam(), userService);
             }
@@ -113,15 +114,13 @@ public final class RatingMatchMaking implements OnUserStateChangedListener {
             usersInThisMatchmaking.add(user);
 
             TreeSet<WaitingUser> users = waitingUsers.get(pickMode).get(findGameMsg.getGameMode());
-            synchronized (users) {
-                users.add(new WaitingUser(user, userService.getRating(user)));
-            }
+            users.add(new WaitingUser(user, userService.getRating(user)));
         }
     }
 
     @ProtobufMessage(messageCase = CommonProtos.WrapperMessage.MessageCase.CANCELFINDINGGAME)
     public void removeFromMatchMaking(final UserIdHolder user) {
-        synchronized (user) {
+        synchronized (lock) {
             remove(user);
             userStateService.setNewState(Status.MAIN_MENU, user);
         }
@@ -133,11 +132,9 @@ public final class RatingMatchMaking implements OnUserStateChangedListener {
         WaitingUser waitingUser = new WaitingUser(user, userService.getRating(user));
         for (PickMode pickMode : PickMode.values()) {
             for (TreeSet<WaitingUser> users : waitingUsers.get(pickMode).values()) {
-                synchronized (users) {
-                    if (users.contains(waitingUser)) {
-                        users.remove(waitingUser);
-                        break;
-                    }
+                if (users.contains(waitingUser)) {
+                    users.remove(waitingUser);
+                    break;
                 }
             }
         }
@@ -147,12 +144,13 @@ public final class RatingMatchMaking implements OnUserStateChangedListener {
 
     @Scheduled(fixedDelay = MATCH_REFRESH_TIME)
     public void match() {
-        iterateAscending = !iterateAscending;
+        synchronized (lock) {
+            iterateAscending = !iterateAscending;
 
-        for (PickMode pickMode : PickMode.values()) {
-            for (GameMode gameMode : GameMode.values()) {
-                TreeSet<WaitingUser> users = waitingUsers.get(pickMode).get(gameMode);
-                synchronized (users) {
+            for (PickMode pickMode : PickMode.values()) {
+                for (GameMode gameMode : GameMode.values()) {
+                    TreeSet<WaitingUser> users = waitingUsers.get(pickMode).get(gameMode);
+
                     if (users.isEmpty()) {
                         continue;
                     }
@@ -225,10 +223,10 @@ public final class RatingMatchMaking implements OnUserStateChangedListener {
 
     @Override
     public void onUserStateChanged(final UserIdHolder user, final Status newState) {
-        synchronized (user) {
-            if (!usersInThisMatchmaking.contains(user)) {
-                return;
-            }
+        if (!usersInThisMatchmaking.contains(user)) {
+            return;
+        }
+        synchronized (lock) {
             if (newState == Status.OFFLINE) {
                 remove(user);
             } else {

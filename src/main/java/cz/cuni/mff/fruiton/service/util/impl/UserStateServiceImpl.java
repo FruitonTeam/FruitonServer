@@ -73,7 +73,11 @@ public final class UserStateServiceImpl implements UserStateService {
 
             synchronized (onUserStateChangedListeners) {
                 for (OnUserStateChangedListener listener : onUserStateChangedListeners) {
-                    listener.onUserStateChanged(user, newState);
+                    try {
+                        listener.onUserStateChanged(user, newState);
+                    } catch (Exception e) { // if one listener causes exception we do not stop notifying others
+                        logger.log(Level.WARNING, "Exception while calling onUserStateChanged", e);
+                    }
                 }
             }
         }
