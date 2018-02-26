@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.io.IOException;
 import java.security.Principal;
 import java.util.HashSet;
 import java.util.Objects;
@@ -60,7 +59,7 @@ public final class CommunicationServiceImpl implements CommunicationService {
             synchronized (session) { // sendMessage is not thread-safe
                 session.sendMessage(message);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.log(Level.SEVERE, "Cannot send websocket message", e);
         }
     }

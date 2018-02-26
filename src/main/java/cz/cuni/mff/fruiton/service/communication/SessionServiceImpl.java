@@ -60,7 +60,6 @@ public final class SessionServiceImpl implements SessionService {
     public void unregister(final WebSocketSession session) {
         try {
             sessionsLock.writeLock().lock();
-            playersOnTheSameAddressLock.writeLock().lock();
 
             if (!sessions.containsKey(session.getPrincipal())) {
                 logger.log(Level.WARNING, "Trying to unregister unknown session {0}", session);
@@ -68,6 +67,15 @@ public final class SessionServiceImpl implements SessionService {
             }
 
             sessions.remove(session.getPrincipal());
+        } finally {
+            sessionsLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void unregisterFromSameNetwork(final WebSocketSession session) {
+        try {
+            playersOnTheSameAddressLock.writeLock().lock();
 
             Set<Principal> players = playersOnTheSameAddressMap.get(session.getRemoteAddress().getAddress());
             if (players.size() == 1) {
@@ -76,7 +84,6 @@ public final class SessionServiceImpl implements SessionService {
                 players.remove(session.getPrincipal());
             }
         } finally {
-            sessionsLock.writeLock().unlock();
             playersOnTheSameAddressLock.writeLock().unlock();
         }
     }

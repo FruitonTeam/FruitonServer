@@ -189,6 +189,7 @@ public final class TeamDraftServiceImpl implements TeamDraftService, OnUserState
     @ProtobufMessage(messageCase = MessageCase.DRAFTSURRENDERMESSAGE)
     private void handleDraftSurrenderMessage(final UserIdHolder user) {
         removeFromDraft(user, Reason.SURRENDER);
+        userStateService.setNewState(Status.MAIN_MENU, user);
     }
 
     @Scheduled(fixedDelay = DRAFT_CHECK_TIME_REFRESH_TIME)

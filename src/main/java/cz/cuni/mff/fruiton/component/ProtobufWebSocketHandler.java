@@ -132,6 +132,8 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
                             + session.getPrincipal() + " went offline", e);
                 }
 
+                sessionService.unregisterFromSameNetwork(session);
+
                 try {
                     userStateService.setNewState(GameProtos.Status.OFFLINE, (UserIdHolder) session.getPrincipal());
                 } catch (Exception e) {
