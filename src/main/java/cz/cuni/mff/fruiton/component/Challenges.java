@@ -19,6 +19,7 @@ import cz.cuni.mff.fruiton.service.game.matchmaking.TeamDraftService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
 import cz.cuni.mff.fruiton.service.util.UserStateService.OnUserStateChangedListener;
+import cz.cuni.mff.fruiton.util.FruitonTeamUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -103,6 +104,10 @@ public final class Challenges implements OnUserStateChangedListener {
             return;
         }
 
+        if (challengeMsg.getPickMode() == PickMode.STANDARD_PICK) {
+            FruitonTeamUtils.checkTeamValidity(from, challengeMsg.getTeam(), userService);
+        }
+
         ChallengeData data = new ChallengeData(from, challengeMsg.getTeam(), challenged, challengeMsg.getGameMode(),
                 challengeMsg.getPickMode());
 
@@ -142,6 +147,10 @@ public final class Challenges implements OnUserStateChangedListener {
                         && data.challenged.equals(from)) {
 
                     if (challengeResultMsg.getChallengeAccepted()) {
+                        if (data.pickMode == PickMode.STANDARD_PICK) {
+                            FruitonTeamUtils.checkTeamValidity(from, challengeResultMsg.getTeam(), userService);
+                        }
+
                         communicationService.send(data.challenger, WrapperMessage.newBuilder()
                                 .setChallengeResult(challengeResultMsg)
                                 .build());

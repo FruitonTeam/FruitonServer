@@ -6,6 +6,7 @@ import cz.cuni.mff.fruiton.dto.CommonProtos.ErrorMessage.ErrorId;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.exception.FruitonServerException;
 import cz.cuni.mff.fruiton.service.social.UserService;
+import org.apache.commons.collections4.ListUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,8 +54,7 @@ public class FruitonTeamUtils {
             throw new InvalidTeamException(fruitonTeam);
         } else if (!userService.teamContainsAvailableFruitons(user, FruitonTeam.fromProtobuf(fruitonTeam))) {
             List<Integer> fruitonsList = new ArrayList<>(fruitonTeam.getFruitonIDsList());
-            fruitonsList.removeAll(userService.getAvailableFruitons(user));
-            throw new NotUnlockedFruitonException(fruitonsList);
+            throw new NotUnlockedFruitonException(ListUtils.subtract(fruitonsList, userService.getAvailableFruitons(user)));
         }
     }
 

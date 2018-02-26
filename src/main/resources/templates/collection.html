@@ -14,7 +14,7 @@
         <div th:classappend="${idx.count % 6 == 0 ? 'row' : ''}">
 
             <div class="col-sm-2">
-                <a th:href="@{/collection/fruiton(id=${fruiton.id})}" class="thumbnail" th:switch="${fruiton.type}">
+                <a th:href="@{/collection/fruiton(id=${fruiton.info.id})}" class="thumbnail" th:switch="${fruiton.info.type}">
 
                     <img th:case="${T(cz.cuni.mff.fruiton.service.game.FruitonService.FruitonType).KING}"
                          class="fruiton-type" th:src="@{/img/fruiton/type/king_64.png}" />
@@ -25,11 +25,13 @@
                     <img th:case="${T(cz.cuni.mff.fruiton.service.game.FruitonService.FruitonType).MINOR}"
                          class="fruiton-type" th:src="@{/img/fruiton/type/minor_64.png}" />
 
-                    <img th:src="@{'/img/fruiton/' + ${fruiton.model} + '.png'}" th:alt="${fruiton.model}"
+                    <img th:src="@{'/img/fruiton/' + ${fruiton.info.model} + '.png'}" th:alt="${fruiton.info.model}"
+                         th:class="${fruiton.count &gt; 0 ? '' : 'grayscale'}"
                          style="width:100%"/>
+                    <span th:if="${fruiton.count &gt; 0}" class="badge fruiton-badge" th:text="${fruiton.count}"></span>
                     <div class="caption">
                         <div class="text-center">
-                            <strong><span th:text="${fruiton.name}"></span></strong><br/>
+                            <strong><span th:text="${fruiton.info.name}"></span></strong><br/>
                         </div>
                     </div>
                 </a>
