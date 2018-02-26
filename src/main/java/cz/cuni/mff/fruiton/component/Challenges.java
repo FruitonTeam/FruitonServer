@@ -108,6 +108,12 @@ public final class Challenges implements OnUserStateChangedListener {
             FruitonTeamUtils.checkTeamValidity(from, challengeMsg.getTeam(), userService);
         }
 
+        if (challengeExistsBetween(from, challenged)) {
+            logger.log(Level.WARNING, "User challenged user who already challenged him");
+            communicationService.send(from, getChallengeNotAcceptedMsg(from.getUsername()));
+            return;
+        }
+
         ChallengeData data = new ChallengeData(from, challengeMsg.getTeam(), challenged, challengeMsg.getGameMode(),
                 challengeMsg.getPickMode());
 
@@ -124,6 +130,18 @@ public final class Challenges implements OnUserStateChangedListener {
             Challenge challenge = Challenge.newBuilder(challengeMsg).setChallengeFrom(from.getUsername()).build();
             communicationService.send(challenged, WrapperMessage.newBuilder().setChallenge(challenge).build());
         }
+    }
+
+    private boolean challengeExistsBetween(final UserIdHolder user1, final UserIdHolder user2) {
+        synchronized (challenges) {
+            for (ChallengeData data : challenges) {
+                if ((data.challenger.equals(user1) && data.challenged.equals(user2))
+                        || (data.challenger.equals(user2) && data.challenged.equals(user1))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private WrapperMessage getChallengeNotAcceptedMsg(final String challengeFrom) {
