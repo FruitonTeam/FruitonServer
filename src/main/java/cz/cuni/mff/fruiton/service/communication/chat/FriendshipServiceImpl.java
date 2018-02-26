@@ -67,6 +67,11 @@ public final class FriendshipServiceImpl implements FriendshipService {
         User friend = userRepository.findByLogin(friendToAdd);
 
         User from = userRepository.findOne(user.getId());
+
+        if (from.getFriends().contains(friend)) {
+            throw new IllegalArgumentException("User " + user + " has already added " + friendToAdd + " as a friend");
+        }
+
         if (friendRequestRepository.existsByFromAndTo(from, friend)) {
             // friend request already exists and the recipient did not respond yet
             return;
