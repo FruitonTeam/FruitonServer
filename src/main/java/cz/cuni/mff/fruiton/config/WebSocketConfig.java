@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
 
-    private static final String TOKEN_HEADER_KEY = "x-auth-token";
+    public static final String TOKEN_HEADER_KEY = "x-auth-token";
 
     private static final int IDLE_TIMEOUT = 2 * 60 * 1000; // 2 min
 
@@ -73,7 +73,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
                     final ServerHttpRequest serverHttpRequest,
                     final ServerHttpResponse serverHttpResponse,
                     final WebSocketHandler webSocketHandler,
-                    final Map<String, Object> map
+                    final Map<String, Object> attributes
             ) {
                 List<String> tokens = serverHttpRequest.getHeaders().get(TOKEN_HEADER_KEY);
                 if (tokens == null || tokens.isEmpty()) {
@@ -90,6 +90,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 }
 
                 String token = tokens.get(0);
+                attributes.put(TOKEN_HEADER_KEY, token);
 
                 return tokenService.isValid(token);
             }

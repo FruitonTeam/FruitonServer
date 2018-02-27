@@ -1,6 +1,8 @@
 package cz.cuni.mff.fruiton.component;
 
+import cz.cuni.mff.fruiton.config.WebSocketConfig;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
+import cz.cuni.mff.fruiton.dto.CommonProtos.Disconnected;
 import cz.cuni.mff.fruiton.dto.CommonProtos.WrapperMessage;
 import cz.cuni.mff.fruiton.dto.GameProtos;
 import cz.cuni.mff.fruiton.service.communication.CommunicationService;
@@ -24,6 +26,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
+
+    private static final int RECONNECT_CODE = 3500; // must be between 3000 and 5000
 
     private static final Logger logger = Logger.getLogger(ProtobufWebSocketHandler.class.getName());
 
@@ -75,16 +79,59 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
                 new Object[] {session.getPrincipal(), session.getId()});
 
         synchronized (lock) {
-            sessionService.register(session);
-
-            sendLoggedPlayerInfo(session);
-
-            if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
-                sendPlayersOnTheSameNetworkInfo(session);
+            if (!isReconnectWithPreviousConnectionOpen(session)) {
+                sessionService.register(session);
+                sessionInit(session);
+            } else {
+                handleReconnect(session);
             }
-
-            userStateService.setNewState(GameProtos.Status.MAIN_MENU, (UserIdHolder) session.getPrincipal());
         }
+    }
+
+    private boolean isReconnectWithPreviousConnectionOpen(final WebSocketSession session) {
+        return sessionService.isOnline(session.getPrincipal());
+    }
+
+    private void sessionInit(final WebSocketSession session) {
+        sendLoggedPlayerInfo(session);
+
+        if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
+            sendPlayersOnTheSameNetworkInfo(session);
+        }
+
+        userStateService.setNewState(GameProtos.Status.MAIN_MENU, (UserIdHolder) session.getPrincipal());
+    }
+
+    private void handleReconnect(final WebSocketSession session) {
+        WebSocketSession previousSession = sessionService.getSession(session.getPrincipal());
+        boolean isNewLogin = !getToken(previousSession).equals(getToken(session));
+
+        try {
+            if (previousSession.isOpen()) {
+                communicationService.send(previousSession, WrapperMessage.newBuilder()
+                        .setDisconnected(Disconnected.newBuilder())
+                        .build());
+
+                if (isNewLogin) { // let all services think that user went offline – closes games etc.
+                    userStateService.setNewState(GameProtos.Status.OFFLINE, (UserIdHolder) session.getPrincipal());
+                }
+                previousSession.close(new CloseStatus(RECONNECT_CODE));
+            } else {
+                logger.log(Level.WARNING, "Server thinks that user tried to reconnect but his old connection is closed");
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Could not close previous session", e);
+        }
+
+        sessionService.register(session);
+
+        if (isNewLogin) {
+            sessionInit(session);
+        }
+    }
+
+    private String getToken(final WebSocketSession session) {
+        return (String) session.getAttributes().get(WebSocketConfig.TOKEN_HEADER_KEY);
     }
 
     private void sendLoggedPlayerInfo(final WebSocketSession session) {
@@ -118,6 +165,10 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
     @Override
     public final void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) {
+        if (status.getCode() == RECONNECT_CODE) { // ignore
+            return;
+        }
+
         logger.log(Level.FINEST, "Closed connection for {0} with status: {1}", new Object[] {session.getPrincipal(), status});
 
         // if we were trying to send messages when application was closing then exceptions were thrown

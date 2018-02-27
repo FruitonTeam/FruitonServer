@@ -168,6 +168,10 @@ public final class RatingMatchMaking implements OnUserStateChangedListener {
         while (it.hasNext()) {
             WaitingUser current = it.next();
             if (Math.abs(previous.getRating() - current.getRating()) < current.deltaWindow) { // it's a match
+
+                usersInThisMatchmaking.remove(previous.user);
+                usersInThisMatchmaking.remove(current.user);
+
                 if (pickMode == PickMode.STANDARD_PICK) {
                     gameService.createGame(
                             previous.user,
@@ -182,8 +186,6 @@ public final class RatingMatchMaking implements OnUserStateChangedListener {
                 } else {
                     draftService.startDraft(previous.user, current.user, gameMode);
                 }
-                usersInThisMatchmaking.remove(previous.user);
-                usersInThisMatchmaking.remove(current.user);
 
                 previous.markedForDelete = true;
                 current.markedForDelete = true;
@@ -230,7 +232,7 @@ public final class RatingMatchMaking implements OnUserStateChangedListener {
             if (newState == Status.OFFLINE) {
                 remove(user);
             } else {
-                logger.log(Level.SEVERE, "User's state changed to {0} even though he was in matchmaking: {1}",
+                logger.log(Level.SEVERE, "User state changed to {0} even though he was in matchmaking: {1}",
                         new Object[]{newState, user});
             }
         }

@@ -230,15 +230,15 @@ public final class Challenges implements OnUserStateChangedListener {
     }
 
     private void removeFromChallenges(final UserIdHolder user) {
-        logger.log(Level.FINER, "Removing {0} from challenges", user);
-
         synchronized (challenges) {
             for (Iterator<ChallengeData> it = challenges.iterator(); it.hasNext();) {
                 ChallengeData data = it.next();
                 if (data.challenger.equals(user)) {
+                    logger.log(Level.FINER, "Removing {0} from challenges", user);
                     sendRevokeMessage(data.challenged, data.challenger.getUsername());
                     it.remove();
                 } else if (data.challenged.equals(user)) {
+                    logger.log(Level.FINER, "Removing {0} from challenges", user);
                     communicationService.send(data.challenger, getChallengeNotAcceptedMsg(data.challenger.getUsername()));
                     it.remove();
                 }
