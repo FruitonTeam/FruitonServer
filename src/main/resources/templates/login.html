@@ -7,74 +7,88 @@
 
 <div class="container main-content">
 
-    <div id="loginbox" class="mainbox col-md-6 col-md-offset-3 col-sm-6 col-sm-offset-3">
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3 col-sm-6 col-sm-offset-3 text-center">
+            <a th:href="@{/download}" class="btn btn-lg btn-primary">
+                <span class="glyphicon glyphicon-download" style="vertical-align: middle;"></span>&nbsp;Download game!
+            </a>
+        </div>
+    </div>
 
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <div class="panel-title text-center">Fruitons</div>
-            </div>
+    <div class="row">
+        <div id="loginbox" class="mainbox col-md-6 col-md-offset-3 col-sm-6 col-sm-offset-3">
 
-            <div class="panel-body">
-
-                <div th:if="${showRenewPasswordInfo}" class="alert alert-info">
-                    <strong>Incorrect password!</strong> You can renew your password at
-                    <a th:href="@{/renewPassword}">password renewal page</a>.
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="panel-title text-center">Fruitons</div>
                 </div>
 
-                <form name="form" id="form" class="form-horizontal validated-form" enctype="multipart/form-data"
-                      method="POST" data-toggle="validator" th:action="@{/}">
+                <div class="panel-body">
 
-                    <div class="form-group">
-                        <div class="input-group">
-                            <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
-                            <input id="user" type="text" class="form-control" name="username" value="" placeholder="Login"
-                                   pattern="^[_A-z0-9]{4,}$" required="required"
-                                   data-pattern-error="Minimum of 4 alphanumeric characters"
-                                   data-remote-error="User with given login does not exist"
-                                   th:attr="data-remote=@{/api/player/isLoginUsed}"
-                                   autofocus="autofocus" maxlength="50" />
-                        </div>
-
-                        <div class="help-block with-errors"></div>
+                    <div th:if="${showRenewPasswordInfo}" class="alert alert-info">
+                        <strong>Incorrect password!</strong> You can renew your password at
+                        <a th:href="@{/renewPassword}">password renewal page</a>.
                     </div>
 
-                    <div class="form-group">
-                        <div class="input-group">
-                            <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
-                            <input id="password" type="password" class="form-control" name="password" placeholder="Password"
-                                   data-minlength="6" required="required" maxlength="50" />
+                    <form name="form" id="form" class="form-horizontal validated-form" enctype="multipart/form-data"
+                          method="POST" data-toggle="validator" th:action="@{/}">
+
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                                <input id="user" type="text" class="form-control" name="username" value=""
+                                       placeholder="Login"
+                                       pattern="^[_A-z0-9]{4,}$" required="required"
+                                       data-pattern-error="Minimum of 4 alphanumeric characters"
+                                       data-remote-error="User with given login does not exist"
+                                       th:attr="data-remote=@{/api/player/isLoginUsed}"
+                                       autofocus="autofocus" maxlength="50"/>
+                            </div>
+
+                            <div class="help-block with-errors"></div>
                         </div>
 
-                        <div class="help-block with-errors"></div>
-                    </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+                                <input id="password" type="password" class="form-control" name="password"
+                                       placeholder="Password"
+                                       data-minlength="6" required="required" maxlength="50"/>
+                            </div>
 
-                    <div class="form-group">
-                        <div class="col-sm-12 controls">
-                            <a th:href="@{/register}" class="btn btn-default pull-left">
-                                <i class="glyphicon glyphicon-user"></i> Register
-                            </a>
-                            <button type="submit" class="btn btn-primary pull-right">
-                                <i class="glyphicon glyphicon-log-in"></i> Log in
-                            </button>
+                            <div class="help-block with-errors"></div>
                         </div>
-                    </div>
 
-                </form>
+                        <div class="form-group">
+                            <div class="col-sm-12 controls">
+                                <a th:href="@{/register}" class="btn btn-default pull-left">
+                                    <i class="glyphicon glyphicon-user"></i> Register
+                                </a>
+                                <button type="submit" class="btn btn-primary pull-right">
+                                    <i class="glyphicon glyphicon-log-in"></i> Log in
+                                </button>
+                            </div>
+                        </div>
 
+                    </form>
+
+                </div>
             </div>
-        </div>
-        <div class="divider">
-            <hr class="left"/><span>or</span><hr class="right" />
-        </div>
+            <div class="divider">
+                <hr class="left"/>
+                <span>or</span>
+                <hr class="right"/>
+            </div>
 
-        <div class="g-signin2" data-onsuccess="onSignIn"></div>
+            <div class="g-signin2" data-onsuccess="onSignIn"></div>
+        </div>
 
     </div>
 
 </div>
 
 <form id="googleSubmitForm" th:action="@{/api/loginGoogleWeb}">
-    <input name="idToken" type="hidden" />
+    <input name="idToken" type="hidden"/>
 </form>
 
 <footer th:replace="fragments/footer :: footer"></footer>
