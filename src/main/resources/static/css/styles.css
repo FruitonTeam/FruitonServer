@@ -188,3 +188,26 @@ ul.dropdown-social-menu li .item-right {
 ul.dropdown-social-menu li .item-right button {
     margin-top:14px;
 }
+
+/*
+ * Top bar styles on Download page for not authenticated users
+ */
+
+.navbar-brand-centered {
+    position: absolute;
+    left: 50%;
+    display: block;
+    text-align: center;
+    background-color: transparent;
+}
+
+.navbar-brand-centered h3{
+    margin: 0;
+    margin-left: -30px;
+    margin-top:-2px
+}
+
+.navbar>.container .navbar-brand-centered,
+.navbar>.container-fluid .navbar-brand-centered {
+    margin-left: -80px;
+}
