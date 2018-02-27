@@ -73,18 +73,18 @@
             if (auth2) {
                 auth2.signOut().then(function () {
                     console.log('Google user signed out.');
+                    window.location.href = /*[[@{/logout}]]*/ ''; // ordinary spring logout
                 });
+            } else {
+                window.location.href = /*[[@{/logout}]]*/ ''; // ordinary spring logout
             }
-
-            window.location.href = /*[[@{/logout}]]*/ ''; // ordinary spring logout
         }
 
-        $(document).ready(function () { // auth need to be initialized if no google sign in button is on the page
+        window.onLoadCallback = function() {
             gapi.load('auth2', function () {
                 gapi.auth2.init();
             });
-        });
-
+        }
     </script>
 
 </nav>
