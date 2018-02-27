@@ -10,11 +10,14 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Service
@@ -27,6 +30,8 @@ public final class TokenServiceImpl implements TokenService {
     private static final int TOKEN_VALID_PERIOD = 300_000; // 5 min
 
     private final Map<String, TokenValue> tokens = new HashMap<>();
+
+    private final Set<UserIdHolder> users = new HashSet<>();
 
     private final ReadWriteLock tokensLock = new ReentrantReadWriteLock();
 
@@ -44,6 +49,13 @@ public final class TokenServiceImpl implements TokenService {
         String token;
         try {
             tokensLock.writeLock().lock();
+
+            if (users.contains(user)) {
+                removeToken(user);
+            } else {
+                users.add(user);
+            }
+
             token = generateToken();
             tokens.put(token, value);
         } finally {
@@ -51,6 +63,22 @@ public final class TokenServiceImpl implements TokenService {
         }
 
         return token;
+    }
+
+    private void removeToken(final UserIdHolder user) {
+        logger.log(Level.FINE, "Removing token explicitly for user {0}", user);
+        try {
+            tokensLock.writeLock().lock();
+            for (Iterator<Map.Entry<String, TokenValue>> it = tokens.entrySet().iterator(); it.hasNext();) {
+                Map.Entry<String, TokenValue> entry = it.next();
+                if (entry.getValue().user.equals(user)) {
+                    it.remove();
+                    break;
+                }
+            }
+        } finally {
+            tokensLock.writeLock().unlock();
+        }
     }
 
     private String generateToken() {
@@ -103,6 +131,7 @@ public final class TokenServiceImpl implements TokenService {
                         tokenValue.validFrom = Instant.now();
                     } else {
                         it.remove();
+                        users.remove(tokenValue.user);
                     }
                 }
             }
