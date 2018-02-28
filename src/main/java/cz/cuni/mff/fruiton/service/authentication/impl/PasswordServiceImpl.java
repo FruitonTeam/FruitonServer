@@ -24,10 +24,10 @@ public class PasswordServiceImpl implements PasswordService {
 
     private static final Logger logger = Logger.getLogger(PasswordServiceImpl.class.getName());
 
-    @Value("${mail.password.renew.subject}")
+    @Value("${mail.password.reset.subject}")
     private String subject;
 
-    @Value("${mail.password.renew.content}")
+    @Value("${mail.password.reset.content}")
     private String contentTemplate;
 
     private final UserRepository userRepository;
