@@ -75,14 +75,16 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
     @Override
     public final void afterConnectionEstablished(final WebSocketSession session) {
-        logger.log(Level.FINEST, "Opened connection for {0} with id: {1}",
+        logger.log(Level.FINE, "Opened connection for {0} with id: {1}",
                 new Object[] {session.getPrincipal(), session.getId()});
 
         synchronized (lock) {
             if (!isReconnectWithPreviousConnectionOpen(session)) {
+                logger.log(Level.FINEST, "Normal connect {0}", session);
                 sessionService.register(session);
                 sessionInit(session);
             } else {
+                logger.log(Level.FINEST, "Reconnecting {0}", session);
                 handleReconnect(session);
             }
         }
@@ -108,6 +110,7 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
         try {
             if (previousSession.isOpen()) {
+                logger.log(Level.FINE, "Sending Disconnected message to {0}", previousSession);
                 communicationService.send(previousSession, WrapperMessage.newBuilder()
                         .setDisconnected(Disconnected.newBuilder())
                         .build());
@@ -169,11 +172,17 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
             return;
         }
 
-        logger.log(Level.FINEST, "Closed connection for {0} with status: {1}", new Object[] {session.getPrincipal(), status});
+        logger.log(Level.FINE, "Closed connection for {0} with status: {1}", new Object[] {session.getPrincipal(), status});
 
         // if we were trying to send messages when application was closing then exceptions were thrown
         if (!applicationClosing) {
             synchronized (lock) {
+                if (!getToken(sessionService.getSession(session.getPrincipal())).equals(getToken(session))) {
+                    // this fixes bug when server and client closes the connection for reconnecting and client
+                    // closes with different status code, so we would unregister new (reconnected) session
+                    return;
+                }
+
                 try {
                     if (sessionService.hasOtherPlayersOnTheSameNetwork(session)) {
                         sendPlayerOnTheSameNetworkDisconnected(session);
