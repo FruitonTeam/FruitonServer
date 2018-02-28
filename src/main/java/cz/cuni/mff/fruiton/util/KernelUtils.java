@@ -111,7 +111,18 @@ public final class KernelUtils {
         team.getFruitonIDsList().forEach(fruitons::push);
 
         ValidationResult validationResult = FruitonTeamValidator.validateFruitonTeam(fruitons, getFruitonDb());
-        return validationResult.complete && validationResult.valid;
+        return validationResult.complete && validationResult.valid
+                && FruitonTeamValidator.haveValidPositions(getFruitonArray(team));
+    }
+
+    private static Array<Fruiton> getFruitonArray(final GameProtos.FruitonTeam team) {
+        Array<Fruiton> fruitonArray = new Array<>();
+        for (int i = 0; i < team.getFruitonIDsCount(); i++) {
+            Fruiton fruiton = KernelUtils.getFruiton(team.getFruitonIDs(i));
+            fruiton.position = KernelUtils.positionToPoint(team.getPositions(i));
+            fruitonArray.push(fruiton);
+        }
+        return fruitonArray;
     }
 
     public static int getRandomMapId() {

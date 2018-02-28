@@ -96,16 +96,16 @@ public class TestUtils {
                 .setName("test_team_name")
                 .addAllFruitonIDs(List.of(3, 11, 11, 11, 11, 20, 20, 20, 20, 20))
                 .addAllPositions(List.of(
-                        KernelUtils.positionOf(0, 0),
-                        KernelUtils.positionOf(1, 0),
+                        KernelUtils.positionOf(4, 0),
                         KernelUtils.positionOf(2, 0),
                         KernelUtils.positionOf(3, 0),
-                        KernelUtils.positionOf(4, 0),
-                        KernelUtils.positionOf(0, 1),
-                        KernelUtils.positionOf(1, 1),
+                        KernelUtils.positionOf(5, 0),
+                        KernelUtils.positionOf(6, 0),
                         KernelUtils.positionOf(2, 1),
                         KernelUtils.positionOf(3, 1),
-                        KernelUtils.positionOf(4, 1)
+                        KernelUtils.positionOf(4, 1),
+                        KernelUtils.positionOf(5, 1),
+                        KernelUtils.positionOf(6, 1)
                         )
                 )
                 .build();
