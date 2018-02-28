@@ -6,9 +6,9 @@ package cz.cuni.mff.fruiton.service.authentication;
 public interface PasswordService {
 
     /**
-     * Renews password for specified user.
-     * @param email email of the user we want to renew password for
+     * Resets password for specified user.
+     * @param email email of the user we want to reset password for
      */
-    void renew(String email);
+    void reset(String email);
 
 }

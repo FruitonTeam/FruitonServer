@@ -1,7 +1,7 @@
 package cz.cuni.mff.fruiton.controller.web;
 
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
-import cz.cuni.mff.fruiton.dto.form.RenewPasswordForm;
+import cz.cuni.mff.fruiton.dto.form.ResetPasswordForm;
 import cz.cuni.mff.fruiton.service.authentication.AuthenticationService;
 import cz.cuni.mff.fruiton.service.authentication.PasswordService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +49,7 @@ public final class IndexController {
 
     @RequestMapping("/loginFail")
     public String loginFail(final Model model) {
-        model.addAttribute("showRenewPasswordInfo", true);
+        model.addAttribute("showResetPasswordInfo", true);
         return "login";
     }
 
@@ -68,16 +68,16 @@ public final class IndexController {
         }
     }
 
-    @GetMapping("/renewPassword")
-    public String renewPassword(final Model model) {
-        model.addAttribute("form", new RenewPasswordForm());
+    @GetMapping("/resetPassword")
+    public String resetPassword(final Model model) {
+        model.addAttribute("form", new ResetPasswordForm());
 
-        return "renewPassword";
+        return "resetPassword";
     }
 
-    @PostMapping("/renewPassword")
-    public String renewPassword(@Valid final RenewPasswordForm form) {
-        passwordService.renew(form.getEmail());
+    @PostMapping("/resetPassword")
+    public String resetPassword(@Valid final ResetPasswordForm form) {
+        passwordService.reset(form.getEmail());
 
         return "redirect:/";
     }

@@ -42,7 +42,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/socket*").permitAll()
                 .antMatchers("/register").permitAll()
                 .antMatchers("/registerWeb").permitAll()
-                .antMatchers("/renewPassword").permitAll()
+                .antMatchers("/resetPassword").permitAll()
                 .antMatchers("/registerGoogle").permitAll()
                 .antMatchers("/download").permitAll()
                 .anyRequest().authenticated()

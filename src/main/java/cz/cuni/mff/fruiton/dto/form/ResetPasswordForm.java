@@ -5,7 +5,7 @@ import org.hibernate.validator.constraints.Email;
 
 import javax.validation.constraints.Size;
 
-public final class RenewPasswordForm {
+public final class ResetPasswordForm {
 
     @Size(max = User.EMAIL_MAX_LENGTH)
     @Email
