@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+
+</head>
+<body>
+
+<nav th:fragment="navbar-with-back-button" class="navbar navbar-default navbar-fixed-top">
+    <div class="container-fluid">
+        <div class="navbar-header" style="padding-left: 10px">
+            <a class="btn btn-default navbar-btn pull-left" th:href="@{/}">
+                <span class="glyphicon glyphicon-chevron-left"></span>
+            </a>
+            <div class="navbar-text navbar-brand-centered"><h3>Fruitons game!</h3></div>
+        </div>
+    </div>
+</nav>
+
+</body>
+</html>
