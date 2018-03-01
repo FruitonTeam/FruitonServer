@@ -10,6 +10,7 @@ import cz.cuni.mff.fruiton.service.communication.SessionService;
 import cz.cuni.mff.fruiton.service.social.UserService;
 import cz.cuni.mff.fruiton.service.util.UserStateService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
@@ -17,6 +18,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
 import javax.annotation.PreDestroy;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
@@ -28,6 +30,9 @@ import java.util.stream.Collectors;
 public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
     private static final int RECONNECT_CODE = 3500; // must be between 3000 and 5000
+
+    @Value("${server.session.timeout}")
+    private int defaultHttpSessionTimeout;
 
     private static final Logger logger = Logger.getLogger(ProtobufWebSocketHandler.class.getName());
 
@@ -199,8 +204,15 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
                 }
 
                 sessionService.unregister(session);
+
+                // after WebSocket session is closed set its HttpSession timeout back to default value
+                getHttpSession(session).setMaxInactiveInterval(defaultHttpSessionTimeout);
             }
         }
+    }
+
+    private HttpSession getHttpSession(final WebSocketSession session) {
+        return (HttpSession) session.getAttributes().get(WebSocketConfig.HTTP_SESSION_KEY);
     }
 
     private void sendPlayerOnTheSameNetworkDisconnected(final WebSocketSession session) {

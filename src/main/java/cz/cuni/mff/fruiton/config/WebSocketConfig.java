@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -16,6 +18,7 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
+import javax.servlet.http.HttpSession;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +31,11 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     public static final String TOKEN_HEADER_KEY = "x-auth-token";
 
+    public static final String HTTP_SESSION_KEY = "session";
+
     private static final int IDLE_TIMEOUT = 2 * 60 * 1000; // 2 min
+
+    private static final int HTTP_SESSION_INFINITE_INACTIVE_TIME = -1;
 
     private static final Logger logger = Logger.getLogger(WebSocketConfig.class.getName());
 
@@ -58,8 +65,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
                     final WebSocketHandler wsHandler,
                     final Map<String, Object> attributes
             ) {
-                String token = request.getHeaders().get(TOKEN_HEADER_KEY).get(0);
-                return tokenService.getUser(token);
+                return (Principal) ((UsernamePasswordAuthenticationToken) request.getPrincipal()).getPrincipal();
             }
 
         };
@@ -91,6 +97,12 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
                 String token = tokens.get(0);
                 attributes.put(TOKEN_HEADER_KEY, token);
+
+                HttpSession session = ((ServletServerHttpRequest) serverHttpRequest).getServletRequest().getSession();
+
+                session.setMaxInactiveInterval(HTTP_SESSION_INFINITE_INACTIVE_TIME);
+
+                attributes.put(HTTP_SESSION_KEY, session);
 
                 return tokenService.isValid(token);
             }
