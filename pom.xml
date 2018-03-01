@@ -6,7 +6,7 @@
 
     <groupId>cz.cuni.mff</groupId>
     <artifactId>fruiton-server</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
 
     <packaging>${packaging}</packaging>
 
@@ -111,13 +111,13 @@
         <dependency>
             <groupId>cz.cuni.mff</groupId>
             <artifactId>fruiton-protobufs</artifactId>
-            <version>0.2.11</version>
+            <version>1.0.0</version>
         </dependency>
 
         <dependency>
             <groupId>cz.cuni.mff</groupId>
             <artifactId>fruiton-kernel</artifactId>
-            <version>0.2.7</version>
+            <version>1.0.0</version>
         </dependency>
 
         <dependency>
