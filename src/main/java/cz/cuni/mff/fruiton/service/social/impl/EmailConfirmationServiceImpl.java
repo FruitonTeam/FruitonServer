@@ -1,5 +1,6 @@
 package cz.cuni.mff.fruiton.service.social.impl;
 
+import cz.cuni.mff.fruiton.component.util.ServerAddressHelper;
 import cz.cuni.mff.fruiton.dao.domain.MailConfirmation;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.dao.repository.EmailConfirmationRepository;
@@ -17,12 +18,16 @@ import java.util.logging.Logger;
 @Service
 public class EmailConfirmationServiceImpl implements EmailConfirmationService {
 
+    private static final String MAIL_CONFIRM_URL = "api/confirmMail?confirmationId=";
+
     private static final Logger logger = Logger.getLogger(EmailConfirmationServiceImpl.class.getName());
 
     private final UserRepository userRepository;
     private final EmailConfirmationRepository mailConfirmationRepository;
 
     private final MailService mailService;
+
+    private final ServerAddressHelper serverAddressHelper;
 
     @Value("${mail.confirmation.subject}")
     private String mailConfirmationSubject;
@@ -33,11 +38,13 @@ public class EmailConfirmationServiceImpl implements EmailConfirmationService {
     public EmailConfirmationServiceImpl(
             final UserRepository userRepository,
             final EmailConfirmationRepository mailConfirmationRepository,
-            final MailService mailService
+            final MailService mailService,
+            final ServerAddressHelper serverAddressHelper
     ) {
         this.userRepository = userRepository;
         this.mailConfirmationRepository = mailConfirmationRepository;
         this.mailService = mailService;
+        this.serverAddressHelper = serverAddressHelper;
     }
 
     @Override
@@ -47,7 +54,8 @@ public class EmailConfirmationServiceImpl implements EmailConfirmationService {
 
         mailConfirmationRepository.save(confirmation);
 
-        String mailConfirmationContent = MessageFormat.format(mailConfirmationTemplate, user.getLogin(), confirmation.getId());
+        String mailConfirmationContent = MessageFormat.format(mailConfirmationTemplate, user.getLogin(),
+                serverAddressHelper.getHttpAddress(MAIL_CONFIRM_URL + confirmation.getId()));
 
         mailService.send(user.getEmail(), mailConfirmationSubject, mailConfirmationContent);
     }
