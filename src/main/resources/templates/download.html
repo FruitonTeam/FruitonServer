@@ -11,16 +11,7 @@
 </div>
 
 <div sec:authorize="isAnonymous()">
-    <nav class="navbar navbar-default navbar-fixed-top">
-        <div class="container-fluid">
-            <div class="navbar-header" style="padding-left: 10px">
-                <a class="btn btn-default navbar-btn pull-left" th:href="@{/}">
-                    <span class="glyphicon glyphicon-chevron-left"></span>
-                </a>
-                <div class="navbar-text navbar-brand-centered"><h3>Fruitons game!</h3></div>
-            </div>
-        </div>
-    </nav>
+    <nav th:replace="fragments/navbarWithBackButton :: navbar-with-back-button"></nav>
 </div>
 
 <div class="container main-content">

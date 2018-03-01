@@ -29,8 +29,7 @@ public final class RegistrationServiceImpl implements RegistrationService {
 
     private static final int RANDOM_GOOGLE_PASSWORD_SIZE = 10;
 
-    // TODO: use some generic url based on some properties
-    private static final String RENEW_PASSWORD_URL = "http://prak.mff.cuni.cz:8050/fruiton/renew";
+    private static final String RENEW_PASSWORD_URL = "http://prak.mff.cuni.cz:8050/fruiton/resetPassword";
 
     private static final Logger logger = Logger.getLogger(RegistrationServiceImpl.class.getName());
 
@@ -60,7 +59,7 @@ public final class RegistrationServiceImpl implements RegistrationService {
             final UserService userService,
             final MailService mailService,
             final QuestService questService
-            ) {
+    ) {
         this.userRepository = userRepository;
         this.emailConfirmationService = emailConfirmationService;
         this.passwordEncoder = passwordEncoder;

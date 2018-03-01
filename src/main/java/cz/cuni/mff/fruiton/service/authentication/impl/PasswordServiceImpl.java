@@ -24,10 +24,10 @@ public class PasswordServiceImpl implements PasswordService {
 
     private static final Logger logger = Logger.getLogger(PasswordServiceImpl.class.getName());
 
-    @Value("${mail.password.renew.subject}")
+    @Value("${mail.password.reset.subject}")
     private String subject;
 
-    @Value("${mail.password.renew.content}")
+    @Value("${mail.password.reset.content}")
     private String contentTemplate;
 
     private final UserRepository userRepository;
@@ -47,12 +47,12 @@ public class PasswordServiceImpl implements PasswordService {
 
     /** {@inheritDoc} */
     @Override
-    public void renew(final String email) {
+    public void reset(final String email) {
         if (email == null) {
-            throw new IllegalArgumentException("Cannot renew password for null email");
+            throw new IllegalArgumentException("Cannot reset password for null email");
         }
 
-        logger.log(Level.FINEST, "Renewing password for {0}", email);
+        logger.log(Level.FINEST, "Performing password reset for {0}", email);
 
         User user = userRepository.findByEmail(email);
         if (user == null) {
@@ -68,7 +68,7 @@ public class PasswordServiceImpl implements PasswordService {
 
         mailService.send(email, subject, MessageFormat.format(contentTemplate, user.getLogin(), newPasswd));
 
-        logger.log(Level.FINEST, "Password renewed successfully for {0}", user);
+        logger.log(Level.FINEST, "Password reset successfully performed for {0}", user);
     }
 
 }
