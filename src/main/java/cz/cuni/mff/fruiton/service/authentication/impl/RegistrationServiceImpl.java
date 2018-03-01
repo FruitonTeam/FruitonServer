@@ -1,6 +1,7 @@
 package cz.cuni.mff.fruiton.service.authentication.impl;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import cz.cuni.mff.fruiton.component.util.ServerAddressHelper;
 import cz.cuni.mff.fruiton.dao.UserIdHolder;
 import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dao.domain.User;
@@ -29,7 +30,7 @@ public final class RegistrationServiceImpl implements RegistrationService {
 
     private static final int RANDOM_GOOGLE_PASSWORD_SIZE = 10;
 
-    private static final String RENEW_PASSWORD_URL = "http://prak.mff.cuni.cz:8050/fruiton/resetPassword";
+    private static final String RENEW_PASSWORD_URL = "resetPassword";
 
     private static final Logger logger = Logger.getLogger(RegistrationServiceImpl.class.getName());
 
@@ -45,6 +46,8 @@ public final class RegistrationServiceImpl implements RegistrationService {
 
     private final QuestService questService;
 
+    private final ServerAddressHelper serverAddressHelper;
+
     @Value("${mail.google.welcome.subject}")
     private String googleWelcomeMailSubject;
 
@@ -58,7 +61,8 @@ public final class RegistrationServiceImpl implements RegistrationService {
             final PasswordEncoder passwordEncoder,
             final UserService userService,
             final MailService mailService,
-            final QuestService questService
+            final QuestService questService,
+            final ServerAddressHelper serverAddressHelper
     ) {
         this.userRepository = userRepository;
         this.emailConfirmationService = emailConfirmationService;
@@ -66,6 +70,7 @@ public final class RegistrationServiceImpl implements RegistrationService {
         this.userService = userService;
         this.mailService = mailService;
         this.questService = questService;
+        this.serverAddressHelper = serverAddressHelper;
     }
 
     @Override
@@ -113,7 +118,7 @@ public final class RegistrationServiceImpl implements RegistrationService {
                         "User {0} does not have google avatar, using default one", user));
 
         mailService.send(payload.getEmail(), googleWelcomeMailSubject,
-                MessageFormat.format(googleWelcomeMailTemplate, login, RENEW_PASSWORD_URL));
+                MessageFormat.format(googleWelcomeMailTemplate, login, serverAddressHelper.getHttpAddress(RENEW_PASSWORD_URL)));
 
         return UserIdHolder.of(user);
     }

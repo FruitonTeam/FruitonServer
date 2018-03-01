@@ -6,7 +6,6 @@ import cz.cuni.mff.fruiton.dao.repository.UserRepository;
 import cz.cuni.mff.fruiton.dao.domain.User;
 import cz.cuni.mff.fruiton.service.authentication.RegistrationService;
 import cz.cuni.mff.fruiton.service.authentication.impl.RegistrationServiceImpl;
-import cz.cuni.mff.fruiton.service.social.EmailConfirmationService;
 import cz.cuni.mff.fruiton.service.social.EmailConfirmationService.MailConfirmationNotFound;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.ConstraintViolation;
@@ -34,29 +32,16 @@ public class RegistrationController {
 
     private final RegistrationService service;
 
-    private final EmailConfirmationService emailConfirmationService;
-
     @Autowired
-    public RegistrationController(
-            final UserRepository userRepository,
-            final RegistrationService service,
-            final EmailConfirmationService emailConfirmationService
-    ) {
+    public RegistrationController(final UserRepository userRepository, final RegistrationService service) {
         this.userRepository = userRepository;
         this.service = service;
-        this.emailConfirmationService = emailConfirmationService;
     }
 
     @RequestMapping(value = "/api/register", method = RequestMethod.POST)
     public final String register(@RequestBody final UserProtos.RegistrationData data) {
         service.register(data);
         return "OK";
-    }
-
-    @RequestMapping(value = "/api/confirmMail", method = RequestMethod.GET)
-    public final String confirmMail(@RequestParam(value = "confirmationId") final String confirmationId) {
-        emailConfirmationService.confirmEmail(confirmationId);
-        return "Mail confirmed";
     }
 
     @RequestMapping(value = "/api/debug/getAllRegistered", method = RequestMethod.GET)

@@ -7,6 +7,13 @@
 
 <div class="container main-content">
 
+    <div class="row" th:if="${success != null}">
+        <div class="alert alert-success" role="alert">
+            <h4 class="alert-heading">Well done!</h4>
+            <p th:text="${success}"></p>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-md-6 col-md-offset-3 col-sm-6 col-sm-offset-3 text-center">
             <a th:href="@{/download}" class="btn btn-lg btn-primary">
