@@ -114,6 +114,7 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
         boolean isNewLogin = !getToken(previousSession).equals(getToken(session));
 
         try {
+            invalidateHttpSession(previousSession);
             if (previousSession.isOpen()) {
                 logger.log(Level.FINE, "Sending Disconnected message to {0}", previousSession);
                 communicationService.send(previousSession, WrapperMessage.newBuilder()
@@ -206,13 +207,17 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
                 sessionService.unregister(session);
 
                 // after WebSocket session is closed set its HttpSession timeout back to default value
-                getHttpSession(session).setMaxInactiveInterval(defaultHttpSessionTimeout);
+                invalidateHttpSession(session);
             }
         }
     }
 
     private HttpSession getHttpSession(final WebSocketSession session) {
         return (HttpSession) session.getAttributes().get(WebSocketConfig.HTTP_SESSION_KEY);
+    }
+
+    private void invalidateHttpSession(final WebSocketSession session) {
+        getHttpSession(session).setMaxInactiveInterval(defaultHttpSessionTimeout);
     }
 
     private void sendPlayerOnTheSameNetworkDisconnected(final WebSocketSession session) {
