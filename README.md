@@ -10,5 +10,5 @@ java -jar fruiton-server-1.0-SNAPSHOT.jar
 ```
 
 ## Requirements
-* Java 8
+* Java 9
 * MongoDB
