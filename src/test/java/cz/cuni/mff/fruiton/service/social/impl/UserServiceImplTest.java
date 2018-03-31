@@ -61,11 +61,11 @@ public class UserServiceImplTest {
     public void changeAvatarTest() throws IOException {
         userService.changeAvatar(UserIdHolder.of(user), TestUtils.getDefaultAvatar(AVATAR_NAME));
 
-        assertTrue("Avatar was not set", userRepository.findOne(user.getId()).isAvatarSet());
+        assertTrue("Avatar was not set", userRepository.findById(user.getId()).get().isAvatarSet());
 
         userService.changeAvatar(UserIdHolder.of(user), (MultipartFile) null);
 
-        assertFalse("Avatar was not removed", userRepository.findOne(user.getId()).isAvatarSet());
+        assertFalse("Avatar was not removed", userRepository.findById(user.getId()).get().isAvatarSet());
     }
 
     @Test
@@ -80,7 +80,7 @@ public class UserServiceImplTest {
         userService.changeEmail(UserIdHolder.of(user), NEW_EMAIL);
 
         assertTrue("Email was not changed correctly",
-                userRepository.findOne(user.getId()).getEmail().equals(NEW_EMAIL));
+                userRepository.findById(user.getId()).get().getEmail().equals(NEW_EMAIL));
     }
 
     @Test

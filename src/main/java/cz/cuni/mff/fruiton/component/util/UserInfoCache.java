@@ -40,7 +40,7 @@ public final class UserInfoCache {
             return info;
         }
 
-        User user = instance.userRepository.findOne(idHolder.getId());
+        User user = instance.userRepository.findById(idHolder.getId()).get();
         UserInfo newUserinfo = new UserInfo(user.getAvatarWebImageMapping(), user.getMoney());
         cache.put(idHolder, newUserinfo);
 

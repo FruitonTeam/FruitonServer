@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -117,7 +118,7 @@ public final class BazaarServiceImpl implements BazaarService {
         }
 
         synchronized (lock) {
-            User user = userRepository.findOne(offeredBy.getId());
+            User user = userRepository.findById(offeredBy.getId()).get();
             if (!user.getUnlockedFruitons().contains(fruitonId)) {
                 throw new IllegalArgumentException("User cannot sell fruiton he does not have");
             }
@@ -126,7 +127,7 @@ public final class BazaarServiceImpl implements BazaarService {
             if (offeredTo == null) {
                 offer = new BazaarOffer(price, user, fruitonId);
             } else {
-                offer = new BazaarOffer(price, user, fruitonId, userRepository.findOne(offeredTo.getId()));
+                offer = new BazaarOffer(price, user, fruitonId, userRepository.findById(offeredTo.getId()).get());
             }
             bazaarOfferRepository.save(offer);
 
@@ -140,7 +141,7 @@ public final class BazaarServiceImpl implements BazaarService {
 
     @Override
     public List<BazaarOfferListItemWithId> getOffersCreatedBy(final UserIdHolder idHolder) {
-        User user = userRepository.findOne(idHolder.getId());
+        User user = userRepository.findById(idHolder.getId()).get();
 
         return bazaarOfferRepository.findByOfferedBy(user).stream().map(offer -> {
             Fruiton f = KernelUtils.getFruiton(offer.getFruitonId());
@@ -152,11 +153,12 @@ public final class BazaarServiceImpl implements BazaarService {
     @Override
     public void removeOffer(final String offerId, final UserIdHolder idHolder) {
         synchronized (lock) {
-            BazaarOffer offer = bazaarOfferRepository.findOne(offerId);
-            if (offer == null) {
+            Optional<BazaarOffer> offerOptional = bazaarOfferRepository.findById(offerId);
+            if (!offerOptional.isPresent()) {
                 throw new IllegalArgumentException("No bazaar offer with id " + offerId);
             }
 
+            BazaarOffer offer = offerOptional.get();
             if (!offer.getOfferedBy().getId().equals(idHolder.getId())) {
                 throw new SecurityException("User " + idHolder + " cannot remove offer " + offer
                         + " because this offer was not offered by him");
@@ -177,11 +179,12 @@ public final class BazaarServiceImpl implements BazaarService {
     @Override
     public void removeOfferByOfferedTo(final String offerId, final UserIdHolder offeredTo) {
         synchronized (lock) {
-            BazaarOffer offer = bazaarOfferRepository.findOne(offerId);
-            if (offer == null) {
+            Optional<BazaarOffer> offerOptional = bazaarOfferRepository.findById(offerId);
+            if (!offerOptional.isPresent()) {
                 throw new IllegalArgumentException("No bazaar offer with id " + offerId);
             }
 
+            BazaarOffer offer = offerOptional.get();
             if (!offeredTo.represents(offer.getOfferedTo())) {
                 throw new SecurityException("User " + offeredTo + " cannot remove offer " + offer
                         + " because this offer was not offered to him");
@@ -199,11 +202,12 @@ public final class BazaarServiceImpl implements BazaarService {
         }
 
         synchronized (lock) {
-            BazaarOffer offer = bazaarOfferRepository.findOne(offerId);
-            if (offer == null) {
+            Optional<BazaarOffer> offerOptional = bazaarOfferRepository.findById(offerId);
+            if (!offerOptional.isPresent()) {
                 throw new IllegalArgumentException("No bazaar offer with id " + offerId);
             }
 
+            BazaarOffer offer = offerOptional.get();
             if (offer.getOfferedBy().getId().equals(idHolder.getId())) {
                 throw new IllegalStateException("User cannot buy his own offer");
             }
@@ -212,7 +216,7 @@ public final class BazaarServiceImpl implements BazaarService {
                 throw new IllegalStateException("Offer " + offerId + " was not created for " + idHolder);
             }
 
-            User user = userRepository.findOne(idHolder.getId());
+            User user = userRepository.findById(idHolder.getId()).get();
 
             if (user.getMoney() < offer.getPrice()) {
                 throw new IllegalStateException("User has insufficient money to buy offer " + offer);
@@ -274,7 +278,7 @@ public final class BazaarServiceImpl implements BazaarService {
 
     @Override
     public List<BazaarOffer> getOffersOfferedTo(final UserIdHolder offeredTo) {
-        return bazaarOfferRepository.findByOfferedTo(userRepository.findOne(offeredTo.getId()));
+        return bazaarOfferRepository.findByOfferedTo(userRepository.findById(offeredTo.getId()).get());
     }
 
     private void sendBazaarOfferResult(final UserIdHolder to, final int money) {

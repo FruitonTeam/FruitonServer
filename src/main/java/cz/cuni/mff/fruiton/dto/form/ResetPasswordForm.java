@@ -1,8 +1,8 @@
 package cz.cuni.mff.fruiton.dto.form;
 
 import cz.cuni.mff.fruiton.dao.domain.User;
-import org.hibernate.validator.constraints.Email;
 
+import javax.validation.constraints.Email;
 import javax.validation.constraints.Size;
 
 public final class ResetPasswordForm {

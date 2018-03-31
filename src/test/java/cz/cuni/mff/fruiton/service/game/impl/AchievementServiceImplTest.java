@@ -43,7 +43,7 @@ public class AchievementServiceImplTest {
         User user = TestUtils.defaultRegister(registrationService, userRepository);
         achievementService.unlockAchievement(UserIdHolder.of(user), ACHIEVEMENT_NAME);
 
-        user = userRepository.findOne(user.getId());
+        user = userRepository.findById(user.getId()).get();
         assertThat(user.getUnlockedAchievements(), hasItems(achievementRepository.findByName(ACHIEVEMENT_NAME)));
     }
 
@@ -56,7 +56,7 @@ public class AchievementServiceImplTest {
             achievementService.updateAchievementProgress(UserIdHolder.of(user), achievement, 1);
         }
 
-        user = userRepository.findOne(user.getId());
+        user = userRepository.findById(user.getId()).get();
         assertThat(user.getUnlockedAchievements(), hasItems(achievementRepository.findByName(ACHIEVEMENT_NAME)));
     }
 

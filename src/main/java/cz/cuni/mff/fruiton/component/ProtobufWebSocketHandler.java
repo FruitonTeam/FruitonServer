@@ -31,7 +31,7 @@ public class ProtobufWebSocketHandler extends BinaryWebSocketHandler {
 
     private static final int RECONNECT_CODE = 3500; // must be between 3000 and 5000
 
-    @Value("${server.session.timeout}")
+    @Value("${server.servlet.session.timeout}")
     private int defaultHttpSessionTimeout;
 
     private static final Logger logger = Logger.getLogger(ProtobufWebSocketHandler.class.getName());

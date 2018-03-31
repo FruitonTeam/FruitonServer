@@ -52,19 +52,19 @@ public class FruitonTeamTest {
 
         userService.addFruitonTeam(UserIdHolder.of(user), team);
 
-        user = userRepository.findOne(user.getId());
+        user = userRepository.findById(user.getId()).get();
 
         assertEquals(1, user.getTeams().size());
 
         userService.addFruitonTeam(UserIdHolder.of(user), team);
 
-        user = userRepository.findOne(user.getId());
+        user = userRepository.findById(user.getId()).get();
 
         assertEquals(1, user.getTeams().size());
 
         userService.removeTeam(UserIdHolder.of(user), TEAM_NAME);
 
-        user = userRepository.findOne(user.getId());
+        user = userRepository.findById(user.getId()).get();
 
         assertTrue(user.getTeams().isEmpty());
     }

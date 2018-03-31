@@ -33,7 +33,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     public static final String HTTP_SESSION_KEY = "session";
 
-    private static final int IDLE_TIMEOUT = 2 * 60 * 1000; // 2 min
+    private static final long IDLE_TIMEOUT = 2 * 60 * 1000; // 2 min
 
     private static final int HTTP_SESSION_INFINITE_INACTIVE_TIME = -1;
 

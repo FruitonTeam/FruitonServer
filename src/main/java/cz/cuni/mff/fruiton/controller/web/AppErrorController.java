@@ -1,12 +1,12 @@
 package cz.cuni.mff.fruiton.controller.web;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.web.ErrorAttributes;
-import org.springframework.boot.autoconfigure.web.ErrorController;
+import org.springframework.boot.web.servlet.error.ErrorAttributes;
+import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.context.request.ServletWebRequest;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -31,7 +31,7 @@ public class AppErrorController implements ErrorController {
      */
     @RequestMapping(value = ERROR_PATH)
     public String handleError(final HttpServletRequest request, final Model model) {
-        Throwable t = errorAttributes.getError(new ServletRequestAttributes(request));
+        Throwable t = errorAttributes.getError(new ServletWebRequest(request));
         if (t != null) {
             model.addAttribute("message", t.getLocalizedMessage());
         } else {
