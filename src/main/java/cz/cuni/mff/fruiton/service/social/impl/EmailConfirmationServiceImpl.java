@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.text.MessageFormat;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -63,12 +64,12 @@ public class EmailConfirmationServiceImpl implements EmailConfirmationService {
     @Override
     public final void confirmEmail(final String confirmationId) {
 
-        MailConfirmation confirmation = mailConfirmationRepository.findOne(confirmationId);
-        if (confirmation == null) {
+        Optional<MailConfirmation> confirmation = mailConfirmationRepository.findById(confirmationId);
+        if (!confirmation.isPresent()) {
             throw new MailConfirmationNotFound("No MailConfirmation with id " + confirmationId);
         }
 
-        User user = confirmation.getUser();
+        User user = confirmation.get().getUser();
         if (user == null) {
             logger.log(Level.SEVERE, "No user for confirmation id: {0}", confirmationId);
             throw new RegistrationService.RegistrationException("Cannot confirm email address, please contact support");
@@ -77,7 +78,7 @@ public class EmailConfirmationServiceImpl implements EmailConfirmationService {
         user.setEmailConfirmed(true);
         userRepository.save(user);
 
-        mailConfirmationRepository.delete(confirmation);
+        mailConfirmationRepository.deleteById(confirmationId);
     }
 
 }

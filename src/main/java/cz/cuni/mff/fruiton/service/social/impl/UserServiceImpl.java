@@ -104,7 +104,7 @@ public final class UserServiceImpl implements UserService {
     }
 
     private User getUser(final UserIdHolder idHolder) {
-        return repository.findOne(idHolder.getId());
+        return repository.findById(idHolder.getId()).get();
     }
 
     @ProtobufMessage(messageCase = MessageCase.SETFRACTION)
@@ -215,12 +215,12 @@ public final class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Cannot find user for null id");
         }
 
-        User user = repository.findOne(id);
+        Optional<User> user = repository.findById(id);
 
-        if (user == null) {
+        if (!user.isPresent()) {
             throw new UsernameNotFoundException("Cannot find user for: " + id);
         }
-        return UserIdHolder.of(user);
+        return UserIdHolder.of(user.get());
     }
 
     @Override

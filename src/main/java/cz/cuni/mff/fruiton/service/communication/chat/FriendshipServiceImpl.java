@@ -66,7 +66,7 @@ public final class FriendshipServiceImpl implements FriendshipService {
     public void addFriend(final UserIdHolder user, final String friendToAdd) {
         User friend = userRepository.findByLogin(friendToAdd);
 
-        User from = userRepository.findOne(user.getId());
+        User from = userRepository.findById(user.getId()).get();
 
         if (from.getFriends().contains(friend)) {
             throw new IllegalArgumentException("User " + user + " has already added " + friendToAdd + " as a friend");
@@ -99,7 +99,7 @@ public final class FriendshipServiceImpl implements FriendshipService {
 
         User friend = userRepository.findByLogin(result.getFriendToAdd());
 
-        FriendRequest request = friendRequestRepository.findByFromAndTo(friend, userRepository.findOne(from.getId()));
+        FriendRequest request = friendRequestRepository.findByFromAndTo(friend, userRepository.findById(from.getId()).get());
 
         if (result.getFriendshipAccepted()) {
             friendshipAccepted(request);
@@ -147,7 +147,7 @@ public final class FriendshipServiceImpl implements FriendshipService {
 
     @Override
     public List<String> getAllFriendRequests(final UserIdHolder userIdHolder) {
-        User user = userRepository.findOne(userIdHolder.getId());
+        User user = userRepository.findById(userIdHolder.getId()).get();
 
         List<FriendRequest> requests = friendRequestRepository.findByTo(user);
         if (requests == null) {

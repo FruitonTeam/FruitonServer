@@ -22,6 +22,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -70,7 +71,7 @@ public final class ChatServiceImpl implements ChatService {
         logger.log(Level.FINE, "Chat message received from {0} with content: {1}", new Object[] {sender, message});
 
         Message msgToPersist = new Message();
-        msgToPersist.setSender(userRepository.findOne(sender.getId()));
+        msgToPersist.setSender(userRepository.findById(sender.getId()).get());
 
         User recipient = userRepository.findByLogin(message.getRecipient());
         msgToPersist.setRecipient(recipient);
@@ -97,7 +98,7 @@ public final class ChatServiceImpl implements ChatService {
         Query query = new Query()
                 .addCriteria(Criteria.where(SENDER_FIELD).in(user1.getId(), user2.getId()))
                 .addCriteria(Criteria.where(RECIPIENT_FIELD).in(user1.getId(), user2.getId()))
-                .with(new PageRequest(page, MESSAGES_PAGE_SIZE))
+                .with(PageRequest.of(page, MESSAGES_PAGE_SIZE))
                 .with(new Sort(Sort.Direction.DESC, CREATED_FIELD));
 
         List<ChatMessage> messages = mongoTemplate.find(query, Message.class).stream()
@@ -109,11 +110,12 @@ public final class ChatServiceImpl implements ChatService {
 
     @Override
     public ChatMessages getMessagesBefore(final String messageId, final int page) {
-        Message m = messageRepository.findOne(messageId);
-        if (m == null) {
+        Optional<Message> message = messageRepository.findById(messageId);
+        if (!message.isPresent()) {
             throw new IllegalArgumentException("Cannot find message with id " + messageId);
         }
 
+        Message m = message.get();
         UserIdHolder loggedInUser = authService.getLoggedInUser();
         if (!(loggedInUser.represents(m.getRecipient()) || loggedInUser.represents(m.getSender()))) {
             throw new SecurityException("User cannot access message with id " + messageId);
@@ -123,7 +125,7 @@ public final class ChatServiceImpl implements ChatService {
                 .addCriteria(Criteria.where(SENDER_FIELD).in(m.getSender().getId(), m.getRecipient().getId()))
                 .addCriteria(Criteria.where(RECIPIENT_FIELD).in(m.getSender().getId(), m.getRecipient().getId()))
                 .addCriteria(Criteria.where(CREATED_FIELD).lt(m.getCreated()))
-                .with(new PageRequest(page, MESSAGES_PAGE_SIZE))
+                .with(PageRequest.of(page, MESSAGES_PAGE_SIZE))
                 .with(new Sort(Sort.Direction.DESC, CREATED_FIELD));
 
         List<ChatMessage> messages = mongoTemplate.find(query, Message.class).stream()

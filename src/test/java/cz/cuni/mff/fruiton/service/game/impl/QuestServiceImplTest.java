@@ -9,8 +9,8 @@ import cz.cuni.mff.fruiton.test.util.TestUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -42,7 +42,7 @@ public class QuestServiceImplTest {
 
         questService.completeQuest(UserIdHolder.of(user), questService.getAllQuests(UserIdHolder.of(user)).get(0).getName());
 
-        user = userRepository.findOne(user.getId());
+        user = userRepository.findById(user.getId()).get();
         assertTrue("User must have received some money for completed quest", user.getMoney() > 0);
     }
 

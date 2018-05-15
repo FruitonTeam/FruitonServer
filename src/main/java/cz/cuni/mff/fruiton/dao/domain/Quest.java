@@ -1,12 +1,12 @@
 package cz.cuni.mff.fruiton.dao.domain;
 
-import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 
 @Document
 public final class Quest implements Comparable<Quest> {

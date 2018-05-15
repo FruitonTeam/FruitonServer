@@ -70,7 +70,7 @@ public final class AchievementServiceImpl implements AchievementService {
             return;
         }
 
-        User user = userRepository.findOne(idHolder.getId());
+        User user = userRepository.findById(idHolder.getId()).get();
 
         AchievementProgress achievementProgress = achievementProgressRepository.findByUserAndAchievement(user, achievement);
         if (achievementProgress == null) {
@@ -135,7 +135,7 @@ public final class AchievementServiceImpl implements AchievementService {
         List<Achievement> userUnlockedAchievements = userService.getUnlockedAchievements(idHolder);
 
         List<AchievementProgress> achievementProgresses = achievementProgressRepository.findByUser(
-                userRepository.findOne(idHolder.getId()));
+                userRepository.findById(idHolder.getId()).get());
 
         List<AchievementStatusInfo> achievementStatusInfos = new ArrayList<>(allAchievements.size());
         for (Achievement achievement : allAchievements) {

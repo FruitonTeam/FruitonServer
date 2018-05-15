@@ -32,7 +32,7 @@ public class LadderController {
             ladderPage = 1;
         }
 
-        Page<User> users = userRepository.findAllByOrderByRatingDesc(new PageRequest(ladderPage - 1, PAGE_SIZE));
+        Page<User> users = userRepository.findAllByOrderByRatingDesc(PageRequest.of(ladderPage - 1, PAGE_SIZE));
 
         model.addAttribute("users", users.getContent());
         model.addAttribute("page", ladderPage);

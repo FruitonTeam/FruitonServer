@@ -79,7 +79,7 @@ public final class QuestServiceImpl implements QuestService {
         if (quest == null) {
             throw new IllegalArgumentException("Cannot update quest progress for null quest");
         }
-        User user = userRepository.findOne(idHolder.getId());
+        User user = userRepository.findById(idHolder.getId()).get();
         if (!user.getAssignedQuests().contains(quest)) {
             return;
         }
@@ -120,7 +120,7 @@ public final class QuestServiceImpl implements QuestService {
             throw new IllegalArgumentException("Cannot complete quest for null user");
         }
 
-        User user = userRepository.findOne(idHolder.getId());
+        User user = userRepository.findById(idHolder.getId()).get();
         if (!user.getAssignedQuests().contains(quest)) {
             return;
         }
@@ -145,7 +145,7 @@ public final class QuestServiceImpl implements QuestService {
             throw new IllegalArgumentException("Cannot get quests for null user");
         }
 
-        User user = userRepository.findOne(idHolder.getId());
+        User user = userRepository.findById(idHolder.getId()).get();
 
         return user.getAssignedQuests().stream().map(q -> {
             QuestProgress progress = questProgressRepository.findByUserAndQuest(user, q);
